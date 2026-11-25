@@ -3,10 +3,13 @@ import { create } from 'zustand'
 import { getAdapter } from '@/core/vfs/idbAdapter'
 import { VirtualFileSystem } from '@/core/vfs/vfs'
 
-export interface DiffTarget { path: string; before: string; after: string; label: string }
+export interface DiffTarget { path: string; before: string; after: string; label: string; existed?: boolean }
+export interface Reveal { path: string; line: number; col: number; nonce: number }
 
 interface WorkspaceState {
   diffTarget: DiffTarget | null
+  reveal: Reveal | null
+  revealAt: (path: string, line: number, col?: number) => void
   showDiff: (t: DiffTarget | null) => void
   vfs: VirtualFileSystem | null
   loading: boolean
@@ -28,6 +31,8 @@ const noop = () => () => {}
 
 export const useWorkspace = create<WorkspaceState>((set, get) => ({
   diffTarget: null,
+  reveal: null,
+  revealAt: (path, line, col = 1) => set((s) => ({ reveal: { path, line, col, nonce: (s.reveal?.nonce ?? 0) + 1 }, openTabs: s.openTabs.includes(path) ? s.openTabs : [...s.openTabs, path], activeFile: path, diffTarget: null })),
   showDiff: (diffTarget) => set({ diffTarget }),
   vfs: null,
   loading: false,

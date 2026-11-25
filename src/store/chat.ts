@@ -118,7 +118,7 @@ export const useChat = create<ChatState>((set, get) => {
       const controller = new AbortController()
       set((s) => { const messages = [...s.messages, userMsg, asst]; persist(s.projectId, messages); return { messages, busy: true, controller } })
 
-      let draft: ChatMessage = { ...asst, parts: [], ops: [] }
+      const draft: ChatMessage = { ...asst, parts: [], ops: [] }
       let raf = 0
       const flush = () => { raf = 0; update(asst.id, { ...draft, parts: draft.parts!.map((p) => ({ ...p })), ops: draft.ops!.map((o) => ({ ...o })) }) }
       const schedule = () => { if (!raf) raf = window.setTimeout(flush, 60) as unknown as number }

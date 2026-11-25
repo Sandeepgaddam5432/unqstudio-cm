@@ -9,4 +9,4 @@ Resume at the first unchecked milestone in `PROGRESS.md`. Commands: `npm run tes
 - Checkpoint timeline: `vfs.checkpoint()`, `vfs.undo()/redo()/restore(id)`; `ensure` an AI turn creates a `kind: 'ai'` checkpoint.
 
 ## State at M4
-VFS + runtime are final. Next: AI layer (M4) – chat consumes `useChatBus.queued`; then replace `Body.tsx` with Studio/Code layouts.
+VFS, runtime and AI are final. Studio layout lives in `ui/workspace/Body.tsx`; Code Mode is a temporary placeholder there until M5. `store/workspace.ts` exposes `diffTarget/showDiff` for the diff viewer.

@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Eye, MessageSquare } from 'lucide-react'
 import { SplitPane } from '@/ui/primitives'
 import { useApp } from '@/store/app'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
-import { HistoryPanel } from './HistoryPanel'
 import { Preview } from '@/ui/preview/Preview'
+import { RightPanel } from './RightPanel'
+import { CodeMode } from '@/ui/code/CodeMode'
 import { ChatPanel } from '@/ui/chat/ChatPanel'
 import { useLiveBuild } from '@/ui/preview/useLiveBuild'
 import { useIsMobile } from '@/lib/useMedia'
+
 import { cn } from '@/lib/cn'
 
 function MobileTabs({ tab, onTab }: { tab: 'chat' | 'preview'; onTab: (t: 'chat' | 'preview') => void }) {
@@ -40,23 +42,8 @@ export function WorkspaceBody() {
         </div>
       )
     }
-    return <SplitPane storageKey="studio" initial={0.38} min={0.25} max={0.65} first={<ChatPanel />} second={<Preview />} />
+    return <SplitPane storageKey="studio" initial={0.38} min={0.25} max={0.65} first={<ChatPanel />} second={<RightPanel tabs={['preview', 'theme', 'history']} />} />
   }
 
-  return (
-    <SplitPane
-      storageKey="body-code-temp"
-      initial={0.34}
-      first={
-        <div className="flex h-full flex-col">
-          <div className="max-h-[45%] overflow-auto border-b border-line p-4 font-mono text-xs">
-            <p className="mb-2 font-sans text-sm text-muted">Code mode · {vfs?.size()} files</p>
-            {vfs?.paths().map((p) => <div key={p}>{p}{vfs.isLocked(p) ? ' 🔒' : ''}</div>)}
-          </div>
-          <div className="min-h-0 flex-1"><HistoryPanel /></div>
-        </div>
-      }
-      second={<Preview />}
-    />
-  )
+  return <Suspense fallback={null}><CodeMode /></Suspense>
 }

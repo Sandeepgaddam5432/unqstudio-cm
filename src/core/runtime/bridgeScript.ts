@@ -2,7 +2,7 @@
  * Script injected as the very first thing in every preview document. It is a plain string (not a bundled function)
  * so minifiers cannot rewrite it. It implements the iframe side of the postMessage bridge:
  *   iframe → host : console, error, resource-error, ready, inspect:select, screenshot
- *   host → iframe : inspect:enable, inspect:apply, theme, screenshot
+ *   host → iframe : inspect:enable, inspect:apply, theme, theme-css, screenshot
  * NOTE: keep this free of backticks and dollar-brace sequences.
  */
 export const BRIDGE_SCRIPT = String.raw`(function () {
@@ -157,6 +157,11 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
     if (m.type === 'inspect:enable') setInspect(m.on);
     else if (m.type === 'theme') document.documentElement.classList.toggle('dark', !!m.dark);
     else if (m.type === 'screenshot') shot(m.id);
+    else if (m.type === 'theme-css') {
+      var st = document.getElementById('__unq_live_theme');
+      if (!st) { st = document.createElement('style'); st.id = '__unq_live_theme'; document.head.appendChild(st); }
+      st.textContent = m.css || '';
+    }
     else if (m.type === 'inspect:apply') {
       var el = m.selector && document.querySelector(m.selector);
       if (!el) return;

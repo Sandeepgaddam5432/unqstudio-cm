@@ -6,6 +6,7 @@ import { Logo } from '@/ui/primitives'
 import { useVault } from '@/store/vault'
 import { OnboardingWizard } from '@/ui/ai/OnboardingWizard'
 import { VaultUnlock } from '@/ui/ai/VaultUnlock'
+import '@/ui/commandsExtra'
 
 const Home = lazy(() => import('@/ui/home/Home'))
 const Workspace = lazy(() => import('@/ui/workspace/Workspace'))

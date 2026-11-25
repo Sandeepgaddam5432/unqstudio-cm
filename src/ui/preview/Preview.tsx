@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Camera, ChevronDown, ExternalLink, Monitor, Moon, RotateCw, Smartphone, Sparkles, Sun, Tablet, Terminal, Trash2, X, ZoomIn, Copy, Maximize2 } from 'lucide-react'
+import { AlertTriangle, Camera, ChevronDown, ExternalLink, Monitor, Moon, RotateCw, Smartphone, Sparkles, Sun, Tablet, Terminal, Trash2, X, ZoomIn, Copy, Maximize2, MousePointer2 } from 'lucide-react'
 import { Button, Dropdown, Input, Spinner, Tooltip, Badge } from '@/ui/primitives'
 import { DEVICE_SIZES, usePreview, type Device, type LogLevel } from '@/store/preview'
 import { useWorkspace } from '@/store/workspace'
@@ -9,13 +9,11 @@ import { popoutWrapper } from '@/core/runtime/previewHtml'
 import { downloadBlob, slugify } from '@/lib/util'
 import { toast } from '@/store/toast'
 import { cn } from '@/lib/cn'
+import { postToPreview, setPreviewFrame } from './bridge'
+import { InspectorPanel } from './Inspector'
 import type { SerializedError } from '@/core/runtime/types'
 
 const pending = new Map<string, (r: { dataUrl?: string; error?: string }) => void>()
-
-export function postToPreview(frame: HTMLIFrameElement | null, msg: Record<string, unknown>) {
-  frame?.contentWindow?.postMessage({ __unq: true, ...msg }, '*')
-}
 
 const deviceIcon = { desktop: <Monitor size={14} />, tablet: <Tablet size={14} />, mobile: <Smartphone size={14} />, custom: <Maximize2 size={14} /> }
 const levelStyle: Record<LogLevel, string> = { log: 'text-fg', info: 'text-fg', debug: 'text-muted', warn: 'text-warn', error: 'text-danger', build: 'text-accent' }
@@ -91,6 +89,7 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
   const frame = useRef<HTMLIFrameElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const [avail, setAvail] = useState({ w: 0, h: 0 })
+  useEffect(() => { setPreviewFrame(frame.current); return () => setPreviewFrame(null) })
   const errCount = p.logs.filter((l) => l.level === 'error').length
 
   useEffect(() => {
@@ -176,6 +175,7 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
         <div className="mx-1 h-4 w-px shrink-0 bg-line" />
         <Tooltip label="Reload preview"><Button size="icon-sm" variant="ghost" onClick={p.reload} aria-label="Reload"><RotateCw size={14} /></Button></Tooltip>
         <Tooltip label={p.appearance === 'dark' ? 'Preview in light mode' : 'Preview in dark mode'}><Button size="icon-sm" variant="ghost" onClick={() => p.set({ appearance: p.appearance === 'dark' ? 'light' : 'dark' })} aria-label="Toggle preview appearance">{p.appearance === 'dark' ? <Sun size={14} /> : <Moon size={14} />}</Button></Tooltip>
+        <Tooltip label={p.inspectMode ? 'Stop selecting' : 'Select an element to edit'}><Button size="icon-sm" variant="ghost" active={p.inspectMode} className={p.inspectMode ? 'text-accent' : ''} disabled={!p.html} onClick={() => p.set({ inspectMode: !p.inspectMode, selected: null })} aria-label="Select element"><MousePointer2 size={14} /></Button></Tooltip>
         {toolbarExtra}
         <div className="ml-auto flex shrink-0 items-center gap-1">
           {busy && <span className="flex items-center gap-1.5 pr-1 text-[11px] text-muted"><Spinner size={12} />{p.status === 'initializing' ? 'Starting compiler' : 'Building'}</span>}
@@ -188,6 +188,7 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
 
       <div ref={box} className={cn('relative min-h-0 flex-1 overflow-auto', fixed && 'dot-grid')}>
         <ErrorBanner />
+        <InspectorPanel />
         {p.html ? (
           fixed ? (
             <div className="flex min-h-full min-w-full items-center justify-center p-4">

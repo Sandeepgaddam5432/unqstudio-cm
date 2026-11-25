@@ -30,7 +30,7 @@ function OpCard({ op, msgId }: { op: OpRecord; msgId: string }) {
   const vfs = useWorkspace((s) => s.vfs)
   const open = () => {
     const ws = useWorkspace.getState()
-    if (op.before !== undefined || op.after !== undefined) ws.showDiff({ path: op.path, before: op.before ?? '', after: op.after ?? '', label: `${opVerb[op.op]} by AI` })
+    if (op.before !== undefined || op.after !== undefined) ws.showDiff({ path: op.path, before: op.before ?? '', after: op.after ?? '', label: `${opVerb[op.op]} by AI`, existed: op.before !== undefined })
     else ws.openFile(op.path)
     ws.openFile(op.path)
     useApp.getState().setMode('code')

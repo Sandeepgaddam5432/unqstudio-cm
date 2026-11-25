@@ -1,5 +1,5 @@
 import type { ProviderDef } from './providers'
-import { ProviderError, type ContentPart, type LLMMessage, type StreamChunk, type StreamRequest } from './types'
+import { ProviderError, type ContentPart, type StreamChunk, type StreamRequest } from './types'
 
 /* ── SSE ─────────────────────────────────────────────────── */
 export interface SseEvent { event?: string; data: string }

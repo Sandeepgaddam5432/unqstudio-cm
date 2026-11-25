@@ -11,6 +11,7 @@ import { buildMessages } from '@/core/ai/orchestrator'
 import { buildHistory } from '@/store/chat'
 import { estimateCost, formatCost, formatTokens } from '@/core/ai/tokens'
 import { findModel } from '@/core/ai/providers'
+import { useChatBus } from '@/store/chatBus'
 
 const IDEAS = [
   'A landing page for a minimalist budgeting app with pricing and FAQ',
@@ -32,6 +33,8 @@ export function ChatPanel() {
   const [images, setImages] = useState<string[]>([])
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
+  const draft = useChatBus((s) => s.draft)
+  useEffect(() => { if (draft !== null) { setText(draft); useChatBus.getState().setDraft(null) } }, [draft])
 
   useEffect(() => {
     const el = scroller.current
