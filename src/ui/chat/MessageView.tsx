@@ -8,9 +8,13 @@ import { useApp } from '@/store/app'
 import { formatCost, formatTokens } from '@/core/ai/tokens'
 import type { OpRecord } from '@/core/ai/apply'
 import { cn } from '@/lib/cn'
+import { useChatPrefs } from '@/store/chatPrefs'
 
 function ThinkBlock({ text, done }: { text: string; done?: boolean }) {
-  const [open, setOpen] = useState(false)
+  const auto = useChatPrefs((p) => p.autoExpandThink)
+  const [manual, setManual] = useState<boolean | null>(null)
+  const open = manual ?? auto
+  const setOpen = (v: boolean) => setManual(v)
   return (
     <div className="my-1.5 rounded-xl border border-line bg-subtle/60">
       <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted" aria-expanded={open}>
@@ -40,9 +44,9 @@ function OpCard({ op, msgId }: { op: OpRecord; msgId: string }) {
     <div className={cn('my-1.5 flex items-start gap-2.5 rounded-xl border px-3 py-2 text-xs', op.status === 'failed' ? 'border-danger/30 bg-danger/5' : op.status === 'skipped-locked' ? 'border-warn/30 bg-warn/5' : 'border-line bg-panel')}>
       <span className="mt-0.5 text-muted">{opIcon[op.op]}</span>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-medium">{opVerb[op.op]}</span>
-          <button onClick={exists || op.status === 'applied' ? open : undefined} className="truncate font-mono text-[11px] text-muted hover:text-fg">{op.path}</button>
+          <button onClick={exists || op.status === 'applied' ? open : undefined} className="min-w-0 max-w-full truncate font-mono text-[11px] text-muted hover:text-fg" title={op.path}>{op.path}</button>
           {op.status === 'streaming' && <span className="flex items-center gap-1 text-muted"><Spinner size={11} />{op.lines ?? 0} lines</span>}
           {op.status === 'applied' && <><Check size={12} className="text-success" />{op.op !== 'delete' && <span className="font-mono text-[11px]"><span className="text-success">+{op.added}</span> <span className="text-danger">−{op.removed}</span></span>}{op.detail && <span className="text-faint">{op.detail}</span>}</>}
           {op.status === 'pending' && <Badge tone="warn">awaiting approval</Badge>}
@@ -65,12 +69,14 @@ function OpCard({ op, msgId }: { op: OpRecord; msgId: string }) {
 
 export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) {
   const { retry, undoTurn, forkAt, approveOps, rejectOps, send, busy } = useChat()
+  const showBadges = useChatPrefs((p) => p.showBadges)
+  const showActivity = useChatPrefs((p) => p.showActivity)
   if (m.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[88%] rounded-2xl rounded-br-md bg-subtle px-3.5 py-2.5 text-[13.5px]">
+        <div className="min-w-0 max-w-[88%] rounded-2xl rounded-br-md bg-subtle px-3.5 py-2.5 text-[1em]">
           {m.images && m.images.length > 0 && <div className="mb-2 flex flex-wrap gap-1.5">{m.images.map((s, i) => <img key={i} src={s} alt="Attachment" className="h-16 w-16 rounded-lg border border-line object-cover" />)}</div>}
-          <p className="whitespace-pre-wrap break-words">{m.text}</p>
+          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.text}</p>
           {m.mode !== 'build' && <Badge className="mt-1.5">{m.mode} mode</Badge>}
         </div>
       </div>
@@ -81,8 +87,8 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
   const opById = new Map(ops.map((o) => [o.id, o]))
   const showFooter = !m.streaming
   return (
-    <div className="group">
-      <div className="mb-1 flex items-center gap-2 text-[11px] text-faint">
+    <div className="group min-w-0">
+      <div className="mb-1 flex min-w-0 items-center gap-2 text-[11px] text-faint">
         <span className="flex h-4 w-4 items-center justify-center rounded bg-fg text-bg"><Hammer size={10} /></span>
         <span className="font-medium text-muted">UnQStudio</span>
         {m.model && <span className="truncate">{m.model.split('/').pop()}</span>}
@@ -91,7 +97,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
       {m.parts?.map((p, i) =>
         p.kind === 'text' ? <Markdown key={i} text={p.text ?? ''} />
         : p.kind === 'think' ? <ThinkBlock key={i} text={p.text ?? ''} done={p.done} />
-        : opById.get(p.opId!) ? <OpCard key={i} op={opById.get(p.opId!)!} msgId={m.id} /> : null,
+        : showActivity && opById.get(p.opId!) ? <OpCard key={i} op={opById.get(p.opId!)!} msgId={m.id} /> : null,
       )}
       {m.streaming && !m.parts?.length && <div className="flex items-center gap-2 py-1 text-xs text-muted"><Spinner size={12} />Working…</div>}
       {m.streaming && !!m.parts?.length && <span className="inline-block h-3.5 w-1.5 animate-pulse-soft rounded-sm bg-accent align-middle" />}
@@ -111,7 +117,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
       {m.undone && <p className="my-1 text-[11px] text-warn">↩ This turn was undone. Use Redo in the top bar to re-apply it.</p>}
       {showFooter && (
         <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] text-faint">
-          {m.usage && <span className="mr-1 font-mono">{formatTokens(m.usage.inputTokens)}↑ {formatTokens(m.usage.outputTokens)}↓{m.usage.estimated ? '~' : ''} · {formatCost(m.cost ?? null)}{m.durationMs ? ` · ${(m.durationMs / 1000).toFixed(1)}s` : ''}</span>}
+          {showBadges && m.usage && <span className="mr-1 font-mono">{formatTokens(m.usage.inputTokens)}↑ {formatTokens(m.usage.outputTokens)}↓{m.usage.estimated ? '~' : ''} · {formatCost(m.cost ?? null)}{m.durationMs ? ` · ${(m.durationMs / 1000).toFixed(1)}s` : ''}</span>}
           {m.checkpointBefore && !m.undone && ops.some((o) => o.status === 'applied') && <Tooltip label="Restore the project to before this request"><Button size="xs" variant="ghost" onClick={() => undoTurn(m.id)}><Rewind size={11} />Undo turn</Button></Tooltip>}
           <Tooltip label="Fork the project and chat from here"><Button size="xs" variant="ghost" onClick={() => forkAt(m.id)}><GitFork size={11} />Fork</Button></Tooltip>
           {isLast && !busy && <Button size="xs" variant="ghost" onClick={() => retry(m.id)}><RefreshCw size={11} />Retry</Button>}

@@ -104,3 +104,7 @@
   background-image: radial-gradient(var(--c-line-strong) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+@keyframes unq-sheet { from { transform: translateY(100%) } to { transform: none } }
+.animate-sheet { animation: unq-sheet .26s cubic-bezier(.2,.8,.2,1) both }
+.scrollbar-none { scrollbar-width: none }
+.scrollbar-none::-webkit-scrollbar { display: none }

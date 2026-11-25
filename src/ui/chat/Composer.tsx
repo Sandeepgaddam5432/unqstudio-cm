@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, BookText, FileCode2, ImagePlus, Mic, MicOff, Square, Undo2, Wand2, X, Check } from 'lucide-react'
+import { ArrowUp, AtSign, BookText, FileCode2, ImagePlus, Mic, MicOff, Square, Undo2, Wand2, X, Check } from 'lucide-react'
 import { Button, Dropdown, Segmented, Spinner, Textarea, Tooltip } from '@/ui/primitives'
 import { ModelPill } from './ModelPill'
 import { useSpeech } from './useSpeech'
@@ -111,7 +111,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
   const hero = variant === 'hero'
   return (
     <div
-      className={cn('relative rounded-2xl border bg-panel transition', hero ? 'p-3 shadow-pop' : 'p-2', drag ? 'border-accent' : 'border-line focus-within:border-line-strong')}
+      className={cn('relative min-w-0 rounded-2xl border bg-panel transition-colors duration-150', hero ? 'p-3 shadow-pop' : 'p-2', drag ? 'border-accent' : 'border-line focus-within:border-line-strong')}
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length) void addFiles(e.dataTransfer.files) }}
@@ -149,9 +149,17 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
         className={cn('border-0 bg-transparent px-2 hover:border-0 focus:border-0', hero ? 'min-h-[56px] text-[15px]' : 'min-h-[38px] text-[13.5px]')}
       />
       <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={(e) => { if (e.target.files) void addFiles(e.target.files); e.target.value = '' }} />
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-0.5">
+      <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5" data-composer-toolbar>
+        <div className="flex min-w-0 flex-wrap items-center gap-0.5">
           <Tooltip label="Attach image (screenshot-to-code)" side="top"><Button variant="ghost" size="icon-sm" onClick={() => file.current?.click()} aria-label="Attach image"><ImagePlus size={15} /></Button></Tooltip>
+          {mentionPaths && (
+            <Tooltip label="Mention a file (@)" side="top"><Button variant="ghost" size="icon-sm" aria-label="Mention file" onClick={() => {
+              const el = area.current; const pos = el?.selectionStart ?? value.length; const before = value.slice(0, pos)
+              const ins = (before && !/\s$/.test(before) ? ' ' : '') + '@'
+              onChange(before + ins + value.slice(pos)); setCaret(pos + ins.length); setSel(0)
+              requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(pos + ins.length, pos + ins.length) })
+            }}><AtSign size={15} /></Button></Tooltip>
+          )}
           <Tooltip label={speech.supported ? (speech.listening ? 'Stop dictation' : 'Voice input') : 'Voice input is not supported in this browser (try Chrome, Edge or Safari)'} side="top">
             <Button variant="ghost" size="icon-sm" disabled={!speech.supported} onClick={() => { speech.toggle(); if (speech.error) toast.error(speech.error) }} aria-label="Voice input" className={cn(speech.listening && 'text-danger')}>
               {speech.supported ? <Mic size={15} className={cn(speech.listening && 'animate-pulse-soft')} /> : <MicOff size={15} />}
@@ -182,7 +190,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
             <Segmented<AIMode> size="sm" className="ml-1" value={mode} onChange={onMode} items={[{ id: 'build', label: 'Build' }, { id: 'plan', label: 'Plan' }, { id: 'ask', label: 'Ask' }]} />
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5">
           <ModelPill align="end" />
           {busy ? (
             <Button variant="primary" size="icon" onClick={onStop} aria-label="Stop generating" className="rounded-full"><Square size={13} fill="currentColor" /></Button>

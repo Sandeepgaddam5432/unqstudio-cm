@@ -34,7 +34,7 @@ function Code({ lang, code }: { lang: string; code: string }) {
           {ok ? <Check size={11} /> : <Copy size={11} />}{ok ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre className="overflow-auto p-3 font-mono text-[12px] leading-relaxed"><code>{code}</code></pre>
+      <pre className="max-w-full overflow-auto p-3 font-mono text-[12px] leading-relaxed"><code>{code}</code></pre>
     </div>
   )
 }
@@ -87,5 +87,5 @@ export function Markdown({ text }: { text: string }) {
     while (i < lines.length && lines[i].trim() && !/^```|^#{1,4}\s|^\s*([-*]|\d+\.)\s+|^\s*\|/.test(lines[i])) para.push(lines[i++])
     blocks.push(<p key={k++} className="my-1 leading-relaxed">{para.map((p, j) => <Fragment key={j}>{j > 0 && <br />}{inline(p, String(j))}</Fragment>)}</p>)
   }
-  return <div className="text-[13.5px] text-fg">{blocks}</div>
+  return <div className="min-w-0 text-[1em] text-fg [overflow-wrap:anywhere]">{blocks}</div>
 }

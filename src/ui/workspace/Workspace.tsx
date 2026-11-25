@@ -34,9 +34,9 @@ export default function Workspace({ projectId }: { projectId: string }) {
     return <div className="flex h-full items-center justify-center text-muted"><Loader2 className="animate-spin-fast" /></div>
   }
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-[100dvh] min-w-0 flex-col overflow-hidden">
       <TopBar />
-      <div className="min-h-0 flex-1"><WorkspaceBody /></div>
+      <div className="min-h-0 min-w-0 flex-1"><WorkspaceBody /></div>
       <PublishModal />
     </div>
   )

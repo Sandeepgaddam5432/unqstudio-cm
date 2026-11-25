@@ -1,0 +1,35 @@
+# 04 · UI & Design System
+
+## Tokens (`src/index.css`)
+CSS variables drive Tailwind 4 theme colours: `bg`, `panel`, `subtle`, `fg`, `muted`, `faint`, `line`, `line-strong`, `accent`, `accent-fg`, `success`, `warn`, `danger`, `shadow-pop`.
+- **Obsidian Dark** (default): near-black `#09090B` surfaces, 1px hairline borders (`border-line`), violet/indigo accent.
+- **Paper Light**: warm white surfaces, same hairline rhythm.
+- Typography: Inter Variable (UI), JetBrains Mono Variable (code). Micro-transitions: 150ms (`transition-colors duration-150`); popover `animate-pop`, sheet `animate-sheet`, backdrop `animate-fade`.
+- Focus: `focus-visible:ring-2 ring-accent/30`; inputs `focus-within:ring-accent/20`.
+
+## Adaptive Dual Workspace
+- **Studio Mode** (default): Chat | Preview/Theme/History (`SplitPane`, ratio persisted).
+- **Code Mode** (`Ctrl/⌘+E`): file tree · CodeMirror 6 · diff viewer · search · preview.
+- `<768px`: single column + **bottom navigation** `Chat | Preview | Code` (`src/ui/workspace/Body.tsx`); Code selects `mode: 'code'`.
+
+## Floating UI anchoring & Mobile Bottom Sheet (`src/ui/primitives/Popover.tsx`)
+**v1.0 bug root cause:** the dropdown computed `getBoundingClientRect()` once on open and positioned itself with `position: fixed`; any ancestor scroll/resize moved the trigger but not the panel (it also closed on resize only).
+**v2.0 fix:** `@floating-ui/react` `useFloating({ strategy: 'fixed', whileElementsMounted: autoUpdate, middleware: [offset(6), flip, shift, size] })` in a portal. `autoUpdate` subscribes to ancestor scroll, resize, and element resize/layout shift, so the panel tracks its trigger continuously; `size()` caps `max-height`/`max-width` to the available viewport space (never overflows).
+Rules:
+- `≥640px`: anchored popover. `<640px` with `mobileSheet`: bottom-sheet (backdrop blur, drag-handle, `max-h-[82dvh]`, safe-area padding, body scroll lock, Esc/backdrop dismiss).
+- Model picker: sticky search input + provider filter pills + grouped list.
+
+## Chat 3-zone grid (`src/ui/chat/ChatPanel.tsx`)
+```
+h-[100dvh] (Workspace) ─ TopBar
+  └ ChatPanel  grid  grid-rows-[auto_minmax(0,1fr)_auto]  min-w-0 overflow-x-hidden
+      ├ zone 1  header      model/token badge · Chat settings · Clear
+      ├ zone 2  messages    min-h-0 overflow-y-auto overflow-x-hidden (only scroller)
+      └ zone 3  composer    textarea (top) + wrapped toolbar row (below)
+```
+Composer toolbar (`flex-wrap`): Attach · `@` file · Voice · Enhance ✨ · Rules · Mode | (ml-auto) Model pill · Send/Stop. Wrapping, not overlay, guarantees zero overlap at 375/768/1440px. Long filenames/code truncate or scroll inside their own boxes (`min-w-0`, `[overflow-wrap:anywhere]`).
+
+Chat customization (`useChatPrefs`, key `unq.chatprefs.v1`): density, font size, auto-expand `<think>`, token/cost badges, agent file activity cards, auto-scroll.
+
+## Visual Inspector `postMessage` protocol
+Preview iframe (`sandbox="allow-scripts"`, srcdoc) runs `bridgeScript.ts`. Messages (all tagged `source: 'unq'`): `error` (runtime/console errors), `ready`, `inspect:on|off`, `inspect:hover` / `inspect:select` (element path, rect, computed styles), `inspect:apply` (style/text edits written back through `inspectorEdit.ts` into the VFS). Parent validates `event.source === iframe.contentWindow`.
