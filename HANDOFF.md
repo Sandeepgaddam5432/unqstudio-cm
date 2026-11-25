@@ -8,5 +8,5 @@ Resume at the first unchecked milestone in `PROGRESS.md`. Commands: `npm run tes
 - Absolute VFS paths (`/src/App.tsx`). Locks only gate the `ai` actor (`vfs.write(path, c, {actor:'ai'})`).
 - Checkpoint timeline: `vfs.checkpoint()`, `vfs.undo()/redo()/restore(id)`; `ensure` an AI turn creates a `kind: 'ai'` checkpoint.
 
-## State at M2
-VFS, projects service, zip, fsSync are final. Next: build `core/runtime` (M3) and replace `Body.tsx`.
+## State at M3
+VFS + runtime are final. Next: AI layer (M4) – chat consumes `useChatBus.queued`; then replace `Body.tsx` with Studio/Code layouts.
