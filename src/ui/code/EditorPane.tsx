@@ -4,10 +4,10 @@ import { Button, EmptyState, Spinner } from '@/ui/primitives'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
 import { useApp } from '@/store/app'
 import { basenameOf } from '@/core/vfs/vfs'
-import { DiffViewer } from './DiffViewer'
 import { cn } from '@/lib/cn'
 
 const CodeEditor = lazy(() => import('./CodeEditor'))
+const DiffViewer = lazy(() => import('./DiffViewer').then((m) => ({ default: m.DiffViewer })))
 const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', ico: 'image/x-icon', bmp: 'image/bmp' }
 
 export function EditorPane() {
@@ -57,7 +57,7 @@ export function EditorPane() {
 
       <div className="min-h-0 flex-1">
         {diffTarget ? (
-          <DiffViewer target={diffTarget} onClose={() => showDiff(null)} />
+          <Suspense fallback={<div className="flex h-full items-center justify-center text-muted"><Spinner size={18} /></div>}><DiffViewer target={diffTarget} onClose={() => showDiff(null)} /></Suspense>
         ) : !activeFile || !rec ? (
           <EmptyState icon={<FileCode2 size={22} />} title="No file open">Pick a file from the explorer or press <kbd className="rounded border border-line px-1 font-mono text-[10px]">⌘K</kbd> to search.</EmptyState>
         ) : rec.encoding === 'base64' ? (

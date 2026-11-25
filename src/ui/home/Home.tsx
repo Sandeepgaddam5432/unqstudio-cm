@@ -152,6 +152,8 @@ export default function Home() {
               onImages={setImages}
               onSubmit={start}
               busy={busy}
+              allowEmptySubmit
+              submitLabel="Create project"
               autoFocus
               placeholder="A pricing page with three tiers, a monthly/yearly toggle and a FAQ…"
             />

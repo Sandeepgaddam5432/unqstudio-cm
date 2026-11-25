@@ -33,3 +33,34 @@ Rules: `core/*` never imports from `ui/*`; UI talks to core through stores/hooks
 ```
 
 (Runtime, AI and deploy sections are extended in the milestones that introduce them; see `PROGRESS.md`.)
+
+## Layer details
+
+### `core/vfs`
+`VirtualFileSystem` = write-through cache over `IStorageAdapter`; emits change events for `useSyncExternalStore`. Locks are project metadata and gate only `actor: 'ai'`.
+Checkpoints form a linear timeline (`historyPtr`); `undo/redo/restore` first checkpoint unsaved edits. `backup.ts` serialises everything (checkpoint payloads as base64) for the Data tab.
+
+### `core/runtime`
+```
+files ─► compileProject(esbuild, input, fetcher)
+           ├ plugin "vfs":  entry · ./ ../ @/ / · ext + index probing · CSS→<style> (Tailwind detected) · assets→data URLs
+           └ plugin "http": bare imports → https://esm.sh/pkg@ver?external=react,react-dom (React shared) · cached
+        ─► assembleHtml(index.html, bundle, bridge, tailwind-browser)  ─► iframe srcdoc (sandbox, opaque origin)
+```
+**Extending: a new runtime.** Implement `IRuntimeEngine { id, name, init(), build(input), dispose() }` returning `BuildResult.html`, then `registerRuntime(async () => new MyEngine())`.
+UI and AI layers only call `getRuntime().build()`.
+
+### `core/ai`
+```
+prompt ─► buildMessages(system + protocol + file tree/contents + history) ─► streamChat(provider) ─► ArtifactStreamParser
+       ─► applyOp (lock check, patch engine) or approval tray ─► checkpoint(before/after) ─► chat store
+```
+**Extending: a new provider.** Add a `ProviderDef` to `PROVIDERS` (`kind: 'openai'` for any `/chat/completions` SSE API, or `'anthropic'`). For a new wire format add a request
+builder + chunk parser in `stream.ts` returning `StreamChunk`s (`text | reasoning | usage`). Users can also declare OpenAI-compatible providers from Settings → Features without code.
+
+### Messaging bridge (preview ⇄ host)
+iframe → host: `console`, `error`, `resource-error`, `ready`, `inspect:select`, `screenshot`. host → iframe: `inspect:enable`, `inspect:apply`, `theme`, `theme-css`, `screenshot`.
+
+### Quality gates
+Vitest covers VFS, locks, checkpoints, ZIP, resolver, real esbuild compilation (Node), parser (split at every offset), patches, vault crypto, adapters, mocked deploy APIs,
+and compiles + `tsc --strict`-checks every template. `scripts/e2e.mjs` drives headless Chromium through Home → template → live preview → Code Mode → theme → settings → mobile.

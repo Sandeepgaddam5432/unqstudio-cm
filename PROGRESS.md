@@ -1,34 +1,17 @@
 # PROGRESS
 
-- [x] **M1** Scaffold, design system, Home, workspace shell, docs foundation
-- [x] **M2** VFS: CRUD, file locks, checkpoints/undo/redo/fork/diff, ZIP export+import, local folder sync, tests
-- [x] **M3** esbuild-wasm runtime (`core/runtime`), sandboxed preview, error catcher, preview toolbar, tests
-- [x] **M4** AI orchestrator: 20 BYOK providers, streaming, artifact parser, patch engine, vault, modes, enhancer, vision, voice, @mentions, token/cost meter
-- [x] **M5** Code Mode IDE, diff viewer, visual click-to-edit inspector, Theme Studio, command palette extensions
-- [x] **M6** 8 static templates + Bolt-class Settings hub
-- [x] **M7** Pure client-side export, Git & one-click deploy hub
-- [ ] M8 Hardening + docs
+- [x] **M1** Scaffold, design system, Home, workspace shell, docs
+- [x] **M2** VFS: CRUD, locks, checkpoints, ZIP, folder sync, tests
+- [x] **M3** esbuild-wasm runtime, sandboxed preview, error catcher
+- [x] **M4** AI orchestrator (20 providers, parser, patches, vault, chat UI)
+- [x] **M5** Code Mode, diff viewer, inspector, Theme Studio
+- [x] **M6** 8 templates + settings hub
+- [x] **M7** Deploy hub (GitHub/GitLab/Netlify/Vercel/Cloudflare/Supabase)
+- [x] **M8** Hardening, lazy chunks, headless E2E, complete docs
 
-## Notes
-- M3: `IRuntimeEngine` + `EsbuildWasmEngine` (wasm served from bundled asset with progress, jsDelivr fallback, `registerRuntime()` for alternative engines).
-  esbuild plugin: `vfs` namespace (relative, `@/`, absolute, index/ext probing, CSS injection with Tailwind browser runtime detection, binary assets as data URLs)
-  + `http` namespace (esm.sh with shared React via `?external`, memory + IndexedDB cache). Real compile pipeline is covered by tests running esbuild-wasm in Node.
-  Preview: debounced rebuild, sandboxed iframe + postMessage bridge (console, errors, unhandled rejections, in-memory storage shim, inspector + screenshot protocol),
-  error banner with “Fix with AI” (queues a message on `chatBus`; the chat consumes it in M4), viewport/rotate/zoom/reload/console/pop-out/screenshot toolbar.
-- `ui/workspace/Body.tsx` is still a transitional layout (file list + History + Preview) until M4/M5.
-- M4: `core/ai` – `stream.ts` (SSE; OpenAI-compatible + Anthropic with `anthropic-dangerous-direct-browser-access`), `parser.ts` (chunk-boundary-safe artifact parser incl. `<think>`),
-  `patch.ts` (SEARCH/REPLACE, exact → whitespace-tolerant, all-or-nothing), `apply.ts` (lock-aware file ops), `orchestrator.ts` (turn pipeline, before/after checkpoints, approval tray, enhancer, test-connection),
-  `vault.ts` (PBKDF2+AES-GCM). UI: Studio layout (chat | preview), composer (enhancer, image attach/paste/drop, voice, @file mentions, rules library, Build/Plan/Ask), op cards with diff/approve/reject,
-  undo turn / fork chat / retry / Approve & Build, onboarding wizard, Providers settings tab with vault controls. Tests: parser (every split position), patch, vault, adapters, lock enforcement, mocked end-to-end turns.
-- M5: Code Mode = explorer (create/rename/duplicate/delete/drag-move/upload/lock/pin) + Search & Replace + History | multi-tab CodeMirror 6 (lazy chunk, autosave, locked-file banner, image preview) | right panel (Preview, Chat, Theme, Tokens).
-  Diff viewer: split/unified, collapsed context, compare-with-any-checkpoint, per-file Accept/Revert (opened from AI op cards and History). Inspector: hover outline + tag/size/classes tooltip, click → quick edit
-  (text, colors, padding, radius, font size) with instant preview and “Save to source” (unique-match Tailwind class/text rewrite, otherwise explains why not) or “Edit with AI” (DOM snippet + source hint into the composer).
-  Theme Studio: presets, light/dark tokens, radius, Google Font picker; live via `theme-css` bridge message, persisted to `/src/index.css` + `/index.html`. Mobile: 4-tab bottom bar in Code Mode.
-- M6: Templates — Blank, SaaS Landing, Analytics Dashboard (hand-rolled SVG charts), Designer Portfolio, Product Storefront (persistent cart), AI Chat App, Kanban (DnD), Editorial Blog & Docs.
-  `templates.test.ts` compiles every template with the real esbuild pipeline and **type-checks each one with `tsc --strict`** against real React/lucide typings. Settings hub tabs: General, Providers (+vault),
-  Connections (GitHub/GitLab/Cloudflare/Netlify/Vercel/Supabase tokens in the vault + live verification), Prompts (rules library + presets), Data (storage meter, JSON backup/restore, bulk chat mgmt, selective clear, factory reset),
-  Debug (capabilities, filterable event log, diagnostics report without secrets), Features (flags, themes/templates/providers/MCP plugin registry, JSON import/export, MCP HTTP+SSE probe).
-- M7: `core/deploy` — GitHub (import via tree + raw/blobs; push via blobs → tree → commit → ref, repo auto-create, empty-repo bootstrap, Pages workflow + enable), GitLab (commits API with create/update actions),
-  Netlify (SHA-1 digest deploy + required uploads + polling), Vercel (v13 deployments, inline base64 files), Cloudflare Pages (multipart direct upload; CORS-blocked → step-by-step Git-connect guide),
-  Supabase (OpenAPI schema → tables browser, TypeScript types, typed client injection; refuses service_role keys). Production static bundle comes from the in-browser compiler (`production: true`).
-  UI: Publish hub tabs Download / Git / Deploy / Supabase, Import from GitHub on Home. Tests use mocked `fetch` to assert endpoints, headers and payloads (tree/commit, Netlify digests, Vercel files, ZIP integrity).
+## Verification (v1.0.0)
+`npm run test` (all green) · `npx tsc --noEmit` · `npm run lint` · `npm run build` · `npm run e2e` → 15/15 checks (Home, template compile in sandboxed iframe with Tailwind styling, Studio↔Code, theme toggle, palette, settings tabs, 20 providers, Theme Studio, 375 px no-overflow, zero console errors).
+Lazy chunks: workspace, settings, CodeMirror, diff viewer, esbuild engine + wasm, jszip.
+
+## Honest limitations
+Providers/Cloudflare API CORS behaviour and live LLM calls cannot be exercised without user keys: LLM streaming, GitHub/GitLab/Netlify/Vercel/Cloudflare flows are verified against mocked `fetch` (endpoints, headers, payloads) rather than live accounts.

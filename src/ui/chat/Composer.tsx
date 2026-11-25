@@ -29,9 +29,11 @@ export interface ComposerProps {
   variant?: 'hero' | 'chat'
   autoFocus?: boolean
   submitIcon?: React.ReactNode
+  allowEmptySubmit?: boolean
+  submitLabel?: string
 }
 
-export function Composer({ value, onChange, images, onImages, onSubmit, busy, onStop, mode, onMode, placeholder, mentionPaths, variant = 'chat', autoFocus, submitIcon }: ComposerProps) {
+export function Composer({ value, onChange, images, onImages, onSubmit, busy, onStop, mode, onMode, placeholder, mentionPaths, variant = 'chat', autoFocus, submitIcon, allowEmptySubmit, submitLabel }: ComposerProps) {
   const area = useRef<HTMLTextAreaElement>(null)
   const file = useRef<HTMLInputElement>(null)
   const [enhancing, setEnhancing] = useState(false)
@@ -102,7 +104,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
     }
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
-      if (!busy && (value.trim())) onSubmit()
+      if (!busy && (value.trim() || allowEmptySubmit)) onSubmit()
     }
   }
 
@@ -185,7 +187,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
           {busy ? (
             <Button variant="primary" size="icon" onClick={onStop} aria-label="Stop generating" className="rounded-full"><Square size={13} fill="currentColor" /></Button>
           ) : (
-            <Button variant="accent" size="icon" onClick={onSubmit} disabled={!value.trim()} aria-label="Send" className="rounded-full">{submitIcon ?? <ArrowUp size={17} />}</Button>
+            <Button variant="accent" size="icon" onClick={onSubmit} disabled={!value.trim() && !allowEmptySubmit} aria-label={submitLabel ?? 'Send'} className="rounded-full">{submitIcon ?? <ArrowUp size={17} />}</Button>
           )}
         </div>
       </div>
