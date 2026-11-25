@@ -27,12 +27,22 @@ Deploys as a plain `dist/` folder on Cloudflare Pages.
 | **Settings hub** | Providers, Connections, Prompts, Data (backup/restore, storage meter), Debug (event log, diagnostics), Features & plugin registry (themes, templates, providers, remote MCP connectors) |
 | **Publish** | ZIP, GitHub (import / push / Pages workflow), GitLab, Netlify, Vercel, Cloudflare Pages (+ Git-connect fallback), Supabase explorer + typed client |
 
+## What's new in v2.0
+- **Rock-solid model picker** — Floating UI anchoring (`autoUpdate` + flip/shift/size) on desktop, bottom-sheet drawer on mobile. The v1 scroll-detach bug is fixed at the root.
+- **Zero-overlap chat** — strict 3-zone grid (`auto minmax(0,1fr) auto`) in `100dvh`, wrapping composer toolbar, chat customization popover (density, font size, reasoning, badges, activity cards, auto-scroll), mobile bottom nav.
+- **`models.dev` universal registry** — 300+ providers / ~9k models via build snapshot → edge function → live per-provider `/models` auto-fetch on key entry. Honest tags: Browser-Ready 🟢 · Local 💻 · Requires Proxy 🔌.
+- **Official brand + SEO/AEO** — logo, JSON-LD (SoftwareApplication, Organization, WebSite, FAQPage), `llms.txt`, `llms-full.txt`, sitemap, robots, PWA manifest.
+- **Optional sign-in & free cloud sync** — Google (GIS, Drive AppData) and GitHub (Pages Function OAuth, Gist). Guest mode always works; GitHub OAuth also powers import/push/Pages deploy.
+- **Living docs** — [`AGENTS.md`](./AGENTS.md) + six code-level references in [`DOCS/`](./DOCS), enforced by `npm run verify:docs`.
+
 ## Quickstart
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm run test         # 100+ unit tests (vitest)
+npm run test         # 147 unit tests (vitest, Node >= 22)
+npm run verify:docs  # doc-sync guard (also: npm run docs:map to regenerate the code map)
+npm run sync:models  # refresh public/models-registry.json from models.dev (runs on prebuild)
 npm run lint && npm run typecheck
 npm run build        # static bundle in dist/
 npm run preview      # serve dist/
@@ -55,7 +65,7 @@ On first use press the model pill → **Quick setup**, pick a provider (OpenRout
                        bridge               orchestrator          browser → API)
 ```
 
-Details: [ARCHITECTURE.md](./ARCHITECTURE.md) · [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) · [DOCS/FEATURES.md](./DOCS/FEATURES.md) · [DOCS/DEPLOYMENT.md](./DOCS/DEPLOYMENT.md)
+Deep docs: [AGENTS.md](./AGENTS.md) · [01 Architecture](./DOCS/01-SYSTEM-ARCHITECTURE.md) · [02 Codebase map](./DOCS/02-CODEBASE-MAP.md) · [03 Models & AI](./DOCS/03-MODELS-AND-AI-ENGINE.md) · [04 UI & design system](./DOCS/04-UI-AND-DESIGN-SYSTEM.md) · [05 Auth/SEO/Deploy](./DOCS/05-AUTH-SEO-DEPLOY.md) · [06 Changelog & ADRs](./DOCS/06-CHANGELOG-AND-ADRS.md) · v1 notes: [ARCHITECTURE.md](./ARCHITECTURE.md) · [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) · [DOCS/FEATURES.md](./DOCS/FEATURES.md) · [DOCS/DEPLOYMENT.md](./DOCS/DEPLOYMENT.md)
 
 ## Deploy to Cloudflare Pages (static)
 
@@ -64,5 +74,5 @@ Details: [ARCHITECTURE.md](./ARCHITECTURE.md) · [DESIGN_SYSTEM.md](./DESIGN_SYS
 
 ## Security & privacy
 
-API keys and tokens live in IndexedDB on your device (optionally AES-GCM encrypted with a passphrase). They are sent only to the provider/service you configure.
+API keys live in IndexedDB on your device; OAuth tokens only in the tab's sessionStorage (optionally AES-GCM encrypted with a passphrase). They are sent only to the provider/service you configure.
 No telemetry, no server. The preview runs in an opaque-origin sandbox, so generated code can never read your keys.

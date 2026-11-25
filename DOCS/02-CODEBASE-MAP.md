@@ -1087,6 +1087,37 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useApp → AppState`
 
+<details><summary>State shape</summary>
+
+```ts
+interface AppState {
+  theme: ThemePref
+  resolvedTheme: 'dark' | 'light'
+  mode: WorkspaceMode
+  projectId: string | null
+  settingsOpen: boolean
+  settingsTab: string
+  publishOpen: boolean
+  paletteOpen: boolean
+  onboardingOpen: boolean
+  pendingPrompt: PendingPrompt | null
+  setTheme: (t: ThemePref) => void
+  toggleTheme: () => void
+  setResolvedTheme: (t: 'dark' | 'light') => void
+  setMode: (m: WorkspaceMode) => void
+  toggleMode: () => void
+  setProjectId: (id: string | null) => void
+  openSettings: (tab?: string) => void
+  closeSettings: () => void
+  setPublishOpen: (v: boolean) => void
+  setPaletteOpen: (v: boolean) => void
+  setOnboardingOpen: (v: boolean) => void
+  setPendingPrompt: (p: PendingPrompt | null) => void
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export type ThemePref = 'system' | 'dark' | 'light'`
@@ -1108,6 +1139,35 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useAuth → AuthState`
 
+<details><summary>State shape</summary>
+
+```ts
+interface AuthState {
+  google: AuthSession | null
+  github: AuthSession | null
+  lastSynced: Partial<Record<AuthProviderId, number>>
+  googleClientIdOverride: string
+  githubConfigured: boolean | null
+  modalOpen: boolean
+  guide: AuthProviderId | null
+  busy: AuthProviderId | null
+  error: string | null
+  init: () => Promise<void>
+  openModal: () => void
+  closeModal: () => void
+  openGuide: (p: AuthProviderId | null) => void
+  setGoogleClientId: (id: string) => void
+  googleConfigured: () => boolean
+  signInGoogle: () => Promise<void>
+  signInGithub: () => void
+  receiveSession: (s: AuthSession) => void
+  signOut: (p: AuthProviderId) => void
+  sync: (p: AuthProviderId, dir: SyncDirection) => Promise<void>
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export const loadSession = …`
@@ -1124,6 +1184,30 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 **Size:** 256 lines
 
 **Zustand stores:** `useChat → ChatState`
+
+<details><summary>State shape</summary>
+
+```ts
+interface ChatState {
+  projectId: string | null
+  messages: ChatMessage[]
+  busy: boolean
+  autoFix: number
+  controller: AbortController | null
+  load: (projectId: string) => Promise<void>
+  send: (p: { text: string; images?: string[]; mode?: AIMode; auto?: boolean }) => Promise<boolean>
+  stop: () => void
+  clear: () => Promise<void>
+  deleteMessage: (id: string) => Promise<void>
+  retry: (assistantId: string) => Promise<void>
+  undoTurn: (assistantId: string) => Promise<void>
+  forkAt: (assistantId: string) => Promise<void>
+  approveOps: (assistantId: string, opIds?: string[]) => Promise<void>
+  rejectOps: (assistantId: string, opIds?: string[]) => Promise<void>
+}
+```
+
+</details>
 
 **Exports:**
 
@@ -1143,6 +1227,20 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useChatBus → ChatBus`
 
+<details><summary>State shape</summary>
+
+```ts
+interface ChatBus {
+  queued: QueuedMessage | null
+  draft: string | null
+  enqueue: (m: QueuedMessage) => void
+  setDraft: (d: string | null) => void
+  take: () => QueuedMessage | null
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export interface QueuedMessage { text: string; images?: string[]; mode?: 'build' | 'plan' | 'ask'; auto?: boolean }`
@@ -1156,6 +1254,17 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 **Size:** 38 lines
 
 **Zustand stores:** `useChatPrefs → ChatPrefsState`
+
+<details><summary>State shape</summary>
+
+```ts
+interface ChatPrefsState extends ChatPrefs {
+  setPref: <K extends keyof ChatPrefs>(k: K, v: ChatPrefs[K]) => void
+  reset: () => void
+}
+```
+
+</details>
 
 **Exports:**
 
@@ -1191,6 +1300,18 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useEvents → EventsState`
 
+<details><summary>State shape</summary>
+
+```ts
+interface EventsState {
+  entries: EventEntry[]
+  log: (category: EventCategory, message: string, extra?: { durationMs?: number; data?: unknown }) => void
+  clear: () => void
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export type EventCategory = 'ai' | 'compile' | 'error' | 'vfs' | 'deploy' | 'system'`
@@ -1209,6 +1330,23 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useModels → ModelsState`
 
+<details><summary>State shape</summary>
+
+```ts
+interface ModelsState {
+  registry: Registry | null
+  registrySource: RegistrySource | null
+  syncedAt: number | null
+  registryStatus: 'idle' | 'loading' | 'ready' | 'error'
+  registryError?: string
+  live: Record<string, LiveState>
+  loadRegistry: (force?: boolean) => Promise<void>
+  fetchLive: (a: { providerId: string; target: { id: string; kind: 'openai' | 'anthropic'; baseUrl: string; noKey?: boolean }; apiKey?: string; baseUrl?: string; registryProvider?: RegProvider }) => Promise<FetchOutcome>
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export interface LiveState`
@@ -1224,6 +1362,40 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 **Size:** 60 lines
 
 **Zustand stores:** `usePreview → PreviewState`
+
+<details><summary>State shape</summary>
+
+```ts
+interface PreviewState {
+  status: 'idle' | 'initializing' | 'building' | 'ready' | 'error'
+  progress: { message: string; pct: number | null } | null
+  html: string | null
+  lastHash: string | null
+  buildErrors: SerializedError[]
+  runtimeErrors: SerializedError[]
+  warnings: SerializedError[]
+  durationMs: number | null
+  logs: LogEntry[]
+  device: Device
+  customW: number
+  customH: number
+  rotated: boolean
+  zoom: 'fit' | number
+  appearance: 'light' | 'dark'
+  consoleOpen: boolean
+  inspectMode: boolean
+  selected: ElementInfo | null
+  reloadKey: number
+  errorDismissed: boolean
+  set: (p: Partial<Omit<PreviewState, 'set'>>) => void
+  addLog: (level: LogLevel, text: string, ts?: number) => void
+  clearLogs: () => void
+  addRuntimeError: (e: SerializedError) => void
+  reload: () => void
+}
+```
+
+</details>
 
 **Exports:**
 
@@ -1245,6 +1417,22 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useProjects → ProjectsState`
 
+<details><summary>State shape</summary>
+
+```ts
+interface ProjectsState {
+  projects: ProjectMeta[]
+  loaded: boolean
+  refresh: () => Promise<void>
+  create: (input: CreateProjectInput) => Promise<ProjectMeta>
+  duplicate: (id: string) => Promise<ProjectMeta>
+  remove: (id: string) => Promise<void>
+  update: (id: string, patch: Partial<ProjectMeta>) => Promise<void>
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export const useProjects = create<ProjectsState>((set, get) => (`
@@ -1259,6 +1447,28 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 **Size:** 62 lines
 
 **Zustand stores:** `useSettings → SettingsState`
+
+<details><summary>State shape</summary>
+
+```ts
+interface SettingsState {
+  activeProvider: string
+  activeModel: string
+  enabled: Record<string, boolean>
+  baseUrls: Record<string, string>
+  userModels: Record<string, string[]>
+  aiMode: AIMode
+  flags: FeatureFlags
+  customPrompts: CustomPrompt[]
+  plugins: PluginRegistry
+  onboarded: boolean
+  vaultEncrypted: boolean
+  set: (patch: Partial<Omit<SettingsState, 'set'>>) => void
+  setFlag: (k: keyof FeatureFlags, v: boolean) => void
+}
+```
+
+</details>
 
 **Exports:**
 
@@ -1283,6 +1493,18 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 
 **Zustand stores:** `useToasts → ToastState`
 
+<details><summary>State shape</summary>
+
+```ts
+interface ToastState {
+  items: ToastItem[]
+  push: (t: Omit<ToastItem, 'id'>, ttl?: number) => void
+  dismiss: (id: string) => void
+}
+```
+
+</details>
+
 **Exports:**
 
 - `export interface ToastItem`
@@ -1299,6 +1521,28 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 **Size:** 45 lines
 
 **Zustand stores:** `useVault → VaultState`
+
+<details><summary>State shape</summary>
+
+```ts
+interface VaultState {
+  ready: boolean
+  encrypted: boolean
+  locked: boolean
+  rev: number
+  unlockOpen: boolean
+  init: () => Promise<void>
+  unlock: (pass: string) => Promise<void>
+  lock: () => void
+  setSecret: (name: string, value: string) => Promise<void>
+  removeSecret: (name: string) => Promise<void>
+  enable: (pass: string) => Promise<void>
+  disable: () => Promise<void>
+  setUnlockOpen: (v: boolean) => void
+}
+```
+
+</details>
 
 **Exports:**
 
@@ -1317,6 +1561,33 @@ Zustand stores (UI state, settings, chat, vault, projects, auth).
 **Size:** 76 lines
 
 **Zustand stores:** `useWorkspace → WorkspaceState`
+
+<details><summary>State shape</summary>
+
+```ts
+interface WorkspaceState {
+  diffTarget: DiffTarget | null
+  reveal: Reveal | null
+  revealAt: (path: string, line: number, col?: number) => void
+  showDiff: (t: DiffTarget | null) => void
+  vfs: VirtualFileSystem | null
+  loading: boolean
+  error: string | null
+  openTabs: string[]
+  activeFile: string | null
+  /** Files pinned into the AI context (@file / @folder mentions). */
+  pinned: string[]
+  open: (projectId: string) => Promise<void>
+  close: () => void
+  openFile: (path: string) => void
+  closeFile: (path: string) => void
+  setActiveFile: (path: string | null) => void
+  togglePin: (path: string) => void
+  renameProject: (name: string) => Promise<void>
+}
+```
+
+</details>
 
 **Exports:**
 

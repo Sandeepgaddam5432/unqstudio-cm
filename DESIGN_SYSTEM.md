@@ -1,3 +1,5 @@
+> **SUPERSEDED in v2.0** — the authoritative, code-level version is [`DOCS/04-UI-AND-DESIGN-SYSTEM.md`](./DOCS/04-UI-AND-DESIGN-SYSTEM.md) (plus `DOCS/02-CODEBASE-MAP.md`). This v1 file is kept for history.
+
 # UnQStudio Design System
 
 Swiss-minimalist, monochrome-first. One signature accent (vermilion) used sparingly for focus, primary calls to action and live state.

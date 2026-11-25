@@ -1,3 +1,5 @@
+> **SUPERSEDED in v2.0** — the authoritative, code-level version is [`DOCS/01-SYSTEM-ARCHITECTURE.md`](./DOCS/01-SYSTEM-ARCHITECTURE.md) (plus `DOCS/02-CODEBASE-MAP.md`). This v1 file is kept for history.
+
 # UnQStudio Architecture
 
 UnQStudio is a pure static SPA (Vite + React 19 + TypeScript strict + Tailwind v4 + Zustand). The code is split into five

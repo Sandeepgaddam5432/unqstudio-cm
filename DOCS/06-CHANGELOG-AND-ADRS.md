@@ -2,6 +2,11 @@
 
 ## Changelog
 
+### v2.0 — V2-M5 · Living documentation system
+- `AGENTS.md`/`CLAUDE.md` constitution with the immutable Doc-Sync Law; DOCS/01–06 complete.
+- `scripts/gen-codemap.mjs` now also embeds Zustand state shapes; `verify:docs` checks presence, undocumented/stale files and that the generated map is current.
+- README/CHANGELOG refreshed; v1 ARCHITECTURE/DESIGN_SYSTEM marked superseded.
+
 ### v2.0 — V2-M4 · Optional Google/GitHub auth + free cloud sync
 - Google GIS token client + Drive AppData sync; GitHub OAuth Pages Function + Gist sync; session-only tokens; GitHub token auto-injected into import/push/Pages deploy.
 - AccountPill, AuthModal with honest unconfigured state and 3-step setup guide. 21 new unit tests.

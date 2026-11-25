@@ -28,6 +28,14 @@ function resolveImport(from, spec) {
   return null
 }
 
+function interfaceBody(src, name) {
+  const i = src.search(new RegExp(`(?:export\\s+)?interface\\s+${name}\\b[^{]*\\{`))
+  if (i < 0) return null
+  let depth = 0, start = src.indexOf('{', i)
+  for (let j = start; j < src.length; j++) { if (src[j] === '{') depth++; else if (src[j] === '}' && --depth === 0) return src.slice(i, j + 1).replace(/^export\s+/, '') }
+  return null
+}
+
 function analyse(file) {
   const src = readFileSync(join(ROOT, file), 'utf8')
   const lines = src.split('\n')
@@ -53,7 +61,8 @@ function analyse(file) {
   const stores2 = [...src.matchAll(/createObjectStore\(\s*'([^']+)'/g)].map((m) => m[1])
   const doc = /^\s*(?:\/\/\s*(.+)|\/\*\*\s*([\s\S]*?)\*\/)/.exec(src.replace(/^(import[^\n]*\n)+\n?/, ''))
   const lead = (doc?.[1] ?? doc?.[2] ?? '').replace(/\s*\n\s*\*?\s*/g, ' ').trim()
-  return { exports, deps: [...deps].sort(), ext: ext.sort(), stores, persistKeys, idb, idbStores: stores2, lead, lines: lines.length, hasJsx: file.endsWith('.tsx') }
+  const shapes = stores.map((st) => { const n = st.split('→')[1].trim(); const b = interfaceBody(src, n); return b && b.length < 2600 ? b : null }).filter(Boolean)
+  return { shapes, exports, deps: [...deps].sort(), ext: ext.sort(), stores, persistKeys, idb, idbStores: stores2, lead, lines: lines.length, hasJsx: file.endsWith('.tsx') }
 }
 
 export function generate() {
@@ -77,7 +86,7 @@ export function generate() {
       const a = analyse(f)
       const purpose = PURPOSES[f] ?? (a.lead && a.lead.length > 8 ? a.lead : null) ?? (a.exports.length ? `Defines ${a.exports.filter((e) => e.kind !== 're-export').slice(0, 4).map((e) => e.name).join(', ')}.` : 'Module side-effects / wiring.')
       out.push(`### \`${f}\``, '', `**Purpose:** ${purpose}  `, `**Size:** ${a.lines} lines${a.hasJsx ? ' · React component module' : ''}`, '')
-      if (a.stores.length) out.push(`**Zustand stores:** ${a.stores.map((s) => `\`${s}\``).join(', ')}`, '')
+      if (a.stores.length) { out.push(`**Zustand stores:** ${a.stores.map((s) => `\`${s}\``).join(', ')}`, ''); for (const sh of a.shapes) out.push('<details><summary>State shape</summary>', '', '```ts', sh, '```', '', '</details>', '') }
       if (a.exports.length) { out.push('**Exports:**', '', ...a.exports.map((e) => `- \`${e.sig.replace(/`/g, "'")}\``), '') } else out.push('**Exports:** none (side-effect / entry module)', '')
       if (a.deps.length) out.push(`**Internal dependencies:** ${a.deps.map((x) => `\`${x}\``).join(', ')}`, '')
       if (a.ext.length) out.push(`**External packages:** ${a.ext.map((x) => `\`${x}\``).join(', ')}`, '')
