@@ -2,6 +2,10 @@
 
 ## Changelog
 
+### v2.0 — V2-M4 · Optional Google/GitHub auth + free cloud sync
+- Google GIS token client + Drive AppData sync; GitHub OAuth Pages Function + Gist sync; session-only tokens; GitHub token auto-injected into import/push/Pages deploy.
+- AccountPill, AuthModal with honest unconfigured state and 3-step setup guide. 21 new unit tests.
+
 ### v2.0 — V2-M3 · Official logo, brand assets, SEO & AEO
 - Official `logo.svg` integrated (TopBar, Home, Settings header, README); derived favicon/touch/PWA icons and 1200×630 OG card.
 - index.html: full meta + 4 JSON-LD blocks; robots.txt, sitemap.xml, llms.txt, llms-full.txt, manifest.webmanifest.
@@ -48,3 +52,12 @@ Parsing the 7 MB upstream may exceed Free-plan CPU budgets on a cold edge. The c
 
 ### ADR-008 SEO via static text + JSON-LD, not SSR
 The app is a client-rendered SPA; prerendering would add a server/build step. Crawlers and answer engines get the same facts from `<noscript>`, JSON-LD, `llms*.txt` and the in-DOM About & FAQ, keeping the architecture fully static.
+
+### ADR-009 Tokens in sessionStorage, not localStorage/vault
+OAuth tokens are bearer credentials with broad scopes (`repo`, `gist`). Keeping them tab-scoped limits the blast radius of XSS persistence and keeps them out of backups; the cost is re-sign-in per session, which is one click.
+
+### ADR-010 GitHub via edge function, Google via pure client
+GitHub's web flow requires a client secret, so the code exchange must run server-side (Pages Function). Google's GIS token client needs no secret, so it stays 100 % static.
+
+### ADR-011 Sync payload excludes the vault
+Uploading even an encrypted vault to third-party storage creates an offline brute-force target. Sync carries projects/chats/settings only; API keys are re-entered per device.

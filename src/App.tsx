@@ -9,6 +9,8 @@ import { VaultUnlock } from '@/ui/ai/VaultUnlock'
 import '@/ui/commandsExtra'
 import { logEvent } from '@/store/events'
 import { useModels } from '@/store/models'
+import { useAuth } from '@/store/auth'
+import { AuthModal } from '@/ui/auth/AuthModal'
 
 const Home = lazy(() => import('@/ui/home/Home'))
 const Workspace = lazy(() => import('@/ui/workspace/Workspace'))
@@ -35,7 +37,7 @@ export default function App() {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
-  useEffect(() => { void useModels.getState().loadRegistry() }, [])
+  useEffect(() => { void useModels.getState().loadRegistry(); void useAuth.getState().init() }, [])
   useEffect(() => { void useVault.getState().init(); logEvent('system', 'UnQStudio started') }, [])
   useEffect(() => { applyThemeClass(theme === 'system' ? systemTheme() : theme, false) }, [])
   useEffect(() => { applyThemeClass(resolvedTheme) }, [resolvedTheme])
@@ -58,6 +60,7 @@ export default function App() {
       </Suspense>
       <CommandPalette />
       <OnboardingWizard />
+      <AuthModal />
       <VaultUnlock />
       <Toaster />
     </div>

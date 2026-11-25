@@ -1,5 +1,6 @@
 import type { Creds, ServiceId } from '@/core/deploy/verify'
 import { getSecret } from './vault'
+import { githubOAuthToken } from './auth'
 
 export interface ServiceField { key: string; label: string; secret?: boolean; placeholder?: string; optional?: boolean }
 export interface ServiceDef { id: ServiceId; name: string; blurb: string; help: string; fields: ServiceField[] }
@@ -19,6 +20,8 @@ export function getConn(service: ServiceId): Creds {
   const def = SERVICES.find((s) => s.id === service)!
   const out: Creds = {}
   for (const f of def.fields) { const v = getSecret(connSecretName(service, f.key)); if (v) out[f.key] = v }
+  // Signing in with GitHub OAuth makes manual PATs unnecessary: inject the session token into import/push/Pages flows.
+  if (service === 'github' && !out.token) { const t = githubOAuthToken(); if (t) out.token = t }
   return out
 }
 export function isConnected(service: ServiceId): boolean {

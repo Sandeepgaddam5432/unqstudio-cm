@@ -4,6 +4,7 @@ import { Button, Dropdown, Logo, Segmented, Tooltip, Kbd } from '@/ui/primitives
 import { navigateHome, useApp } from '@/store/app'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
 import { toast } from '@/store/toast'
+import { AccountPill } from '@/ui/auth/AccountPill'
 
 export function TopBar() {
   const { mode, setMode, resolvedTheme, toggleTheme, openSettings, setPublishOpen, setPaletteOpen } = useApp()
@@ -80,6 +81,7 @@ export function TopBar() {
           <Tooltip label="Command palette" hint="⌘K"><Button variant="ghost" size="sm" onClick={() => setPaletteOpen(true)} aria-label="Command palette"><Command size={14} /><Kbd>K</Kbd></Button></Tooltip>
         </div>
         <Tooltip label="Toggle theme"><Button variant="ghost" size="icon-sm" onClick={toggleTheme} aria-label="Toggle theme">{resolvedTheme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}</Button></Tooltip>
+        <AccountPill />
         <Tooltip label="Settings"><Button variant="ghost" size="icon-sm" onClick={() => openSettings()} aria-label="Settings"><Settings size={15} /></Button></Tooltip>
         <div className="sm:hidden">
           <Dropdown

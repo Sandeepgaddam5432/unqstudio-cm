@@ -5,6 +5,7 @@ import { getConn, isConnected } from '@/store/connections'
 import { importGitHubRepo, parseRepoUrl } from '@/core/deploy/github'
 import { Composer } from '@/ui/chat/Composer'
 import { AboutFaq } from './AboutFaq'
+import { AccountPill } from '@/ui/auth/AccountPill'
 import { TemplateIcon } from '@/ui/TemplateIcon'
 import { getAllTemplates, getTemplate } from '@/templates'
 import { useProjects } from '@/store/projects'
@@ -78,7 +79,7 @@ export default function Home() {
     if (!ref) return toast.error('Enter a repository like owner/name or a github.com URL')
     setGhBusy(true)
     try {
-      const token = isConnected('github') ? getConn('github').token : undefined
+      const token = isConnected('github') ? getConn('github').token : undefined // includes the GitHub OAuth token (see store/connections)
       const r = await importGitHubRepo({ ...ref, token, onLog: setGhLog })
       if (!Object.keys(r.files).length) throw new Error('No importable files found in that repository')
       const p = await projects.create({ name: r.name, files: r.files, description: r.description, sourceRepo: `${ref.owner}/${ref.repo}`, checkpointLabel: `Imported ${ref.owner}/${ref.repo}@${r.ref}` })
@@ -131,6 +132,7 @@ export default function Home() {
         </div>
         <nav aria-label="Primary" className="flex items-center gap-1">
           <Tooltip label="Toggle theme"><Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">{resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</Button></Tooltip>
+          <AccountPill />
           <Tooltip label="Settings"><Button variant="ghost" size="icon" onClick={() => openSettings()} aria-label="Settings"><Settings size={16} /></Button></Tooltip>
         </nav>
       </header>
