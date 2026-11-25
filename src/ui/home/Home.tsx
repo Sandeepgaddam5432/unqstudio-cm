@@ -1,0 +1,253 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowUp, ChevronDown, Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Check } from 'lucide-react'
+import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Textarea, Tooltip, Kbd } from '@/ui/primitives'
+import { TemplateIcon } from '@/ui/TemplateIcon'
+import { getAllTemplates, getTemplate } from '@/templates'
+import { useProjects } from '@/store/projects'
+import { navigateToProject, useApp } from '@/store/app'
+import { PROVIDERS, getProvider } from '@/core/ai/providers'
+import { useSettings } from '@/store/settings'
+import { timeAgo } from '@/lib/util'
+import { cn } from '@/lib/cn'
+import { toast } from '@/store/toast'
+import type { ProjectMeta } from '@/core/vfs/types'
+
+function deriveName(prompt: string) {
+  const words = prompt.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).slice(0, 5).join(' ')
+  return words ? words[0].toUpperCase() + words.slice(1) : 'Untitled project'
+}
+
+export function ModelPill() {
+  const s = useSettings()
+  const prov = getProvider(s.activeProvider)
+  const customProviders = s.plugins.providers
+  return (
+    <Dropdown
+      width={300}
+      align="start"
+      trigger={
+        <button className="flex h-8 items-center gap-1.5 rounded-full border border-line bg-subtle px-3 text-xs font-medium text-muted transition hover:border-line-strong hover:text-fg">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+          <span className="max-w-[150px] truncate">{s.activeModel.split('/').pop()}</span>
+          <span className="text-faint">· {prov?.name ?? s.activeProvider}</span>
+          <ChevronDown size={12} />
+        </button>
+      }
+      content={(close) => (
+        <div className="max-h-80">
+          {[...PROVIDERS.filter((p) => s.enabled[p.id] !== false), ...customProviders.map((c) => ({ id: `plugin:${c.id}`, name: c.name, models: c.models.map((id) => ({ id })) }))].map((p) => {
+            const models = [...p.models.map((x) => x.id), ...(s.userModels[p.id] ?? [])]
+            if (!models.length) return null
+            return (
+              <div key={p.id} className="mb-1">
+                <div className="px-2.5 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">{p.name}</div>
+                {models.map((id) => (
+                  <button
+                    key={id}
+                    onClick={() => { s.set({ activeProvider: p.id, activeModel: id }); close() }}
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-subtle"
+                  >
+                    <span className="flex-1 truncate">{id}</span>
+                    {s.activeProvider === p.id && s.activeModel === id && <Check size={13} className="text-accent" />}
+                  </button>
+                ))}
+              </div>
+            )
+          })}
+          <div className="mt-1 border-t border-line p-1">
+            <button onClick={() => { close(); useApp.getState().openSettings('providers') }} className="w-full rounded-lg px-2.5 py-1.5 text-left text-xs text-muted hover:bg-subtle hover:text-fg">
+              Manage providers & API keys…
+            </button>
+          </div>
+        </div>
+      )}
+    />
+  )
+}
+
+function ProjectCard({ p, onRename, onDelete }: { p: ProjectMeta; onRename: () => void; onDelete: () => void }) {
+  const projects = useProjects()
+  const initial = p.name.trim()[0]?.toUpperCase() ?? '?'
+  return (
+    <div
+      onClick={() => navigateToProject(p.id)}
+      className="group relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-line bg-panel p-4 transition hover:-translate-y-px hover:border-line-strong hover:shadow-pop"
+    >
+      <div className="dot-grid flex h-24 items-center justify-center rounded-xl border border-line bg-subtle">
+        <span className="text-3xl font-semibold tracking-tight text-faint transition group-hover:text-fg">{initial}</span>
+      </div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            {p.pinned && <Pin size={11} className="shrink-0 text-accent" />}
+            <h3 className="truncate text-sm font-medium">{p.name}</h3>
+          </div>
+          <p className="mt-0.5 text-xs text-muted">{timeAgo(p.updatedAt)}{p.forkOf ? ' · fork' : ''}</p>
+        </div>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            align="end"
+            width={190}
+            trigger={<Button variant="ghost" size="icon-sm" aria-label="Project actions"><MoreHorizontal size={15} /></Button>}
+            items={[
+              { label: 'Rename', icon: <Pencil size={14} />, onSelect: onRename },
+              { label: p.pinned ? 'Unpin' : 'Pin to top', icon: p.pinned ? <PinOff size={14} /> : <Pin size={14} />, onSelect: () => projects.update(p.id, { pinned: !p.pinned, updatedAt: p.updatedAt }) },
+              { label: 'Duplicate / Fork', icon: <Copy size={14} />, onSelect: async () => { await projects.duplicate(p.id); toast.success('Project duplicated') } },
+              { separator: true },
+              { label: 'Delete', icon: <Trash2 size={14} />, danger: true, onSelect: onDelete },
+            ]}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Home() {
+  const projects = useProjects()
+  const { resolvedTheme, toggleTheme, openSettings, setPendingPrompt } = useApp()
+  const [prompt, setPrompt] = useState('')
+  const [tplId, setTplId] = useState('blank')
+  const [query, setQuery] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [renaming, setRenaming] = useState<ProjectMeta | null>(null)
+  const [renameVal, setRenameVal] = useState('')
+  const [deleting, setDeleting] = useState<ProjectMeta | null>(null)
+  const area = useRef<HTMLTextAreaElement>(null)
+  const templates = getAllTemplates()
+
+  useEffect(() => { void projects.refresh() }, [])
+  useEffect(() => {
+    const el = area.current
+    if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 220) + 'px' }
+  }, [prompt])
+
+  const filtered = useMemo(() => projects.projects.filter((p) => p.name.toLowerCase().includes(query.toLowerCase())), [projects.projects, query])
+
+  const start = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const tpl = getTemplate(tplId)
+      const p = await projects.create({ name: prompt.trim() ? deriveName(prompt) : tpl.name, files: tpl.files, templateId: tpl.id })
+      if (prompt.trim()) setPendingPrompt({ text: prompt.trim() })
+      navigateToProject(p.id)
+    } catch (e) {
+      toast.error('Could not create project', e instanceof Error ? e.message : String(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex min-h-full flex-col">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-line bg-bg/80 px-4 backdrop-blur-xl sm:px-8">
+        <div className="flex items-center gap-2.5">
+          <Logo />
+          <span className="text-[15px] font-semibold tracking-tight">UnQStudio</span>
+          <Badge tone="accent" className="hidden sm:inline-flex">v1.0</Badge>
+        </div>
+        <div className="flex items-center gap-1">
+          <Tooltip label="Toggle theme"><Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">{resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</Button></Tooltip>
+          <Tooltip label="Settings"><Button variant="ghost" size="icon" onClick={() => openSettings()} aria-label="Settings"><Settings size={16} /></Button></Tooltip>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 sm:px-8">
+        <section className="flex flex-col items-center pb-10 pt-14 text-center sm:pt-24">
+          <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+            Describe it. <span className="text-muted">Watch it build.</span>
+          </h1>
+          <p className="mt-4 max-w-xl text-balance text-sm text-muted sm:text-base">
+            A static, in-browser AI engineering studio. Bring your own model key — your code and keys never leave your device.
+          </p>
+
+          <div className="mt-9 w-full max-w-2xl rounded-2xl border border-line bg-panel p-3 text-left shadow-pop transition focus-within:border-line-strong">
+            <Textarea
+              ref={area}
+              value={prompt}
+              rows={2}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void start() } }}
+              placeholder="A pricing page with three tiers, a monthly/yearly toggle and a FAQ…"
+              className="min-h-[56px] border-0 bg-transparent px-2 text-[15px] hover:border-0 focus:border-0"
+              aria-label="Describe what you want to build"
+            />
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <ModelPill />
+              <div className="flex items-center gap-2">
+                <span className="hidden text-[11px] text-faint sm:block"><Kbd>⌘</Kbd> <Kbd>↵</Kbd></span>
+                <Button variant="accent" size="icon" onClick={start} disabled={busy} aria-label="Create project" className="rounded-full">
+                  <ArrowUp size={17} />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex max-w-3xl flex-wrap items-center justify-center gap-2">
+            <span className="mr-1 text-xs text-faint">Start from</span>
+            {templates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTplId(t.id)}
+                title={t.description}
+                className={cn(
+                  'flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition',
+                  tplId === t.id ? 'border-fg bg-fg text-bg' : 'border-line bg-panel text-muted hover:border-line-strong hover:text-fg',
+                )}
+              >
+                <TemplateIcon name={t.icon} size={13} />
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold tracking-tight">Recent projects <span className="ml-1 font-normal text-faint">{projects.projects.length}</span></h2>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search projects" className="h-8 w-44 pl-8 text-xs sm:w-56" aria-label="Search projects" />
+              </div>
+            </div>
+          </div>
+          {!projects.loaded ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => <div key={i} className="animate-pulse-soft h-48 rounded-2xl border border-line bg-panel" />)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-line-strong py-16 text-center text-sm text-muted">
+              {projects.projects.length ? 'No projects match your search.' : 'No projects yet — describe an idea above or pick a template.'}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((p) => (
+                <ProjectCard key={p.id} p={p} onRename={() => { setRenaming(p); setRenameVal(p.name) }} onDelete={() => setDeleting(p)} />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <Modal
+        open={!!renaming}
+        onClose={() => setRenaming(null)}
+        title="Rename project"
+        size="sm"
+        footer={<><Button variant="ghost" onClick={() => setRenaming(null)}>Cancel</Button><Button variant="primary" onClick={async () => { if (renaming && renameVal.trim()) { await projects.update(renaming.id, { name: renameVal.trim() }); setRenaming(null) } }}>Save</Button></>}
+      >
+        <Input autoFocus value={renameVal} onChange={(e) => setRenameVal(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
+      </Modal>
+      <ConfirmModal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        danger
+        title="Delete project?"
+        message={<>“{deleting?.name}” and all of its files, checkpoints and chat will be permanently removed from this browser.</>}
+        confirmLabel="Delete"
+        onConfirm={async () => { if (deleting) { await projects.remove(deleting.id); toast.success('Project deleted') } }}
+      />
+    </div>
+  )
+}

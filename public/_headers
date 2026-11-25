@@ -1,0 +1,18 @@
+# Cloudflare Pages static headers.
+# NOTE: No restrictive CSP on purpose: the app must reach esm.sh (npm imports in the preview),
+# user-chosen LLM provider APIs (BYOK, direct from the browser) and run sandboxed preview iframes.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), geolocation=(), microphone=(self)
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/index.html
+  Cache-Control: no-cache
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable

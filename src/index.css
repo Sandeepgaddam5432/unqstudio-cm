@@ -1,0 +1,106 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── UnQStudio design tokens: Paper Light / Obsidian Dark ───────────────── */
+:root {
+  color-scheme: light;
+  --c-bg: #fafafa;
+  --c-panel: #ffffff;
+  --c-subtle: #f4f4f5;
+  --c-raised: #ffffff;
+  --c-line: rgba(9, 9, 11, 0.09);
+  --c-line-strong: rgba(9, 9, 11, 0.18);
+  --c-fg: #09090b;
+  --c-muted: #71717a;
+  --c-faint: #a1a1aa;
+  --c-accent: #e5481b;
+  --c-accent-fg: #ffffff;
+  --c-danger: #dc2626;
+  --c-success: #16a34a;
+  --c-warn: #d97706;
+  --shadow-pop: 0 1px 0 rgba(255,255,255,.6) inset, 0 12px 40px -8px rgba(9,9,11,.18), 0 2px 8px rgba(9,9,11,.06);
+}
+.dark {
+  color-scheme: dark;
+  --c-bg: #09090b;
+  --c-panel: #111114;
+  --c-subtle: #18181b;
+  --c-raised: #1c1c20;
+  --c-line: rgba(255, 255, 255, 0.08);
+  --c-line-strong: rgba(255, 255, 255, 0.16);
+  --c-fg: #fafafa;
+  --c-muted: #a1a1aa;
+  --c-faint: #71717a;
+  --c-accent: #ff6a3d;
+  --c-accent-fg: #09090b;
+  --c-danger: #f87171;
+  --c-success: #4ade80;
+  --c-warn: #fbbf24;
+  --shadow-pop: 0 1px 0 rgba(255,255,255,.04) inset, 0 16px 48px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-panel: var(--c-panel);
+  --color-subtle: var(--c-subtle);
+  --color-raised: var(--c-raised);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-faint: var(--c-faint);
+  --color-accent: var(--c-accent);
+  --color-accent-fg: var(--c-accent-fg);
+  --color-danger: var(--c-danger);
+  --color-success: var(--c-success);
+  --color-warn: var(--c-warn);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --shadow-pop: var(--shadow-pop);
+}
+
+@layer base {
+  * { border-color: var(--c-line); }
+  html, body, #root { height: 100%; }
+  body {
+    background: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01", "calt";
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  ::selection { background: color-mix(in srgb, var(--c-accent) 30%, transparent); }
+  :focus-visible { outline: 2px solid color-mix(in srgb, var(--c-accent) 70%, transparent); outline-offset: 1px; }
+  * { scrollbar-width: thin; scrollbar-color: var(--c-line-strong) transparent; }
+}
+
+.theme-transition, .theme-transition * {
+  transition: background-color .25s ease, border-color .25s ease, color .25s ease, fill .25s ease !important;
+}
+
+@keyframes unq-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes unq-pop { from { opacity: 0; transform: translateY(6px) scale(.98) } to { opacity: 1; transform: none } }
+@keyframes unq-slide { from { transform: translateX(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes unq-spin { to { transform: rotate(360deg) } }
+@keyframes unq-pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+.animate-fade { animation: unq-fade .18s ease-out both }
+.animate-pop { animation: unq-pop .2s cubic-bezier(.2,.8,.2,1) both }
+.animate-slide { animation: unq-slide .24s cubic-bezier(.2,.8,.2,1) both }
+.animate-spin-fast { animation: unq-spin .7s linear infinite }
+.animate-pulse-soft { animation: unq-pulse 1.4s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+.cm-editor { height: 100%; background: transparent !important; font-size: 13px; }
+.cm-editor.cm-focused { outline: none !important; }
+.cm-scroller { font-family: var(--font-mono) !important; }
+.dot-grid {
+  background-image: radial-gradient(var(--c-line-strong) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
