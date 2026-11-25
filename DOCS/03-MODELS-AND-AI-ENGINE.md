@@ -1,6 +1,77 @@
 # 03 · Models & AI Engine
-_(Full v2.0 spec is written in milestone V2-M2; v1 engine summary below.)_
 
-- Streaming adapters in `src/core/ai/stream.ts`: OpenAI-compatible SSE and Anthropic Messages SSE.
-- Artifact grammar parsed incrementally by `parser.ts`; edits applied by `patch.ts` (search/replace) and `apply.ts` with checkpoints and file locks.
-- API keys are stored by `vault.ts` with Web Crypto AES-GCM (optional passphrase).
+Code-level spec of the model pipeline and the AI engine. Symbols live in `src/core/ai/**` (see `DOCS/02` for exact signatures).
+
+## 1. The 3-tier model discovery pipeline
+
+```
+ Tier 1  build-time   scripts/sync-models-dev.mjs ─► public/models-registry.json   (committed snapshot, offline-safe)
+ Tier 2  live edge    functions/api/models-dev.ts ─► /api/models-dev               (s-maxage=3600, CORS *)
+                      client chain: /api/models-dev → https://models.dev/api.json → /models-registry.json
+                      cached in IndexedDB  unqstudio-registry / kv / "registry"  (24h TTL, "Refresh Registry" forces)
+ Tier 3  live per-provider   src/core/ai/modelFetcher.ts   GET <provider>/models with the user's key
+                      → enriched with models.dev metadata → store/models `live[providerId]`
+```
+**Resolution order for any provider's model list** (`modelsForProvider` in `src/store/aiConfig.ts`):
+`live /models (enriched)` → `models.dev catalog (alias-aware)` → `built-in static list (offline fallback only)`; user-added custom IDs are always appended. Nothing is hard-coded as the primary mechanism.
+
+### 1.1 Normalizer — `src/core/ai/modelsDev.ts` (pure, import-free)
+Shared by the Node script (transpiled in-memory via `esbuild-wasm` and imported as a `data:` module), the edge function and the browser.
+- `normalizeModelsDev(raw, {source, now}) → Registry` — `{version:1, generatedAt, source, providers: RegProvider[]}`.
+- `RegProvider`: `id, name, api?, doc?, logo (https://models.dev/logos/{id}.svg), npm?, env?, kind ('openai'|'anthropic'), compat, models[]`.
+- `RegModel`: `id, name, context?, output?, cost{input,output} (USD / 1M tok), reasoning?, vision? (image in modalities.input), tool_call?, modalities?, release_date?`. Deprecated models are dropped; models sorted newest-first.
+- `KNOWN_API`: models.dev omits `api` for first-party SDK providers (OpenAI, Anthropic, Google, xAI, Groq, Mistral, Cerebras, Together, Perplexity, Cohere, DeepInfra, OpenRouter, Vercel, Venice, DeepSeek) — their public endpoints are tabulated here.
+- `REGISTRY_ALIAS`: built-in ids that differ from models.dev ids (`gemini→google`, `together→togetherai`, `fireworks→fireworks-ai`, `moonshot→moonshotai`, `github→github-models`). Built-ins keep their ids so saved keys keep working.
+- Synthetic local providers `ollama` and `lmstudio` are always added.
+
+### 1.2 Compatibility classification (`classifyProvider`)
+| class | rule | UI tag |
+|---|---|---|
+| `local` | `ollama`, `lmstudio`, or base URL host is localhost/127.0.0.1/0.0.0.0 | Local 💻 |
+| `requires-proxy` | id/npm matches `amazon-bedrock | google-vertex | azure | watsonx | sap-ai-core | cloudflare-ai-gateway | gitlab | salad-cloud | qvac | merge-gateway`, **or no usable base URL** | Requires Proxy / Gateway 🔌 |
+| `browser-ready` | everything else with a base URL (from `api` or `KNOWN_API`) | Browser-Ready 🟢 |
+`kind = 'anthropic'` when `id==='anthropic'` or the npm package contains `anthropic` (Anthropic Messages wire format), else `'openai'`.
+
+### 1.3 `scripts/sync-models-dev.mjs`
+`npm run sync:models` and `prebuild`. Fetches `https://models.dev/api.json` (30 s timeout), normalizes, refuses to overwrite if `< 30` providers, writes compact JSON (~2.4 MB, ~220 KB gzip). **Never fails the build**: any error ⇒ warning + committed snapshot is kept. Env: `MODELS_DEV_FILE` (local raw file), `MODELS_DEV_URL`.
+
+### 1.4 `functions/api/models-dev.ts` (Cloudflare Pages Function)
+`onRequest` → `handleModelsDev(request, fetchImpl)`: OPTIONS→204, non-GET→405, GET fetches upstream, normalizes (`source: 'edge (live models.dev)'`), returns `Cache-Control: public, max-age=300, s-maxage=3600` + `Access-Control-Allow-Origin: *`; upstream failure → 502 JSON (client falls through to the next tier). Newly released providers appear without redeploy.
+
+### 1.5 Client registry — `src/core/ai/modelsRegistry.ts`
+`fetchRegistry(fetchImpl)` (tier chain, validates `content-type` and shape so an SPA-fallback HTML response is rejected), `loadRegistry({force, now, fetchImpl})` (IndexedDB cache, 24h TTL, stale-on-total-failure, bundled-source merged with the cached copy via `mergeRegistries`), `mergeRegistries(base, overlay)` (overlay wins per id; nothing in base is ever lost). State in `useModels` (`src/store/models.ts`): `registry, registrySource, syncedAt, registryStatus, live{}`. UI: `RegistryCard` (Settings → Providers) and the picker footer show source, last-synced time and **Refresh Registry**.
+
+### 1.6 Live per-provider fetch — `src/core/ai/modelFetcher.ts`
+`liveEndpoint(provider, key, baseOverride)`:
+| provider | request |
+|---|---|
+| OpenAI-compatible (OpenRouter, OpenAI, Groq, DeepSeek, xAI, Mistral, Moonshot, Together, Fireworks, Cerebras, Perplexity, Hyperbolic, GitHub Models, LM Studio, Custom, **any models.dev provider**) | `GET {baseUrl}/models`, `Authorization: Bearer <key>` |
+| Google Gemini | `GET https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=<key>`; ids stripped of `models/`, only `generateContent` models |
+| Anthropic | `GET {base}/models?limit=1000` with `x-api-key`, `anthropic-version: 2023-06-01`, `anthropic-dangerous-direct-browser-access: true` |
+| Ollama | `GET {base minus /v1}/api/tags` |
+`enrichModels(live, catalog)` matches exact → case-insensitive → last path segment (strips `:free/:latest/:beta`) and merges pretty name, context, pricing, vision/reasoning/tool badges. `fetchLiveModels` never throws: failures (`nokey | http | network | parse | empty`) return the catalog as fallback so the user can still add a custom model ID. Triggers: debounced (900 ms) auto-fetch while typing a key in `ProviderKeyForm`, on save, a manual **Fetch Models** button (spinner + error badge), and automatic fetch for configured providers when the picker opens.
+
+### 1.7 Dynamic adapter routing
+`registryProviderToDef(rp)` turns *any* registry provider into a `ProviderDef` (`dynamic: true`, `baseUrl = rp.api`). `allProviders()` appends them; `resolveProvider(id)` finds them, so `streamChat` (universal OpenAI-compatible SSE adapter, or Anthropic adapter when `kind==='anthropic'`) works with **zero code changes** for providers that did not exist at build time. Registry providers are opt-in (`isProviderEnabled`: `enabled[id] ?? !dynamic`). `setModelLookup` lets `findModel()` price/badge non-built-in models for the token meter.
+
+## 2. Streaming & adapters (`stream.ts`)
+`sseEvents(body)` incremental SSE decoder → `buildOpenAIRequest` / `buildAnthropicRequest` → `streamChat(req): AsyncGenerator<StreamChunk>` (`text | reasoning | usage | done`), with `ProviderError` classification (401/403/429/network/CORS hints). `stream_options.include_usage` is omitted for providers that reject it (`gemini, cohere, github, perplexity`).
+
+## 3. Artifact (streaming parser) grammar — `parser.ts`
+```
+<think>…</think>
+<create_file path="/src/x.tsx">…</create_file>
+<update_file path="…">full content</update_file>
+<patch_file path="…"><<<<<<< SEARCH … ======= … >>>>>>> REPLACE</patch_file>
+<delete_file path="…" />
+```
+Incremental: tags may be split across chunks anywhere (`couldBePrefix`, `partialSuffixLen`). Events: `text | think-start/delta/end | file-start/delta/end | delete`. Markdown fences inside file blocks are stripped (`cleanFileContent`).
+
+## 4. Search/replace patch engine — `patch.ts`
+`parsePatchBlocks(body)` → `PatchBlock[]`; `applyPatch(content, blocks)` → `PatchResult {ok, content, applied, failures[]}`. Exact match first, then **fuzzy** line match (whitespace-normalised, re-indented to the matched block). Failures are reported per block with the offending SEARCH text so the model can retry. `apply.ts` applies ops to the VFS honouring file locks and creating a checkpoint first (`autoCheckpoint`).
+
+## 5. Key vault — `vault.ts` (+ `store/vault.ts`)
+Keys are stored in IndexedDB as `VaultBlob {v:1, mode:'plain'|'encrypted', salt, iv, iter, data}`. With a passphrase: PBKDF2-SHA256 (`DEFAULT_ITERATIONS`) → **AES-GCM-256**, random 16-byte salt, random 12-byte IV per write; the derived `CryptoKey` is non-extractable and held in memory only while unlocked. Provider secrets use the name `provider:{id}`; OAuth tokens are never stored here.
+
+## 6. Orchestrator — `orchestrator.ts`
+`buildMessages({vfs, mode, history, userText, pinned, includeAllFiles})` assembles system prompt (`prompts.ts`) + project context (token-budgeted) + history; `runTurn` streams, parses and applies; `enhancePrompt`, `testConnection` live here too. Modes: `build | plan | ask`.

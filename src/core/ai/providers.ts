@@ -26,6 +26,12 @@ export interface ProviderDef {
   blurb: string
   /** Extra static headers. */
   headers?: Record<string, string>
+  /** v2: honest compatibility tag (browser-ready | local | requires-proxy). */
+  compat?: 'browser-ready' | 'local' | 'requires-proxy'
+  /** v2: discovered from the models.dev registry (not hard-coded). */
+  dynamic?: boolean
+  logo?: string
+  doc?: string
 }
 
 const m = (id: string, extra: Partial<ModelDef> = {}): ModelDef => ({ id, ...extra })
@@ -75,4 +81,7 @@ export const PROVIDERS: ProviderDef[] = [
 ]
 
 export const getProvider = (id: string) => PROVIDERS.find((p) => p.id === id)
-export const findModel = (providerId: string, modelId: string) => getProvider(providerId)?.models.find((x) => x.id === modelId)
+/** Optional dynamic lookup (registry / live models) installed by store/aiConfig to price + badge non-built-in models. */
+let lookup: ((providerId: string, modelId: string) => ModelDef | undefined) | null = null
+export const setModelLookup = (fn: typeof lookup) => { lookup = fn }
+export const findModel = (providerId: string, modelId: string) => getProvider(providerId)?.models.find((x) => x.id === modelId) ?? lookup?.(providerId, modelId)

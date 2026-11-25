@@ -1,7 +1,7 @@
 import { Bot, Cpu, Eye, MousePointer2, Palette, Search, Terminal } from 'lucide-react'
 import { registerCommandProvider, type Command } from './CommandPalette'
 import { useSettings, type AIMode } from '@/store/settings'
-import { allProviders } from '@/store/aiConfig'
+import { allProviders, isConfigured, isProviderEnabled, modelsForProvider } from '@/store/aiConfig'
 import { useApp } from '@/store/app'
 import { useWorkspace } from '@/store/workspace'
 import { usePreview } from '@/store/preview'
@@ -15,8 +15,8 @@ registerCommandProvider((): Command[] => {
   const out: Command[] = []
   for (const m of ['build', 'plan', 'ask'] as AIMode[]) out.push({ id: `aimode:${m}`, group: 'AI mode', label: `AI mode: ${m[0].toUpperCase() + m.slice(1)}`, icon: <Bot size={14} />, run: () => s.set({ aiMode: m }) })
   for (const p of allProviders()) {
-    if (s.enabled[p.id] === false) continue
-    for (const id of [...p.models.map((m) => m.id), ...(s.userModels[p.id] ?? [])]) out.push({ id: `model:${p.id}:${id}`, group: 'Model', label: `Model: ${p.name} · ${id}`, keywords: `${p.id} ${id}`, icon: <Cpu size={14} />, run: () => { s.set({ activeProvider: p.id, activeModel: id }); toast.success('Model selected', id) } })
+    if (!isProviderEnabled(p) || p.compat === 'requires-proxy' || (!isConfigured(p) && s.activeProvider !== p.id && p.dynamic)) continue
+    for (const id of modelsForProvider(p).slice(0, 60).map((m) => m.id)) out.push({ id: `model:${p.id}:${id}`, group: 'Model', label: `Model: ${p.name} · ${id}`, keywords: `${p.id} ${id}`, icon: <Cpu size={14} />, run: () => { s.set({ activeProvider: p.id, activeModel: id }); toast.success('Model selected', id) } })
   }
   out.push({ id: 'providers', group: 'Actions', label: 'Manage providers & API keys', icon: <Cpu size={14} />, run: () => useApp.getState().openSettings('providers') })
   out.push({ id: 'wizard', group: 'Actions', label: 'Connect a model (setup wizard)', icon: <Cpu size={14} />, run: () => useApp.getState().setOnboardingOpen(true) })

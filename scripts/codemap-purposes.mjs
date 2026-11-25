@@ -35,4 +35,13 @@ export const PURPOSES = {
   'src/ui/chat/ChatPanel.tsx': 'Chat screen: strict 3-zone CSS grid (`auto minmax(0,1fr) auto`): header / messages / composer.',
   'src/ui/chat/Composer.tsx': 'Docked composer: multiline textarea on top, wrapped toolbar row below (attach, @file, voice, enhance, rules, mode, model pill, send/stop).',
   'src/ui/workspace/Body.tsx': 'Adaptive workspace body: split panes ≥768px, mobile bottom navigation (Chat | Preview | Code) below.',
+  'src/core/ai/modelsDev.ts': 'Pure, import-free models.dev normalizer + compatibility classifier (KNOWN_API, REGISTRY_ALIAS). Shared by the build script, the edge function and the browser.',
+  'src/core/ai/modelsRegistry.ts': 'Tier-2 client registry: edge → models.dev → bundled fetch chain, IndexedDB cache (24h TTL), overlay merge.',
+  'src/core/ai/modelFetcher.ts': 'Tier-3 live per-provider /models fetchers (OpenAI-compatible, Gemini, Anthropic, Ollama), parsers, enrichment with models.dev metadata, catalog fallback.',
+  'src/store/models.ts': 'Zustand store for the registry (source, lastSynced, status) and live per-provider model lists.',
+  'src/store/aiConfig.ts': 'Provider resolution: built-ins + plugins + every models.dev provider; modelsForProvider (live → catalog → built-in), fetchLiveFor, configured/enabled helpers.',
+  'src/ui/settings/registryUi.tsx': 'RegistryCard (source, last-synced, Refresh Registry button) and the `ago()` formatter.',
+  'src/ui/settings/ProvidersTab.tsx': 'Providers settings: vault card, registry card, compatibility filter tabs (Configured/Browser-Ready/Local/Proxy/All), per-provider key form.',
+  'src/ui/ai/ProviderKeyForm.tsx': 'Key entry with debounced live /models auto-fetch, Fetch Models button, error badges, custom model IDs, proxy warning.',
+  'functions/api/models-dev.ts': 'Cloudflare Pages Function: live models.dev registry (normalized, s-maxage=3600, CORS).',
 }

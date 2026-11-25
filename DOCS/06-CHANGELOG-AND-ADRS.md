@@ -2,6 +2,12 @@
 
 ## Changelog
 
+### v2.0 — V2-M2 · models.dev universal registry + live model auto-fetch
+- 3-tier discovery: build snapshot (`public/models-registry.json`, 327 providers / 9.4k models), edge function `/api/models-dev`, live per-provider `/models` fetch on key entry.
+- Compatibility tagging (Browser-Ready 🟢 / Local 💻 / Requires Proxy 🔌) with filter tabs in picker and Providers settings.
+- Any models.dev provider works immediately through the universal OpenAI-compatible adapter.
+- `prebuild` runs `sync:models` (offline-safe). 19 new unit tests (`models.test.ts`).
+
 ### v2.0 — V2-M1 · Model dropdown anchoring, chat grid, UI polish
 - `Dropdown` rebuilt on `@floating-ui/react` (autoUpdate/offset/flip/shift/size, portal) with mobile bottom sheet. Fixes the scroll-detach bug.
 - Chat panel refactored to a strict 3-zone grid; composer toolbar wraps below the textarea; added `@file` button.
@@ -22,3 +28,15 @@ Hand-maintained symbol docs rot. `scripts/gen-codemap.mjs` derives files, export
 
 ### ADR-003 Wrapping toolbar instead of overlay composer
 Absolute/overlay actions collide at narrow widths. A `flex-wrap` toolbar below the textarea cannot overlap by construction.
+
+### ADR-004 Shared import-free normalizer instead of three copies
+The Node script, the edge function and the browser all need the same models.dev → registry mapping. `modelsDev.ts` has zero imports so the `.mjs` script can transpile it with `esbuild-wasm` (already a dependency) and import it — no extra tooling (tsx/ts-node), no drift.
+
+### ADR-005 Registry providers are opt-in, built-ins keep their ids
+Showing 300+ providers in the picker is noise; registry providers default to disabled until a key/enable. Built-in ids (`gemini`, `together`…) are aliased to models.dev ids (`REGISTRY_ALIAS`) so previously saved keys are not orphaned.
+
+### ADR-006 Honest `requires-proxy` instead of silent failure
+Bedrock/Vertex/Azure need IAM/signed requests; calling them with a bearer key from a browser fails opaquely. They are tagged and blocked with an explanation rather than offered as selectable.
+
+### ADR-007 Edge normalization is best-effort
+Parsing the 7 MB upstream may exceed Free-plan CPU budgets on a cold edge. The client therefore treats the edge as one tier of three (edge → direct models.dev → bundled), validates the response shape, and caches 24h.
