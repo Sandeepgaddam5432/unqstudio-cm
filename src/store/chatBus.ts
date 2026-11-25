@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export interface QueuedMessage { text: string; images?: string[]; mode?: 'build' | 'plan' | 'ask' }
+export interface QueuedMessage { text: string; images?: string[]; mode?: 'build' | 'plan' | 'ask'; auto?: boolean }
 
 /** Lets any part of the UI (preview error banner, inspector, command palette) hand a message to the chat. */
 interface ChatBus {

@@ -3,6 +3,7 @@ import { Cog } from 'lucide-react'
 import { Drawer, Section, Segmented, Switch, Tabs } from '@/ui/primitives'
 import { useApp, type ThemePref } from '@/store/app'
 import { useSettings } from '@/store/settings'
+import { ProvidersTab } from '@/ui/settings/ProvidersTab'
 
 function General() {
   const { theme, setTheme, mode, setMode } = useApp()
@@ -27,6 +28,7 @@ function General() {
 
 export const SETTINGS_TABS: { id: string; label: string; render: () => React.ReactNode }[] = [
   { id: 'general', label: 'General', render: () => <General /> },
+  { id: 'providers', label: 'Providers', render: () => <ProvidersTab /> },
 ]
 
 export default function SettingsDrawer() {

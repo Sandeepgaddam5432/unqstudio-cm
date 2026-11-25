@@ -1,0 +1,125 @@
+import { useState } from 'react'
+import { AlertCircle, Check, ChevronRight, FilePlus2, FileX2, GitFork, Hammer, Lock, Pencil, RefreshCw, Rewind, Sparkles, Wrench, X } from 'lucide-react'
+import { Badge, Button, Spinner, Tooltip } from '@/ui/primitives'
+import { Markdown } from './Markdown'
+import { useChat, type ChatMessage } from '@/store/chat'
+import { useWorkspace } from '@/store/workspace'
+import { useApp } from '@/store/app'
+import { formatCost, formatTokens } from '@/core/ai/tokens'
+import type { OpRecord } from '@/core/ai/apply'
+import { cn } from '@/lib/cn'
+
+function ThinkBlock({ text, done }: { text: string; done?: boolean }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="my-1.5 rounded-xl border border-line bg-subtle/60">
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted" aria-expanded={open}>
+        <ChevronRight size={13} className={cn('transition-transform', open && 'rotate-90')} />
+        {done ? <><Sparkles size={12} />Reasoning</> : <><Spinner size={12} />Thinking…</>}
+      </button>
+      {open && <pre className="max-h-64 overflow-auto whitespace-pre-wrap border-t border-line px-3 py-2 font-mono text-[11px] leading-relaxed text-muted">{text || '…'}</pre>}
+    </div>
+  )
+}
+
+const opIcon = { create: <FilePlus2 size={14} />, update: <Pencil size={14} />, patch: <Wrench size={14} />, delete: <FileX2 size={14} /> }
+const opVerb = { create: 'Create', update: 'Rewrite', patch: 'Patch', delete: 'Delete' }
+
+function OpCard({ op, msgId }: { op: OpRecord; msgId: string }) {
+  const { approveOps, rejectOps } = useChat()
+  const vfs = useWorkspace((s) => s.vfs)
+  const open = () => {
+    const ws = useWorkspace.getState()
+    if (op.before !== undefined || op.after !== undefined) ws.showDiff({ path: op.path, before: op.before ?? '', after: op.after ?? '', label: `${opVerb[op.op]} by AI` })
+    else ws.openFile(op.path)
+    ws.openFile(op.path)
+    useApp.getState().setMode('code')
+  }
+  const exists = vfs?.has(op.path)
+  return (
+    <div className={cn('my-1.5 flex items-start gap-2.5 rounded-xl border px-3 py-2 text-xs', op.status === 'failed' ? 'border-danger/30 bg-danger/5' : op.status === 'skipped-locked' ? 'border-warn/30 bg-warn/5' : 'border-line bg-panel')}>
+      <span className="mt-0.5 text-muted">{opIcon[op.op]}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-medium">{opVerb[op.op]}</span>
+          <button onClick={exists || op.status === 'applied' ? open : undefined} className="truncate font-mono text-[11px] text-muted hover:text-fg">{op.path}</button>
+          {op.status === 'streaming' && <span className="flex items-center gap-1 text-muted"><Spinner size={11} />{op.lines ?? 0} lines</span>}
+          {op.status === 'applied' && <><Check size={12} className="text-success" />{op.op !== 'delete' && <span className="font-mono text-[11px]"><span className="text-success">+{op.added}</span> <span className="text-danger">−{op.removed}</span></span>}{op.detail && <span className="text-faint">{op.detail}</span>}</>}
+          {op.status === 'pending' && <Badge tone="warn">awaiting approval</Badge>}
+          {op.status === 'skipped-locked' && <Badge tone="warn"><Lock size={10} />locked – skipped</Badge>}
+          {op.status === 'rejected' && <Badge>rejected</Badge>}
+          {op.status === 'failed' && <Badge tone="danger">failed</Badge>}
+        </div>
+        {(op.status === 'failed' || op.status === 'skipped-locked') && op.detail && <p className={cn('mt-1 leading-relaxed', op.status === 'failed' ? 'text-danger' : 'text-warn')}>{op.detail}</p>}
+        {op.status === 'pending' && (
+          <div className="mt-2 flex gap-1.5">
+            <Button size="xs" variant="primary" onClick={() => approveOps(msgId, [op.id])}><Check size={11} />Apply</Button>
+            <Button size="xs" onClick={() => rejectOps(msgId, [op.id])}><X size={11} />Reject</Button>
+          </div>
+        )}
+      </div>
+      {op.status === 'applied' && op.op !== 'delete' && <Button size="xs" variant="ghost" onClick={open}>Diff</Button>}
+    </div>
+  )
+}
+
+export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) {
+  const { retry, undoTurn, forkAt, approveOps, rejectOps, send, busy } = useChat()
+  if (m.role === 'user') {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[88%] rounded-2xl rounded-br-md bg-subtle px-3.5 py-2.5 text-[13.5px]">
+          {m.images && m.images.length > 0 && <div className="mb-2 flex flex-wrap gap-1.5">{m.images.map((s, i) => <img key={i} src={s} alt="Attachment" className="h-16 w-16 rounded-lg border border-line object-cover" />)}</div>}
+          <p className="whitespace-pre-wrap break-words">{m.text}</p>
+          {m.mode !== 'build' && <Badge className="mt-1.5">{m.mode} mode</Badge>}
+        </div>
+      </div>
+    )
+  }
+  const ops = m.ops ?? []
+  const pending = ops.filter((o) => o.status === 'pending')
+  const opById = new Map(ops.map((o) => [o.id, o]))
+  const showFooter = !m.streaming
+  return (
+    <div className="group">
+      <div className="mb-1 flex items-center gap-2 text-[11px] text-faint">
+        <span className="flex h-4 w-4 items-center justify-center rounded bg-fg text-bg"><Hammer size={10} /></span>
+        <span className="font-medium text-muted">UnQStudio</span>
+        {m.model && <span className="truncate">{m.model.split('/').pop()}</span>}
+        {m.mode !== 'build' && <Badge tone="accent">{m.mode}</Badge>}
+      </div>
+      {m.parts?.map((p, i) =>
+        p.kind === 'text' ? <Markdown key={i} text={p.text ?? ''} />
+        : p.kind === 'think' ? <ThinkBlock key={i} text={p.text ?? ''} done={p.done} />
+        : opById.get(p.opId!) ? <OpCard key={i} op={opById.get(p.opId!)!} msgId={m.id} /> : null,
+      )}
+      {m.streaming && !m.parts?.length && <div className="flex items-center gap-2 py-1 text-xs text-muted"><Spinner size={12} />Working…</div>}
+      {m.streaming && !!m.parts?.length && <span className="inline-block h-3.5 w-1.5 animate-pulse-soft rounded-sm bg-accent align-middle" />}
+      {m.error && (
+        <div className="my-2 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/5 px-3 py-2 text-xs">
+          <AlertCircle size={14} className="mt-0.5 shrink-0 text-danger" />
+          <div><p className="text-danger">{m.error.message}</p>{m.error.hint && <p className="mt-0.5 text-muted">{m.error.hint}</p>}</div>
+        </div>
+      )}
+      {pending.length > 0 && (
+        <div className="my-2 flex items-center gap-2 rounded-xl border border-warn/30 bg-warn/5 px-3 py-2 text-xs">
+          <span className="flex-1">{pending.length} change{pending.length > 1 ? 's' : ''} waiting in the approval tray.</span>
+          <Button size="xs" variant="primary" onClick={() => approveOps(m.id)}>Apply all</Button>
+          <Button size="xs" onClick={() => rejectOps(m.id)}>Reject all</Button>
+        </div>
+      )}
+      {m.undone && <p className="my-1 text-[11px] text-warn">↩ This turn was undone. Use Redo in the top bar to re-apply it.</p>}
+      {showFooter && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] text-faint">
+          {m.usage && <span className="mr-1 font-mono">{formatTokens(m.usage.inputTokens)}↑ {formatTokens(m.usage.outputTokens)}↓{m.usage.estimated ? '~' : ''} · {formatCost(m.cost ?? null)}{m.durationMs ? ` · ${(m.durationMs / 1000).toFixed(1)}s` : ''}</span>}
+          {m.checkpointBefore && !m.undone && ops.some((o) => o.status === 'applied') && <Tooltip label="Restore the project to before this request"><Button size="xs" variant="ghost" onClick={() => undoTurn(m.id)}><Rewind size={11} />Undo turn</Button></Tooltip>}
+          <Tooltip label="Fork the project and chat from here"><Button size="xs" variant="ghost" onClick={() => forkAt(m.id)}><GitFork size={11} />Fork</Button></Tooltip>
+          {isLast && !busy && <Button size="xs" variant="ghost" onClick={() => retry(m.id)}><RefreshCw size={11} />Retry</Button>}
+        </div>
+      )}
+      {m.mode === 'plan' && isLast && showFooter && !m.error && m.text.trim() && (
+        <Button variant="accent" size="sm" className="mt-2" disabled={busy} onClick={() => send({ text: 'Implement the plan above exactly. Build every file now.', mode: 'build' })}><Hammer size={13} />Approve & Build</Button>
+      )}
+    </div>
+  )
+}

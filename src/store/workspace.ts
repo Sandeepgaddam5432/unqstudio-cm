@@ -3,7 +3,11 @@ import { create } from 'zustand'
 import { getAdapter } from '@/core/vfs/idbAdapter'
 import { VirtualFileSystem } from '@/core/vfs/vfs'
 
+export interface DiffTarget { path: string; before: string; after: string; label: string }
+
 interface WorkspaceState {
+  diffTarget: DiffTarget | null
+  showDiff: (t: DiffTarget | null) => void
   vfs: VirtualFileSystem | null
   loading: boolean
   error: string | null
@@ -23,6 +27,8 @@ interface WorkspaceState {
 const noop = () => () => {}
 
 export const useWorkspace = create<WorkspaceState>((set, get) => ({
+  diffTarget: null,
+  showDiff: (diffTarget) => set({ diffTarget }),
   vfs: null,
   loading: false,
   error: null,
@@ -31,7 +37,7 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   pinned: [],
   open: async (projectId) => {
     if (get().vfs?.projectId === projectId) return
-    set({ loading: true, error: null, vfs: null, openTabs: [], activeFile: null, pinned: [] })
+    set({ loading: true, error: null, vfs: null, openTabs: [], activeFile: null, pinned: [], diffTarget: null })
     try {
       const vfs = await VirtualFileSystem.open(getAdapter(), projectId)
       const paths = vfs.paths()

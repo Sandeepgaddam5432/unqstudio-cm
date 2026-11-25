@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Check, Upload } from 'lucide-react'
-import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Textarea, Tooltip, Kbd } from '@/ui/primitives'
+import { Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Upload } from 'lucide-react'
+import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Tooltip } from '@/ui/primitives'
+import { Composer } from '@/ui/chat/Composer'
 import { TemplateIcon } from '@/ui/TemplateIcon'
 import { getAllTemplates, getTemplate } from '@/templates'
 import { useProjects } from '@/store/projects'
 import { navigateToProject, useApp } from '@/store/app'
-import { PROVIDERS, getProvider } from '@/core/ai/providers'
-import { useSettings } from '@/store/settings'
 import { timeAgo } from '@/lib/util'
 import { cn } from '@/lib/cn'
 import { toast } from '@/store/toast'
@@ -15,54 +14,6 @@ import type { ProjectMeta } from '@/core/vfs/types'
 function deriveName(prompt: string) {
   const words = prompt.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).slice(0, 5).join(' ')
   return words ? words[0].toUpperCase() + words.slice(1) : 'Untitled project'
-}
-
-export function ModelPill() {
-  const s = useSettings()
-  const prov = getProvider(s.activeProvider)
-  const customProviders = s.plugins.providers
-  return (
-    <Dropdown
-      width={300}
-      align="start"
-      trigger={
-        <button className="flex h-8 items-center gap-1.5 rounded-full border border-line bg-subtle px-3 text-xs font-medium text-muted transition hover:border-line-strong hover:text-fg">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          <span className="max-w-[150px] truncate">{s.activeModel.split('/').pop()}</span>
-          <span className="text-faint">· {prov?.name ?? s.activeProvider}</span>
-          <ChevronDown size={12} />
-        </button>
-      }
-      content={(close) => (
-        <div className="max-h-80">
-          {[...PROVIDERS.filter((p) => s.enabled[p.id] !== false), ...customProviders.map((c) => ({ id: `plugin:${c.id}`, name: c.name, models: c.models.map((id) => ({ id })) }))].map((p) => {
-            const models = [...p.models.map((x) => x.id), ...(s.userModels[p.id] ?? [])]
-            if (!models.length) return null
-            return (
-              <div key={p.id} className="mb-1">
-                <div className="px-2.5 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">{p.name}</div>
-                {models.map((id) => (
-                  <button
-                    key={id}
-                    onClick={() => { s.set({ activeProvider: p.id, activeModel: id }); close() }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-subtle"
-                  >
-                    <span className="flex-1 truncate">{id}</span>
-                    {s.activeProvider === p.id && s.activeModel === id && <Check size={13} className="text-accent" />}
-                  </button>
-                ))}
-              </div>
-            )
-          })}
-          <div className="mt-1 border-t border-line p-1">
-            <button onClick={() => { close(); useApp.getState().openSettings('providers') }} className="w-full rounded-lg px-2.5 py-1.5 text-left text-xs text-muted hover:bg-subtle hover:text-fg">
-              Manage providers & API keys…
-            </button>
-          </div>
-        </div>
-      )}
-    />
-  )
 }
 
 function ProjectCard({ p, onRename, onDelete }: { p: ProjectMeta; onRename: () => void; onDelete: () => void }) {
@@ -107,13 +58,13 @@ export default function Home() {
   const projects = useProjects()
   const { resolvedTheme, toggleTheme, openSettings, setPendingPrompt } = useApp()
   const [prompt, setPrompt] = useState('')
+  const [images, setImages] = useState<string[]>([])
   const [tplId, setTplId] = useState('blank')
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState(false)
   const [renaming, setRenaming] = useState<ProjectMeta | null>(null)
   const [renameVal, setRenameVal] = useState('')
   const [deleting, setDeleting] = useState<ProjectMeta | null>(null)
-  const area = useRef<HTMLTextAreaElement>(null)
   const zipInput = useRef<HTMLInputElement>(null)
   const onZip = async (f: File) => {
     try {
@@ -130,10 +81,6 @@ export default function Home() {
   const templates = getAllTemplates()
 
   useEffect(() => { void projects.refresh() }, [])
-  useEffect(() => {
-    const el = area.current
-    if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 220) + 'px' }
-  }, [prompt])
 
   const filtered = useMemo(() => projects.projects.filter((p) => p.name.toLowerCase().includes(query.toLowerCase())), [projects.projects, query])
 
@@ -143,7 +90,7 @@ export default function Home() {
     try {
       const tpl = getTemplate(tplId)
       const p = await projects.create({ name: prompt.trim() ? deriveName(prompt) : tpl.name, files: tpl.files, templateId: tpl.id })
-      if (prompt.trim()) setPendingPrompt({ text: prompt.trim() })
+      if (prompt.trim()) setPendingPrompt({ text: prompt.trim(), images })
       navigateToProject(p.id)
     } catch (e) {
       toast.error('Could not create project', e instanceof Error ? e.message : String(e))
@@ -174,26 +121,18 @@ export default function Home() {
             A static, in-browser AI engineering studio. Bring your own model key — your code and keys never leave your device.
           </p>
 
-          <div className="mt-9 w-full max-w-2xl rounded-2xl border border-line bg-panel p-3 text-left shadow-pop transition focus-within:border-line-strong">
-            <Textarea
-              ref={area}
+          <div className="mt-9 w-full max-w-2xl text-left">
+            <Composer
+              variant="hero"
               value={prompt}
-              rows={2}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void start() } }}
+              onChange={setPrompt}
+              images={images}
+              onImages={setImages}
+              onSubmit={start}
+              busy={busy}
+              autoFocus
               placeholder="A pricing page with three tiers, a monthly/yearly toggle and a FAQ…"
-              className="min-h-[56px] border-0 bg-transparent px-2 text-[15px] hover:border-0 focus:border-0"
-              aria-label="Describe what you want to build"
             />
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <ModelPill />
-              <div className="flex items-center gap-2">
-                <span className="hidden text-[11px] text-faint sm:block"><Kbd>⌘</Kbd> <Kbd>↵</Kbd></span>
-                <Button variant="accent" size="icon" onClick={start} disabled={busy} aria-label="Create project" className="rounded-full">
-                  <ArrowUp size={17} />
-                </Button>
-              </div>
-            </div>
           </div>
 
           <div className="mt-5 flex max-w-3xl flex-wrap items-center justify-center gap-2">

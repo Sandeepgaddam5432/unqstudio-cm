@@ -3,6 +3,9 @@ import { applyThemeClass, parseRoute, systemTheme, useApp } from '@/store/app'
 import { Toaster } from '@/ui/primitives'
 import CommandPalette from '@/ui/CommandPalette'
 import { Logo } from '@/ui/primitives'
+import { useVault } from '@/store/vault'
+import { OnboardingWizard } from '@/ui/ai/OnboardingWizard'
+import { VaultUnlock } from '@/ui/ai/VaultUnlock'
 
 const Home = lazy(() => import('@/ui/home/Home'))
 const Workspace = lazy(() => import('@/ui/workspace/Workspace'))
@@ -29,6 +32,7 @@ export default function App() {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
+  useEffect(() => { void useVault.getState().init() }, [])
   useEffect(() => { applyThemeClass(theme === 'system' ? systemTheme() : theme, false) }, [])
   useEffect(() => { applyThemeClass(resolvedTheme) }, [resolvedTheme])
 
@@ -49,6 +53,8 @@ export default function App() {
         {settingsOpen && <SettingsDrawer />}
       </Suspense>
       <CommandPalette />
+      <OnboardingWizard />
+      <VaultUnlock />
       <Toaster />
     </div>
   )

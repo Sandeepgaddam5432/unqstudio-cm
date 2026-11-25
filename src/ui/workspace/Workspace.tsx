@@ -7,11 +7,13 @@ import { navigateHome } from '@/store/app'
 import { TopBar } from './TopBar'
 import { PublishModal } from './PublishModal'
 import { WorkspaceBody } from './Body'
+import { useChatController } from '@/ui/chat/useChatController'
 
 export default function Workspace({ projectId }: { projectId: string }) {
   const { vfs, loading, error, open } = useWorkspace()
   useVfsVersion(vfs)
   const setProjectId = useApp((s) => s.setProjectId)
+  useChatController()
 
   useEffect(() => {
     setProjectId(projectId)
