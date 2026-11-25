@@ -68,13 +68,13 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden bg-bg" data-chat-root>
+    <div className="@container grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden bg-bg" data-chat-root>
       <div className="flex h-11 min-w-0 items-center justify-between gap-2 border-b border-line bg-panel px-3" data-chat-header>
-        <div className="flex min-w-0 shrink-0 items-center gap-2 text-xs font-medium text-muted"><Sparkles size={13} className="text-accent" />Assistant</div>
-        <div className="flex min-w-0 items-center gap-1">
+        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted"><Sparkles size={13} className="shrink-0 text-accent" /><span className="truncate">Assistant</span></div>
+        <div className="flex shrink-0 items-center gap-1">
           {meter && prefs.showBadges && (
             <Tooltip label="Session tokens in/out · est. cost. Next request sends ≈ context tokens.">
-              <span className="hidden min-w-0 max-w-[16rem] truncate rounded-md bg-subtle px-2 py-0.5 font-mono text-[10px] text-muted md:block">{formatTokens(session.i + session.o)} tok · {formatCost(session.cost)} · ctx≈{formatTokens(nextCtx)}{nextCost != null ? ` (${formatCost(nextCost)})` : ''}</span>
+              <span className="hidden min-w-0 max-w-[16rem] truncate rounded-md bg-subtle px-2 py-0.5 font-mono text-[10px] text-muted @lg:block">{formatTokens(session.i + session.o)} tok · {formatCost(session.cost)} · ctx≈{formatTokens(nextCtx)}{nextCost != null ? ` (${formatCost(nextCost)})` : ''}</span>
             </Tooltip>
           )}
           <ChatSettings />

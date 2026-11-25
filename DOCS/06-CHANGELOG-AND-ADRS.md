@@ -2,6 +2,11 @@
 
 ## Changelog
 
+### v2.0 — V2-M6 · Playwright E2E + visual audit
+- `scripts/e2e.mjs` rewritten: 78 checks at 1440×900, 768×1024 and 375×812 — dropdown anchoring (scroll, resize, trigger movement), mathematical zero-overlap + zero-horizontal-overflow audit of chat header/messages/composer/every toolbar button, bottom-sheet behaviour, registry + live `/models` fetch (mocked), SEO/AEO assets, auth UI, v1 regression (SaaS compile in sandboxed iframe, Ctrl+E, theme, palette), zero console errors.
+- Bugs found and fixed by the audit: chat header overflow in narrow split panes (container query `@lg`), mobile top-bar title collision with the Studio/Code switch (hidden <768px; bottom nav replaces it).
+- Fresh screenshots: `DOCS/screenshots/v2-home.png`, `v2-studio-desktop.png`, `v2-mobile-chat.png`, `v2-models-picker.png` (+ `v2-mobile-picker.png`).
+
 ### v2.0 — V2-M5 · Living documentation system
 - `AGENTS.md`/`CLAUDE.md` constitution with the immutable Doc-Sync Law; DOCS/01–06 complete.
 - `scripts/gen-codemap.mjs` now also embeds Zustand state shapes; `verify:docs` checks presence, undocumented/stale files and that the generated map is current.

@@ -37,8 +37,8 @@ export function TopBar() {
   const canRedo = !!vfs?.canRedo()
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2 sm:px-3">
-      <div className="flex min-w-0 items-center gap-1.5">
+    <header data-topbar className="flex h-12 min-w-0 shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2 sm:px-3">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5 md:flex-none">
         <Tooltip label="All projects"><button onClick={navigateHome} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-subtle" aria-label="Back to projects"><Logo size={20} /></button></Tooltip>
         <span className="hidden text-faint sm:block">/</span>
         {editing ? (
@@ -61,7 +61,7 @@ export function TopBar() {
       </div>
 
       <Tooltip label="Switch workspace" hint="⌘E">
-        <span>
+        <span className="hidden md:inline-flex">
           <Segmented
             value={mode}
             onChange={setMode}
@@ -73,7 +73,7 @@ export function TopBar() {
         </span>
       </Tooltip>
 
-      <div className="flex items-center gap-0.5 sm:gap-1">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
         <div className="hidden items-center gap-0.5 sm:flex">
           <Tooltip label="Undo to previous checkpoint"><Button variant="ghost" size="icon-sm" disabled={!canUndo} onClick={undo} aria-label="Undo"><Undo2 size={15} /></Button></Tooltip>
           <Tooltip label="Redo"><Button variant="ghost" size="icon-sm" disabled={!canRedo} onClick={redo} aria-label="Redo"><Redo2 size={15} /></Button></Tooltip>

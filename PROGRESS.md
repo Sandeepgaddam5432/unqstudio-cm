@@ -7,6 +7,6 @@
 | V2-M3 Brand logo + SEO/AEO | ✅ done |
 | V2-M4 Google/GitHub OAuth + cloud sync | ✅ done |
 | V2-M5 Living docs + doc-sync guard | ✅ done |
-| V2-M6 Playwright E2E + visual audit | ⏳ |
+| V2-M6 Playwright E2E + visual audit | ✅ done |
 
 Test note: unit tests require Node ≥ 22.

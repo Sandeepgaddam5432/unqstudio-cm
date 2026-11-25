@@ -46,7 +46,7 @@ npm run sync:models  # refresh public/models-registry.json from models.dev (runs
 npm run lint && npm run typecheck
 npm run build        # static bundle in dist/
 npm run preview      # serve dist/
-npm run e2e          # headless Chromium end-to-end check (needs `npx playwright install chromium`)
+npm run e2e          # 78-check headless Chromium suite: layout/overlap, anchoring, registry, SEO, auth, regression (needs `npx playwright install chromium`; run `npm run build` first)
 ```
 
 On first use press the model pill → **Quick setup**, pick a provider (OpenRouter, Gemini, Groq, Cerebras and GitHub Models have free tiers) and paste a key.
