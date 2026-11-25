@@ -2,6 +2,11 @@
 
 ## Changelog
 
+### v2.0 — V2-M3 · Official logo, brand assets, SEO & AEO
+- Official `logo.svg` integrated (TopBar, Home, Settings header, README); derived favicon/touch/PWA icons and 1200×630 OG card.
+- index.html: full meta + 4 JSON-LD blocks; robots.txt, sitemap.xml, llms.txt, llms-full.txt, manifest.webmanifest.
+- Home: semantic landmarks + collapsible About & FAQ footer. Tests in `seo.test.ts`.
+
 ### v2.0 — V2-M2 · models.dev universal registry + live model auto-fetch
 - 3-tier discovery: build snapshot (`public/models-registry.json`, 327 providers / 9.4k models), edge function `/api/models-dev`, live per-provider `/models` fetch on key entry.
 - Compatibility tagging (Browser-Ready 🟢 / Local 💻 / Requires Proxy 🔌) with filter tabs in picker and Providers settings.
@@ -40,3 +45,6 @@ Bedrock/Vertex/Azure need IAM/signed requests; calling them with a bearer key fr
 
 ### ADR-007 Edge normalization is best-effort
 Parsing the 7 MB upstream may exceed Free-plan CPU budgets on a cold edge. The client therefore treats the edge as one tier of three (edge → direct models.dev → bundled), validates the response shape, and caches 24h.
+
+### ADR-008 SEO via static text + JSON-LD, not SSR
+The app is a client-rendered SPA; prerendering would add a server/build step. Crawlers and answer engines get the same facts from `<noscript>`, JSON-LD, `llms*.txt` and the in-DOM About & FAQ, keeping the architecture fully static.

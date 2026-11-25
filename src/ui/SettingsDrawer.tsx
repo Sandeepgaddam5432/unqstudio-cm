@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Cog } from 'lucide-react'
-import { Drawer, Section, Segmented, Switch, Tabs } from '@/ui/primitives'
+import { Drawer, Logo, Section, Segmented, Switch, Tabs } from '@/ui/primitives'
 import { useApp, type ThemePref } from '@/store/app'
 import { useSettings } from '@/store/settings'
 import { ProvidersTab } from '@/ui/settings/ProvidersTab'
@@ -46,7 +45,7 @@ export default function SettingsDrawer() {
   const [tabs] = useState(SETTINGS_TABS)
   const active = tabs.find((t) => t.id === settingsTab) ?? tabs[0]
   return (
-    <Drawer open={settingsOpen} onClose={closeSettings} title={<span className="flex items-center gap-2"><Cog size={15} />Settings</span>}>
+    <Drawer open={settingsOpen} onClose={closeSettings} title={<span className="flex items-center gap-2"><Logo size={18} />Settings</span>}>
       <div className="flex h-full flex-col">
         <Tabs size="sm" className="shrink-0 border-b border-line px-3" value={active.id} onChange={(id) => openSettings(id)} items={tabs.map((t) => ({ id: t.id, label: t.label }))} />
         <div className="min-h-0 flex-1 overflow-auto">{active.render()}</div>

@@ -1,4 +1,6 @@
-# UnQStudio
+<p align="center"><img src="public/logo.svg" width="96" alt="UnQStudio logo"></p>
+
+# UnQStudio · v2.0
 
 **A 100 % static, client-side AI software-engineering studio.** Describe an app, bring your own LLM key, and watch it
 compile with `esbuild-wasm` into a sandboxed live preview — no backend, no WebContainers, nothing leaves your device.

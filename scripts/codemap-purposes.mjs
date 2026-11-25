@@ -44,4 +44,6 @@ export const PURPOSES = {
   'src/ui/settings/ProvidersTab.tsx': 'Providers settings: vault card, registry card, compatibility filter tabs (Configured/Browser-Ready/Local/Proxy/All), per-provider key form.',
   'src/ui/ai/ProviderKeyForm.tsx': 'Key entry with debounced live /models auto-fetch, Fetch Models button, error badges, custom model IDs, proxy warning.',
   'functions/api/models-dev.ts': 'Cloudflare Pages Function: live models.dev registry (normalized, s-maxage=3600, CORS).',
+  'src/ui/home/AboutFaq.tsx': 'Collapsible About & FAQ footer (semantic landmarks) + the FAQ array mirrored in index.html FAQPage JSON-LD.',
+  'src/ui/primitives/Misc.tsx': 'Spinner, Kbd, Badge, EmptyState, Section and the Logo (official /logo.svg brand mark).',
 }

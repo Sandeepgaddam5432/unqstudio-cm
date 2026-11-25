@@ -4,6 +4,7 @@ import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Spinner, Too
 import { getConn, isConnected } from '@/store/connections'
 import { importGitHubRepo, parseRepoUrl } from '@/core/deploy/github'
 import { Composer } from '@/ui/chat/Composer'
+import { AboutFaq } from './AboutFaq'
 import { TemplateIcon } from '@/ui/TemplateIcon'
 import { getAllTemplates, getTemplate } from '@/templates'
 import { useProjects } from '@/store/projects'
@@ -122,16 +123,16 @@ export default function Home() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-line bg-bg/80 px-4 backdrop-blur-xl sm:px-8">
+      <header role="banner" className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-line bg-bg/80 px-4 backdrop-blur-xl sm:px-8">
         <div className="flex items-center gap-2.5">
           <Logo />
           <span className="text-[15px] font-semibold tracking-tight">UnQStudio</span>
-          <Badge tone="accent" className="hidden sm:inline-flex">v1.0</Badge>
+          <Badge tone="accent" className="hidden sm:inline-flex">v2.0</Badge>
         </div>
-        <div className="flex items-center gap-1">
+        <nav aria-label="Primary" className="flex items-center gap-1">
           <Tooltip label="Toggle theme"><Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">{resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</Button></Tooltip>
           <Tooltip label="Settings"><Button variant="ghost" size="icon" onClick={() => openSettings()} aria-label="Settings"><Settings size={16} /></Button></Tooltip>
-        </div>
+        </nav>
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 sm:px-8">
@@ -208,6 +209,7 @@ export default function Home() {
           )}
         </section>
       </main>
+      <AboutFaq />
 
       <Modal
         open={!!renaming}

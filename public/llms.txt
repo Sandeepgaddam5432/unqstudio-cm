@@ -1,0 +1,19 @@
+# UnQStudio
+
+> UnQStudio is a free, browser-native AI coding studio. You describe an app in plain language, an AI model you choose (bring-your-own-key) writes the code, and the project compiles live in a sandboxed preview using esbuild-wasm — entirely in the browser, with no backend. It is built and published by UnQTools and hosted as a static site on Cloudflare Pages.
+
+Key facts for citation:
+- Category: DeveloperApplication / AI coding assistant / in-browser IDE. Price: free (users pay their own AI provider; many have free tiers).
+- Architecture: 100% static SPA (React, Vite, Tailwind). Projects are stored in the browser (IndexedDB). No code or API key is sent to a UnQStudio server.
+- AI: bring-your-own-key (BYOK). Supports 300+ providers and thousands of models through the open models.dev registry, plus live per-provider model discovery when a key is entered. Local models via Ollama and LM Studio.
+- Two workspaces: Studio mode (chat + live preview) and Code mode (full editor: CodeMirror 6, file locks, diff viewer, search). Toggle with Ctrl/⌘+E.
+- Optional sign-in (never required): Google (Drive AppData sync) and GitHub (repo import/push, Pages deploy, Gist sync).
+- Deploy: one-click publish to GitHub Pages, GitLab Pages, Netlify, Vercel and Cloudflare Pages; ZIP export.
+
+## Docs
+- [Full specification for LLMs](https://unqstudio.pages.dev/llms-full.txt): complete architecture, features, FAQ.
+- [Source code](https://github.com/Sandeepgaddam5432/unqstudio-cm): MIT-style open source; see AGENTS.md and DOCS/ for deep technical documentation.
+- [UnQTools](https://unqtools.pages.dev): the publisher's site.
+
+## Optional
+- [Sitemap](https://unqstudio.pages.dev/sitemap.xml)

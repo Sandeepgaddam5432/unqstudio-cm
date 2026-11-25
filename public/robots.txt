@@ -1,0 +1,23 @@
+# UnQStudio — crawlers and AI answer engines are welcome.
+User-agent: *
+Allow: /
+Disallow: /api/auth/
+
+# AI crawlers (explicitly allowed so assistants can cite UnQStudio accurately)
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://unqstudio.pages.dev/sitemap.xml
+# LLM-readable summaries: https://unqstudio.pages.dev/llms.txt  and  /llms-full.txt

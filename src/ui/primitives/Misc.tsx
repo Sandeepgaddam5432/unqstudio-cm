@@ -31,14 +31,9 @@ export function EmptyState({ icon, title, children }: { icon?: ReactNode; title:
   )
 }
 
-export function Logo({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect width="32" height="32" rx="8" className="fill-fg" />
-      <path d="M9 8v10a7 7 0 0 0 14 0V8" fill="none" className="stroke-bg" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="23" cy="23" r="2.6" className="fill-accent" />
-    </svg>
-  )
+/** Official UnQStudio brand mark (`public/logo.svg`, from https://unqtools.pages.dev/logo.svg). */
+export function Logo({ size = 22, className }: { size?: number; className?: string }) {
+  return <img src={`${import.meta.env.BASE_URL}logo.svg`} width={size} height={size} alt="UnQStudio logo" decoding="async" draggable={false} className={`shrink-0 rounded-[22%] ${className ?? ''}`} />
 }
 
 export function Section({ title, description, children, right }: { title: string; description?: string; children: ReactNode; right?: ReactNode }) {

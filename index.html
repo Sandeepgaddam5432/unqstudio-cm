@@ -2,11 +2,156 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="UnQStudio — a static, client-side AI software engineering studio." />
-    <meta name="theme-color" content="#09090B" />
-    <title>UnQStudio</title>
+    <title>UnQStudio — Free Browser-Native AI Coding Studio (BYOK, No Backend)</title>
+    <meta name="description" content="UnQStudio is a free AI coding studio that runs entirely in your browser. Describe an app, bring your own key for 300+ AI models, and watch it build live. No backend, no sign-up." />
+    <meta name="keywords" content="AI coding studio, AI app builder, browser IDE, esbuild-wasm, BYOK, models.dev, vibe coding, React, Cloudflare Pages" />
+    <meta name="author" content="UnQTools" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href="https://unqstudio.pages.dev/" />
+
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="alternate" type="text/plain" href="./llms.txt" title="LLM-readable summary" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090B" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAFAF9" />
+    <meta name="color-scheme" content="dark light" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="UnQStudio" />
+    <meta property="og:title" content="UnQStudio — Describe it. Watch it build." />
+    <meta property="og:description" content="Free, browser-native AI coding studio. Bring your own key for 300+ models. No backend." />
+    <meta property="og:url" content="https://unqstudio.pages.dev/" />
+    <meta property="og:image" content="https://unqstudio.pages.dev/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="UnQStudio logo and tagline on a dark card" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="UnQStudio — Describe it. Watch it build." />
+    <meta name="twitter:description" content="Free, browser-native AI coding studio. Bring your own key for 300+ models. No backend." />
+    <meta name="twitter:image" content="https://unqstudio.pages.dev/og-image.png" />
+    <meta name="twitter:image:alt" content="UnQStudio logo and tagline on a dark card" />
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "UnQStudio",
+  "url": "https://unqstudio.pages.dev/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (web browser)",
+  "browserRequirements": "Requires a modern browser with WebAssembly and IndexedDB",
+  "description": "Free, browser-native AI coding studio. Describe an app, bring your own model key (BYOK), and watch it compile live with esbuild-wasm — no backend.",
+  "image": "https://unqstudio.pages.dev/og-image.png",
+  "logo": "https://unqstudio.pages.dev/logo.svg",
+  "softwareVersion": "2.0.0",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "publisher": {
+    "@id": "https://unqstudio.pages.dev/#org"
+  },
+  "featureList": [
+    "Prompt-to-app generation with live preview",
+    "100% client-side: esbuild-wasm build runtime, no backend",
+    "Bring your own key for 300+ AI providers via models.dev",
+    "Live per-provider model discovery",
+    "Studio mode and Code mode (CodeMirror 6 editor)",
+    "Checkpoints, undo and file locks",
+    "Visual element inspector",
+    "One-click deploy to GitHub Pages, GitLab, Netlify, Vercel, Cloudflare Pages",
+    "Optional Google Drive and GitHub Gist cloud sync",
+    "AES-GCM encrypted API key vault"
+  ]
+}
+    </script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://unqstudio.pages.dev/#org",
+  "name": "UnQTools",
+  "alternateName": "UnQStudio",
+  "url": "https://unqtools.pages.dev",
+  "logo": "https://unqstudio.pages.dev/logo.svg",
+  "sameAs": [
+    "https://github.com/Sandeepgaddam5432/unqstudio-cm"
+  ]
+}
+    </script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "UnQStudio",
+  "url": "https://unqstudio.pages.dev/",
+  "description": "Free, browser-native AI coding studio.",
+  "inLanguage": "en",
+  "publisher": {
+    "@id": "https://unqstudio.pages.dev/#org"
+  }
+}
+    </script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is UnQStudio?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "UnQStudio is a free, browser-native AI coding studio. You describe an app in plain language, an AI model you choose writes the code, and it compiles live in a sandboxed preview — all inside your browser tab."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does UnQStudio have a backend?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. It is a static site hosted on Cloudflare Pages. Projects live in your browser (IndexedDB), builds run with esbuild-wasm, and AI requests go directly from your browser to the provider you pick. Optional edge functions only power the models.dev registry and GitHub sign-in."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it really free, and what does BYOK mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "UnQStudio is free. BYOK means bring your own key: you paste an API key from OpenAI, Anthropic, Google, OpenRouter, Groq, Ollama or any other supported provider, and you pay that provider directly (many have free tiers)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are my API keys and code private?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Keys are stored only on your device in IndexedDB and can be encrypted with a passphrase (PBKDF2 and AES-GCM-256 via Web Crypto). Your code never touches a UnQStudio server."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which AI models and providers are supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Every provider in the open models.dev registry (300+ providers, thousands of models). When you enter a key, UnQStudio fetches that provider's live model list automatically. Browser-ready, local (Ollama, LM Studio) and gateway-only providers are clearly tagged."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between Studio mode and Code mode?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Studio mode is chat-first: talk to the AI beside a live preview. Code mode is a full editor on the same project with a file tree, file locks, CodeMirror 6, search, diff viewer and console. Switch any time with Ctrl/Cmd+E."
+      }
+    }
+  ]
+}
+    </script>
     <script>
       try {
         var p = JSON.parse(localStorage.getItem('unq.app.v1') || '{}').state || {};
@@ -18,6 +163,7 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>UnQStudio is a free, browser-native AI coding studio. Enable JavaScript to use it. Summary: https://unqstudio.pages.dev/llms.txt</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
