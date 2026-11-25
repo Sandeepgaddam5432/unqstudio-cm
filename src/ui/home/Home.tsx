@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Check } from 'lucide-react'
+import { ArrowUp, ChevronDown, Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Check, Upload } from 'lucide-react'
 import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Textarea, Tooltip, Kbd } from '@/ui/primitives'
 import { TemplateIcon } from '@/ui/TemplateIcon'
 import { getAllTemplates, getTemplate } from '@/templates'
@@ -114,6 +114,19 @@ export default function Home() {
   const [renameVal, setRenameVal] = useState('')
   const [deleting, setDeleting] = useState<ProjectMeta | null>(null)
   const area = useRef<HTMLTextAreaElement>(null)
+  const zipInput = useRef<HTMLInputElement>(null)
+  const onZip = async (f: File) => {
+    try {
+      const { importZip } = await import('@/core/vfs/zip')
+      const r = await importZip(f)
+      if (!Object.keys(r.files).length) throw new Error('The archive has no importable files')
+      const p = await projects.create({ name: r.name ?? f.name.replace(/\.zip$/i, ''), files: r.files, checkpointLabel: 'Imported from ZIP' })
+      toast.success('Project imported', r.skipped.length ? `${r.skipped.length} oversized/binary files skipped` : `${Object.keys(r.files).length} files`)
+      navigateToProject(p.id)
+    } catch (e) {
+      toast.error('Import failed', e instanceof Error ? e.message : String(e))
+    }
+  }
   const templates = getAllTemplates()
 
   useEffect(() => { void projects.refresh() }, [])
@@ -206,6 +219,8 @@ export default function Home() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold tracking-tight">Recent projects <span className="ml-1 font-normal text-faint">{projects.projects.length}</span></h2>
             <div className="flex items-center gap-2">
+              <input ref={zipInput} type="file" accept=".zip,application/zip" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onZip(f) }} />
+              <Button size="sm" onClick={() => zipInput.current?.click()}><Upload size={13} />Import ZIP</Button>
               <div className="relative">
                 <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
                 <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search projects" className="h-8 w-44 pl-8 text-xs sm:w-56" aria-label="Search projects" />
