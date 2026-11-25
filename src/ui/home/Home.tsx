@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Upload } from 'lucide-react'
-import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Tooltip } from '@/ui/primitives'
+import { Copy, Moon, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, Sun, Trash2, Upload, GitBranch } from 'lucide-react'
+import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Spinner, Tooltip } from '@/ui/primitives'
+import { getConn, isConnected } from '@/store/connections'
+import { importGitHubRepo, parseRepoUrl } from '@/core/deploy/github'
 import { Composer } from '@/ui/chat/Composer'
 import { TemplateIcon } from '@/ui/TemplateIcon'
 import { getAllTemplates, getTemplate } from '@/templates'
@@ -66,6 +68,26 @@ export default function Home() {
   const [renameVal, setRenameVal] = useState('')
   const [deleting, setDeleting] = useState<ProjectMeta | null>(null)
   const zipInput = useRef<HTMLInputElement>(null)
+  const [ghOpen, setGhOpen] = useState(false)
+  const [ghUrl, setGhUrl] = useState('')
+  const [ghBusy, setGhBusy] = useState(false)
+  const [ghLog, setGhLog] = useState('')
+  const importGh = async () => {
+    const ref = parseRepoUrl(ghUrl)
+    if (!ref) return toast.error('Enter a repository like owner/name or a github.com URL')
+    setGhBusy(true)
+    try {
+      const token = isConnected('github') ? getConn('github').token : undefined
+      const r = await importGitHubRepo({ ...ref, token, onLog: setGhLog })
+      if (!Object.keys(r.files).length) throw new Error('No importable files found in that repository')
+      const p = await projects.create({ name: r.name, files: r.files, description: r.description, sourceRepo: `${ref.owner}/${ref.repo}`, checkpointLabel: `Imported ${ref.owner}/${ref.repo}@${r.ref}` })
+      toast.success('Repository imported', `${Object.keys(r.files).length} files${r.skipped ? ` · ${r.skipped} skipped` : ''}`)
+      setGhOpen(false)
+      navigateToProject(p.id)
+    } catch (e) {
+      toast.error('GitHub import failed', e instanceof Error ? e.message : String(e))
+    } finally { setGhBusy(false) }
+  }
   const onZip = async (f: File) => {
     try {
       const { importZip } = await import('@/core/vfs/zip')
@@ -160,6 +182,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <input ref={zipInput} type="file" accept=".zip,application/zip" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onZip(f) }} />
               <Button size="sm" onClick={() => zipInput.current?.click()}><Upload size={13} />Import ZIP</Button>
+              <Button size="sm" onClick={() => setGhOpen(true)}><GitBranch size={13} />From GitHub</Button>
               <div className="relative">
                 <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
                 <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search projects" className="h-8 w-44 pl-8 text-xs sm:w-56" aria-label="Search projects" />
@@ -192,6 +215,11 @@ export default function Home() {
         footer={<><Button variant="ghost" onClick={() => setRenaming(null)}>Cancel</Button><Button variant="primary" onClick={async () => { if (renaming && renameVal.trim()) { await projects.update(renaming.id, { name: renameVal.trim() }); setRenaming(null) } }}>Save</Button></>}
       >
         <Input autoFocus value={renameVal} onChange={(e) => setRenameVal(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
+      </Modal>
+      <Modal open={ghOpen} onClose={() => setGhOpen(false)} title="Import from GitHub" description="Public repositories work without a token. Connect GitHub in Settings → Connections for private repos and higher rate limits." size="sm"
+        footer={<><Button variant="ghost" onClick={() => setGhOpen(false)}>Cancel</Button><Button variant="primary" onClick={importGh} disabled={ghBusy || !ghUrl.trim()}>{ghBusy && <Spinner size={13} />}Import</Button></>}>
+        <Input autoFocus value={ghUrl} onChange={(e) => setGhUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void importGh()} placeholder="owner/repo or https://github.com/owner/repo/tree/branch" spellCheck={false} />
+        {ghLog && <p className="mt-2 text-xs text-muted">{ghLog}</p>}
       </Modal>
       <ConfirmModal
         open={!!deleting}

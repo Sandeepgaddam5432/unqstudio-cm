@@ -5,7 +5,7 @@ import { useApp } from '@/store/app'
 import { Button, EmptyState } from '@/ui/primitives'
 import { navigateHome } from '@/store/app'
 import { TopBar } from './TopBar'
-import { PublishModal } from './PublishModal'
+import { PublishModal } from '@/ui/publish/PublishModal'
 import { WorkspaceBody } from './Body'
 import { useChatController } from '@/ui/chat/useChatController'
 

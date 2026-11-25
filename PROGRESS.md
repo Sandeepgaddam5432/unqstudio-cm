@@ -6,7 +6,7 @@
 - [x] **M4** AI orchestrator: 20 BYOK providers, streaming, artifact parser, patch engine, vault, modes, enhancer, vision, voice, @mentions, token/cost meter
 - [x] **M5** Code Mode IDE, diff viewer, visual click-to-edit inspector, Theme Studio, command palette extensions
 - [x] **M6** 8 static templates + Bolt-class Settings hub
-- [ ] M7 Deploy hub
+- [x] **M7** Pure client-side export, Git & one-click deploy hub
 - [ ] M8 Hardening + docs
 
 ## Notes
@@ -28,3 +28,7 @@
   `templates.test.ts` compiles every template with the real esbuild pipeline and **type-checks each one with `tsc --strict`** against real React/lucide typings. Settings hub tabs: General, Providers (+vault),
   Connections (GitHub/GitLab/Cloudflare/Netlify/Vercel/Supabase tokens in the vault + live verification), Prompts (rules library + presets), Data (storage meter, JSON backup/restore, bulk chat mgmt, selective clear, factory reset),
   Debug (capabilities, filterable event log, diagnostics report without secrets), Features (flags, themes/templates/providers/MCP plugin registry, JSON import/export, MCP HTTP+SSE probe).
+- M7: `core/deploy` — GitHub (import via tree + raw/blobs; push via blobs → tree → commit → ref, repo auto-create, empty-repo bootstrap, Pages workflow + enable), GitLab (commits API with create/update actions),
+  Netlify (SHA-1 digest deploy + required uploads + polling), Vercel (v13 deployments, inline base64 files), Cloudflare Pages (multipart direct upload; CORS-blocked → step-by-step Git-connect guide),
+  Supabase (OpenAPI schema → tables browser, TypeScript types, typed client injection; refuses service_role keys). Production static bundle comes from the in-browser compiler (`production: true`).
+  UI: Publish hub tabs Download / Git / Deploy / Supabase, Import from GitHub on Home. Tests use mocked `fetch` to assert endpoints, headers and payloads (tree/commit, Netlify digests, Vercel files, ZIP integrity).
