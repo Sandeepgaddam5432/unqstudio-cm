@@ -4,6 +4,11 @@ import { Drawer, Section, Segmented, Switch, Tabs } from '@/ui/primitives'
 import { useApp, type ThemePref } from '@/store/app'
 import { useSettings } from '@/store/settings'
 import { ProvidersTab } from '@/ui/settings/ProvidersTab'
+import { ConnectionsTab } from '@/ui/settings/ConnectionsTab'
+import { PromptsTab } from '@/ui/settings/PromptsTab'
+import { DataTab } from '@/ui/settings/DataTab'
+import { DebugTab } from '@/ui/settings/DebugTab'
+import { FeaturesTab } from '@/ui/settings/FeaturesTab'
 
 function General() {
   const { theme, setTheme, mode, setMode } = useApp()
@@ -29,6 +34,11 @@ function General() {
 export const SETTINGS_TABS: { id: string; label: string; render: () => React.ReactNode }[] = [
   { id: 'general', label: 'General', render: () => <General /> },
   { id: 'providers', label: 'Providers', render: () => <ProvidersTab /> },
+  { id: 'connections', label: 'Connections', render: () => <ConnectionsTab /> },
+  { id: 'prompts', label: 'Prompts', render: () => <PromptsTab /> },
+  { id: 'data', label: 'Data', render: () => <DataTab /> },
+  { id: 'debug', label: 'Debug', render: () => <DebugTab /> },
+  { id: 'features', label: 'Features', render: () => <FeaturesTab /> },
 ]
 
 export default function SettingsDrawer() {

@@ -143,7 +143,7 @@ export const TSCONFIG = JSON.stringify(
   {
     compilerOptions: {
       target: 'ES2022', lib: ['ES2022', 'DOM', 'DOM.Iterable'], module: 'ESNext', moduleResolution: 'bundler', jsx: 'react-jsx',
-      strict: true, noEmit: true, skipLibCheck: true, isolatedModules: true, esModuleInterop: true, baseUrl: '.', paths: { '@/*': ['src/*'] }, types: ['vite/client'],
+      strict: true, noEmit: true, skipLibCheck: true, isolatedModules: true, esModuleInterop: true, paths: { '@/*': ['./src/*'] }, types: ['vite/client'],
     },
     include: ['src', 'vite.config.ts'],
   },

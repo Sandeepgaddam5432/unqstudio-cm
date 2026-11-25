@@ -5,7 +5,7 @@
 - [x] **M3** esbuild-wasm runtime (`core/runtime`), sandboxed preview, error catcher, preview toolbar, tests
 - [x] **M4** AI orchestrator: 20 BYOK providers, streaming, artifact parser, patch engine, vault, modes, enhancer, vision, voice, @mentions, token/cost meter
 - [x] **M5** Code Mode IDE, diff viewer, visual click-to-edit inspector, Theme Studio, command palette extensions
-- [ ] M6 Templates + settings hub
+- [x] **M6** 8 static templates + Bolt-class Settings hub
 - [ ] M7 Deploy hub
 - [ ] M8 Hardening + docs
 
@@ -24,3 +24,7 @@
   Diff viewer: split/unified, collapsed context, compare-with-any-checkpoint, per-file Accept/Revert (opened from AI op cards and History). Inspector: hover outline + tag/size/classes tooltip, click → quick edit
   (text, colors, padding, radius, font size) with instant preview and “Save to source” (unique-match Tailwind class/text rewrite, otherwise explains why not) or “Edit with AI” (DOM snippet + source hint into the composer).
   Theme Studio: presets, light/dark tokens, radius, Google Font picker; live via `theme-css` bridge message, persisted to `/src/index.css` + `/index.html`. Mobile: 4-tab bottom bar in Code Mode.
+- M6: Templates — Blank, SaaS Landing, Analytics Dashboard (hand-rolled SVG charts), Designer Portfolio, Product Storefront (persistent cart), AI Chat App, Kanban (DnD), Editorial Blog & Docs.
+  `templates.test.ts` compiles every template with the real esbuild pipeline and **type-checks each one with `tsc --strict`** against real React/lucide typings. Settings hub tabs: General, Providers (+vault),
+  Connections (GitHub/GitLab/Cloudflare/Netlify/Vercel/Supabase tokens in the vault + live verification), Prompts (rules library + presets), Data (storage meter, JSON backup/restore, bulk chat mgmt, selective clear, factory reset),
+  Debug (capabilities, filterable event log, diagnostics report without secrets), Features (flags, themes/templates/providers/MCP plugin registry, JSON import/export, MCP HTTP+SSE probe).
