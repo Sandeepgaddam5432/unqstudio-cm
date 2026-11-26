@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertCircle, Check, ChevronRight, FilePlus2, FileX2, GitFork, Hammer, Lock, Pencil, RefreshCw, Rewind, Sparkles, Wrench, X } from 'lucide-react'
+import { AlertCircle, ListChecks, Check, ChevronRight, FilePlus2, FileX2, GitFork, Hammer, Lock, Pencil, RefreshCw, Rewind, Sparkles, Wrench, X } from 'lucide-react'
 import { Badge, Button, Spinner, Tooltip } from '@/ui/primitives'
 import { Markdown } from './Markdown'
 import { useChat, type ChatMessage } from '@/store/chat'
@@ -9,6 +9,11 @@ import { formatCost, formatTokens } from '@/core/ai/tokens'
 import type { OpRecord } from '@/core/ai/apply'
 import { cn } from '@/lib/cn'
 import { useChatPrefs } from '@/store/chatPrefs'
+import { useSettings } from '@/store/settings'
+import { haptic } from '@/lib/haptics'
+import { BuildActivityCard } from './BuildActivityCard'
+import { VersionCard } from './VersionCard'
+import { FollowUpChips } from './FollowUpChips'
 
 function ThinkBlock({ text, done }: { text: string; done?: boolean }) {
   const auto = useChatPrefs((p) => p.autoExpandThink)
@@ -94,6 +99,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
         {m.model && <span className="truncate">{m.model.split('/').pop()}</span>}
         {m.mode !== 'build' && <Badge tone="accent">{m.mode}</Badge>}
       </div>
+      {(m.streaming || ops.length > 0) && <BuildActivityCard m={m} />}
       {m.parts?.map((p, i) =>
         p.kind === 'text' ? <Markdown key={i} text={p.text ?? ''} />
         : p.kind === 'think' ? <ThinkBlock key={i} text={p.text ?? ''} done={p.done} />
@@ -123,8 +129,13 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
           {isLast && !busy && <Button size="xs" variant="ghost" onClick={() => retry(m.id)}><RefreshCw size={11} />Retry</Button>}
         </div>
       )}
+      <VersionCard m={m} />
+      {isLast && !busy && showFooter && !m.error && <FollowUpChips m={m} />}
       {m.mode === 'plan' && isLast && showFooter && !m.error && m.text.trim() && (
-        <Button variant="accent" size="sm" className="mt-2" disabled={busy} onClick={() => send({ text: 'Implement the plan above exactly. Build every file now.', mode: 'build' })}><Hammer size={13} />Approve & Build</Button>
+        <div data-plan-card className="mt-2 rounded-2xl border border-accent/30 bg-accent/5 p-3">
+          <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-accent"><ListChecks size={12} />Plan ready for approval</p>
+          <Button variant="accent" size="sm" className="min-h-[44px] w-full" disabled={busy} onClick={() => { useSettings.getState().set({ aiMode: 'build' }); haptic('send'); void send({ text: 'Implement the plan above exactly. Build every file now.', mode: 'build' }) }}><Hammer size={14} />Implement the plan</Button>
+        </div>
       )}
     </div>
   )

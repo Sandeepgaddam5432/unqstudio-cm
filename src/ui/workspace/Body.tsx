@@ -49,6 +49,8 @@ export function WorkspaceBody() {
   const [tab, setTab] = useState<'chat' | 'preview'>('chat')
   const setMode = useApp((s) => s.setMode)
   const nav = useRef<HTMLDivElement>(null)
+  const requested = useApp((s) => s.requestedTab)
+  useEffect(() => { if (requested) setTab(requested.tab) }, [requested])
   useEffect(() => {
     const el = nav.current
     if (!el) return

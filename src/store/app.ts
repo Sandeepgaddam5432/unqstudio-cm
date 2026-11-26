@@ -24,6 +24,8 @@ interface AppState {
   projectSettingsOpen: boolean
   projectSettingsTab: string
   pendingPrompt: PendingPrompt | null
+  requestedTab: { tab: 'chat' | 'preview'; n: number } | null
+  requestTab: (t: 'chat' | 'preview') => void
   setTheme: (t: ThemePref) => void
   toggleTheme: () => void
   setResolvedTheme: (t: 'dark' | 'light') => void
@@ -66,6 +68,8 @@ export const useApp = create<AppState>()(
       projectSettingsOpen: false,
       projectSettingsTab: 'overview',
       pendingPrompt: null,
+      requestedTab: null,
+      requestTab: (tab) => set((s) => ({ requestedTab: { tab, n: (s.requestedTab?.n ?? 0) + 1 } })),
       setTheme: (theme) => set({ theme, resolvedTheme: theme === 'system' ? systemTheme() : theme }),
       toggleTheme: () => get().setTheme(get().resolvedTheme === 'dark' ? 'light' : 'dark'),
       setResolvedTheme: (resolvedTheme) => set({ resolvedTheme }),

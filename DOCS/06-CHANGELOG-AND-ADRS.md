@@ -134,3 +134,11 @@ Modal/Drawer/Dropdown switch to the same sheet on phones so drag, scroll-lock an
 
 ### ADR-013 Thumbnails from a layout snapshot, not a pixel screenshot
 The preview iframe is an opaque-origin sandbox, so canvas capture of its DOM is unreliable (tainting, `foreignObject` quirks, headless). The bridge instead walks computed styles (≤140 boxes) and the host renders an SVG (then WebP when the browser can). This works in every context, is escaped/sanitised, and is capped at 40k chars.
+
+### V3.0-M3 — Signature Lovable chat UX
+- `BuildActivityCard` (shimmer + live timer + steps), inline `VersionCard` (v1…, bookmark, Preview / Code·Diff / Restore with a safety checkpoint), `FollowUpChips` (deterministic, offline), Plan card with **Implement the plan** (flips to Build mode and sends).
+- Model Picker keyboard navigation closes the DOCS/08 P1 a11y gap: combobox + `aria-activedescendant`, ArrowUp/Down (wrapping), Home/End, Enter, Escape and scroll-into-view in the virtual window.
+- `useApp.requestTab('preview')` lets chat cards switch the phone view strip.
+
+### ADR-014 Follow-up chips are rules, not a second LLM call
+Chips must be instant, free and work offline on phones; a rule table over the project text is deterministic and unit-testable. Trade-off: less tailored than a model-written suggestion.

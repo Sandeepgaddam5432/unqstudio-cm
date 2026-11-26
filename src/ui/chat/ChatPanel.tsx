@@ -16,6 +16,7 @@ import { estimateCost, formatCost, formatTokens } from '@/core/ai/tokens'
 import { findModel } from '@/core/ai/providers'
 import { useChatBus } from '@/store/chatBus'
 import { cn } from '@/lib/cn'
+import { haptic } from '@/lib/haptics'
 
 const IDEAS = [
   'A landing page for a minimalist budgeting app with pricing and FAQ',
@@ -81,6 +82,7 @@ export function ChatPanel() {
   const submit = async () => {
     const t = text.trim()
     if (!t) return
+    haptic('send')
     const ok = await send({ text: t, images })
     if (ok) { setText(''); setImages([]); stick.current = true }
   }

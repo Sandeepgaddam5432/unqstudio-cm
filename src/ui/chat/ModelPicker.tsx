@@ -16,6 +16,7 @@ import { ProviderIcon } from '@/ui/icons/ProviderIcon'
 import { formatTokens } from '@/core/ai/tokens'
 import { cn } from '@/lib/cn'
 import { ago } from '@/ui/settings/registryUi'
+import { NAV_KEYS, moveActive, scrollTopFor, selectableRows, type NavKey } from './pickerNav'
 
 export type PickerTab = 'configured' | 'favorites' | 'ready' | 'custom' | 'local' | 'all'
 const TABS: { id: PickerTab; label: string }[] = [
@@ -134,6 +135,27 @@ export function ModelPicker({ close }: { close: () => void }) {
   const first = Math.max(0, Math.floor(top / ROW_H) - OVERSCAN)
   const last = Math.min(rows.length, Math.ceil((top + vh) / ROW_H) + OVERSCAN)
 
+  // ── keyboard navigation (ArrowUp/Down, Home/End, Enter, Escape) ──
+  const [activeIdx, setActiveIdx] = useState(-1)
+  useEffect(() => { setActiveIdx(-1) }, [tab, dq])
+  const onNavKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return }
+    if ((NAV_KEYS as string[]).includes(e.key)) {
+      e.preventDefault()
+      const next = moveActive(selectableRows(rows), activeIdx, e.key as NavKey)
+      setActiveIdx(next)
+      const el = scroller.current
+      if (el && next >= 0) { const t = scrollTopFor(next, ROW_H, el.scrollTop, el.clientHeight || vh); if (t !== el.scrollTop) { el.scrollTop = t; setTop(t) } }
+      return
+    }
+    if (e.key === 'Enter') {
+      const r = rows[activeIdx] ?? rows[selectableRows(rows).find((i) => rows[i]!.t === 'model') ?? -1]
+      if (!r) return
+      e.preventDefault()
+      if (r.t === 'model') pick(r.p.id, r.m.id)
+      else if (r.t === 'head') toggle(r.p.id)
+    }
+  }
   const toggle = (id: string) => setOpen((o) => { const n = new Set(o); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const pick = (providerId: string, id: string) => {
     const c = configFor(providerId)
@@ -152,7 +174,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       const { p } = r
       const lv = live[p.id]
       return (
-        <button key={r.key} style={style} onClick={() => toggle(p.id)} aria-expanded={r.open} data-provider-group={p.id} className="flex items-center gap-2 rounded-lg px-2.5 text-left transition-colors duration-150 hover:bg-subtle">
+        <button key={r.key} style={style} onClick={() => toggle(p.id)} aria-expanded={r.open} id={`mp-row-${idx}`} data-active={idx === activeIdx || undefined} data-provider-group={p.id} className={cn('flex items-center gap-2 rounded-lg px-2.5 text-left transition-colors duration-150 hover:bg-subtle', idx === activeIdx && 'bg-subtle ring-2 ring-accent/60')}>
           <ProviderIcon id={p.id} name={p.name} logo={p.logo} brand={p.brand} accent={p.accent} size={16} />
           <span className="min-w-0 flex-1 truncate text-[12px] font-semibold tracking-tight">{p.name}</span>
           {lv?.status === 'loading' && <Spinner size={11} />}
@@ -166,9 +188,9 @@ export function ModelPicker({ close }: { close: () => void }) {
     const fav = favorites.includes(modelKey(p.id, m.id))
     const active = s.activeProvider === p.id && s.activeModel === m.id
     return (
-      <div key={r.key} style={style} role="option" aria-selected={active} tabIndex={0} title={`${p.name} · ${m.id}`} data-model-row={`${p.id}::${m.id}`}
+      <div key={r.key} style={style} role="option" aria-selected={active} tabIndex={0} title={`${p.name} · ${m.id}`} id={`mp-row-${idx}`} data-active={idx === activeIdx || undefined} data-model-row={`${p.id}::${m.id}`}
         onClick={() => pick(p.id, m.id)} onKeyDown={(e) => { if (e.key === 'Enter') pick(p.id, m.id) }}
-        className="group flex cursor-pointer items-center gap-2 rounded-lg px-2.5 text-[13px] transition-colors duration-150 hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none">
+        className={cn('group flex cursor-pointer items-center gap-2 rounded-lg px-2.5 text-[13px] transition-colors duration-150 hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none', idx === activeIdx && 'bg-subtle ring-2 ring-accent/60')}>
         <ModelIcon modelId={m.id} modelName={m.name} providerId={p.id} providerName={p.name} providerLogo={p.logo} brand={p.brand} accent={p.accent} size={16} />
         <span className="min-w-[5rem] flex-1 truncate">{m.name}</span>
         <span className="hidden shrink-0 items-center gap-1 text-faint md:flex" title={p.name}><ProviderIcon id={p.id} name={p.name} logo={p.logo} brand={p.brand} accent={p.accent} size={11} /></span>
@@ -194,7 +216,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       <div className="sticky top-0 z-10 shrink-0 space-y-2 bg-panel p-2 pb-1.5">
         <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-subtle px-2.5 text-muted focus-within:border-line-strong focus-within:ring-2 focus-within:ring-accent/20">
           <Search size={14} className="shrink-0" />
-          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search models, providers, vision, reasoning, free…" aria-label="Search models" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
+          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onNavKey} role="combobox" aria-expanded="true" aria-controls="mp-list" aria-autocomplete="list" aria-activedescendant={activeIdx >= 0 ? `mp-row-${activeIdx}` : undefined} placeholder="Search models, providers, vision, reasoning, free…" aria-label="Search models" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
         </label>
         <div className="scrollbar-none -mx-0.5 flex gap-1 overflow-x-auto px-0.5" role="tablist" aria-label="Provider filter">
           {TABS.map((t) => (
@@ -202,7 +224,7 @@ export function ModelPicker({ close }: { close: () => void }) {
           ))}
         </div>
       </div>
-      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-1 pb-1" data-picker-list role="listbox" aria-label="Models">
+      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-1 pb-1" id="mp-list" data-picker-list role="listbox" aria-label="Models">
         <div className="relative" style={{ height: rows.length * ROW_H }}>
           {rows.slice(first, last).map((r, i) => renderRow(r, first + i))}
         </div>

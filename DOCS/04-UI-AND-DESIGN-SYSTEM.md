@@ -88,3 +88,6 @@ Dark mode is class-based (`@custom-variant dark (&:where(.dark, .dark *))`); fon
 ## v3.0 Home & sidebar
 - `AppSidebar` wraps every route (`App.tsx`): rail on desktop (w-14 / w-64), drawer on phones (`useApp.sidebarOpen`). Sections: New Project, Search, Starred, Recent, Templates & Showcase, account, theme, Global Settings.
 - Home hero uses `.bg-mesh` + `.composer-float`; project cards show captured thumbnails; Showcase uses `TemplateArt` SVGs.
+
+## v3.0 Chat
+`MessageView` order for an assistant turn: BuildActivityCard → reasoning/text/op cards → footer → VersionCard → FollowUpChips → Plan card. Version numbers come from `core/ai/versions.ts`; bookmarks live in `ProjectMeta.bookmarks`. Model Picker rows are `id=mp-row-N`; the search box is an ARIA combobox controlling `#mp-list`.
