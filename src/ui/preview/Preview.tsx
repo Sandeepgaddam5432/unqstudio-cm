@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Monitor, Smartphone, Sparkles, Tablet, Trash2, X, Copy, Maximize2 } from 'lucide-react'
+import { AlertTriangle, Sparkles, Trash2, X, Copy } from 'lucide-react'
 import { Button, Spinner, Badge } from '@/ui/primitives'
 import { DEVICE_SIZES, usePreview, type LogLevel } from '@/store/preview'
 import { useWorkspace } from '@/store/workspace'
@@ -21,7 +21,6 @@ import type { SerializedError } from '@/core/runtime/types'
 let lastThumbAt = 0
 const pending = new Map<string, (r: { dataUrl?: string; error?: string }) => void>()
 
-const deviceIcon = { desktop: <Monitor size={14} />, tablet: <Tablet size={14} />, mobile: <Smartphone size={14} />, custom: <Maximize2 size={14} /> }
 const levelStyle: Record<LogLevel, string> = { log: 'text-fg', info: 'text-fg', debug: 'text-muted', warn: 'text-warn', error: 'text-danger', build: 'text-accent' }
 
 function ErrorBanner() {

@@ -88,7 +88,7 @@ function Body({ onClose }: { onClose: () => void }) {
   const onUrl = (u: string) => { setUrl(u); void getAdapter().kvSet(`liveUrl:${vfs.meta.id}`, u) }
   return (
     <div className="space-y-4">
-      <Tabs size="sm" className="-mx-1 border-b border-line" value={tab} onChange={setTab} items={[
+      <Tabs size="sm" className="scrollbar-none -mx-1 overflow-x-auto border-b border-line" value={tab} onChange={setTab} items={[
         { id: 'publish', label: 'Publish', icon: <Cloud size={13} /> }, { id: 'seo', label: 'Share & SEO', icon: <Share2 size={13} /> },
         { id: 'download', label: 'Download', icon: <Download size={13} /> }, { id: 'git', label: 'Git', icon: <GitBranch size={13} /> }, { id: 'supabase', label: 'Supabase', icon: <Database size={13} /> },
       ]} />

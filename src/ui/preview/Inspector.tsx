@@ -70,7 +70,7 @@ export function InspectorForm() {
   )
 
   return (
-    <div data-inspector-form className="min-w-0">
+    <div data-inspector-form className="min-w-0 [&>div:first-child]:hidden">
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[13px] font-semibold"><MousePointerClick size={13} className="text-accent" />&lt;{sel.tag}&gt; <span className="font-mono text-[10px] font-normal text-faint">{sel.rect.w}×{sel.rect.h}</span></p>

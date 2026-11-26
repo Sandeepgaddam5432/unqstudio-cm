@@ -30,3 +30,12 @@ First production release.
 - **Templates**: 8 static templates verified by compile + strict type-check tests.
 - **Publish**: GitHub (import/push/Pages), GitLab, Netlify, Vercel, Cloudflare Pages (+fallback), Supabase explorer.
 - **Quality**: 100+ unit tests, strict TypeScript, ESLint, headless Chromium E2E.
+
+## 3.0.0
+- Native mobile app shell, BottomSheet, PWA meta, haptics, Lovable Warm accent.
+- Home launchpad, collapsible sidebar/drawer, project thumbnails, template showcase (Preview/Remix).
+- Build activity card, inline Version Cards, follow-up chips, Plan card, Model Picker keyboard navigation.
+- Preview route bar, viewport pills, visual inspector (popover / mobile sheet) with Ask-AI box.
+- Project Settings hub (Project Knowledge, Version History, Integrations); Publish sheet with SVG QR + SEO editor.
+- Multi-step agent loop (read/search/verify, 1–5 steps) and symbol/dependency graph.
+- E2E: 106 checks incl. mobile 390×844 and desktop 1440×900.

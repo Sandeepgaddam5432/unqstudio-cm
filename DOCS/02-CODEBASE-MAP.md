@@ -2874,7 +2874,7 @@ Live preview iframe, visual inspector, live build hook.
 ### `src/ui/preview/Preview.tsx`
 
 **Purpose:** Live preview iframe with PreviewToolbar, device frames, error banner, console drawer, bridge message handling (console, errors, route, thumbnails) and fullscreen mode.  
-**Size:** 222 lines · React component module
+**Size:** 221 lines · React component module
 
 **Exports:**
 

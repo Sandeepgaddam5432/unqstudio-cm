@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v2.1
+# PROGRESS — UnQStudio v3.0
 
 | Milestone | Status |
 |---|---|
@@ -15,5 +15,6 @@
 | V3.0-M4 Preview toolbar, route bar, visual inspector (desktop popover / mobile sheet) | ✅ done |
 | V3.0-M5 Project Settings hub, Knowledge, Publish sheet + QR + SEO | ✅ done |
 | V3.0-M6 Multi-step agent loop + symbol/dependency graph | ✅ done |
+| V3.0-M7 Doc sync, 106-check Chromium E2E, visual QA, release 3.0.0 | ✅ done |
 
-Gates: verify:docs · tsc · lint · 353 unit tests · build · 68 E2E checks. Unit tests need Node ≥ 22.
+Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks. Unit tests need Node ≥ 22.

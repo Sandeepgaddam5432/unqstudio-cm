@@ -88,3 +88,6 @@ Deep docs: [AGENTS.md](./AGENTS.md) · [01 Architecture](./DOCS/01-SYSTEM-ARCHIT
 
 Provider API keys and custom-header values live in the **IndexedDB vault** on your device (optionally AES-GCM-256 encrypted with your passphrase via PBKDF2). OAuth tokens live **only in the tab's `sessionStorage`** (cleared when the tab closes, never persisted, never in backups). They are sent only to the provider/service you configure.
 No telemetry, no server. The preview runs in an opaque-origin sandbox, so generated code can never read your keys.
+
+## v3.0 highlights
+Lovable-class studio: native mobile shell (draggable bottom sheets, sidebar drawer, floating Chat | Preview | Code bar, PWA), Home launchpad with live thumbnails and Templates & Showcase, inline Version Cards, follow-up chips, Plan card, route bar + visual click-to-edit, Project Knowledge, Publish sheet with QR + SEO editor, and a bounded multi-step agent loop. See `DOCS/` and `CHANGELOG.md`.

@@ -49,3 +49,25 @@ Benchmarked against **Lovable.dev, v0.dev, Cursor and Claude Code**. Metrics wer
 10. **Collaborative sessions** over WebRTC (Yjs) with the existing checkpoint timeline as the merge unit.
 11. **Template marketplace** via the existing plugin registry JSON (`src/core/plugins.ts`) hosted as static files with signature verification.
 12. **Edge-side usage analytics opt-in** (privacy-preserving, aggregate only) to tune default models per provider.
+
+## v3.0 post-task audit (honest)
+**Closed from v2.1:** P0 #1 agent tool loop (client-side read/search/verify + self-heal, bounded 1–5, abortable, undoable); P1 #7 picker keyboard navigation (`aria-activedescendant`, Home/End/Enter/Escape); symbol map now has prop contracts, store slices and import edges (partial P1 #4); mobile UX gap vs Lovable (native shell, sheets, drawer, floating switcher); Project Knowledge, inline Version Cards, follow-up chips, QR/SEO publish sheet, route bar and mobile visual editing.
+
+**Measured at release:** 440+ unit tests (Vitest), 106 headless-Chromium E2E checks on production `dist/`, main JS chunk ≈ 0.45 MB (CodeMirror/esbuild lazy), QR encoder 0 dependencies (validated by jsQR in tests).
+
+**Still weaker (with files):**
+1. *Agent uses text tags, not provider-native function calling* (`core/ai/agentLoop.ts`): works on every protocol, but models may ignore the tags; no parallel tool calls.
+2. *Opt-in CORS relay (P0 #2) not built* — `Requires Proxy` providers remain unusable from the browser.
+3. *Runtime-error window after the build is still ~1.8 s* (`store/chat.ts` `waitBuild`) — interaction-time errors are invisible to the agent (P0 #3).
+4. *Thumbnails are layout snapshots, not pixel screenshots* (`core/preview/thumbnail.ts`): faithful to colours/text/boxes, not images, gradients or canvas.
+5. *Route bar is hash-first* (ADR-015): BrowserRouter apps in the srcdoc iframe are best-effort.
+6. *QR limited to versions 1–10* (≤ 154 bytes at ECC M); longer URLs hide the QR.
+7. *Follow-up chips are rule-based* (ADR-014) and English-only.
+8. *E2E seeds chat history instead of replaying a real LLM stream*; recorded-fixture conversation tests (P1 #6) remain open. Drag gestures are verified with mouse-emulated pointer events, not real touch hardware; haptics cannot be verified headless.
+9. *Inspector source mapping is regex/unique-match based* (`core/runtime/inspectorEdit.ts`): ambiguous Tailwind class strings are refused rather than guessed.
+10. *Home thumbnails only exist after a project has been previewed once.*
+
+**Roadmap v3.1+**
+- P0: opt-in CORS relay (`functions/api/proxy.ts`); provider-native tool calling behind the same `AgentDeps`; 10 s post-build runtime-error capture.
+- P1: type-aware symbol graph in a worker; multi-file inline refactor + ghost-text completion; recorded-fixture chat E2E; axe accessibility run in E2E; per-provider catalog shards.
+- P2: WebContainer-class runtime option; project share links (static viewer + read-only fork); Yjs collaboration on checkpoints; template marketplace via signed plugin registry.

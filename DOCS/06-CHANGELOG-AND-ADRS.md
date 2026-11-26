@@ -164,3 +164,8 @@ A QR encoder is ~200 lines, keeps the main chunk free of a library, and the corr
 
 ### ADR-017 Agent loop wraps `send()` instead of replacing the streaming orchestrator
 The streaming parser, approval tray, usage metering and checkpoints all live in `runTurn`/`send`. The loop treats each `send` as one model step (edits are applied there), adds client-side read/search tools and build verification around it, and is testable in isolation through injected deps. Trade-off: tool tags are plain text rather than provider-native function calling (works on every provider/protocol).
+
+### V3.0-M7 — E2E, screenshots, release
+- `scripts/e2e.mjs` grows to 106 checks: native mobile (390×844: PWA meta/manifest, zero overflow on Home/drawer/Chat/Preview/Code/Project sheet/Publish sheet, drawer open+close, BottomSheet drag-dismiss, clean top bar, floating switcher, Visual Inspector sheet) and Lovable desktop (Home, collapsing sidebar, template filter + Preview + Remix, live esbuild-wasm compile, picker keyboard nav, Project Knowledge persisted across reload, SEO editor, inline SVG QR, Version Card + follow-up chips + 1-tap Restore) plus the full v2.1 zero-regression suite.
+- Fresh audit screenshots in `DOCS/screenshots/v30-*.png`; audit fixes: Home screenshot scroll container, Publish tab strip scrolls instead of clipping, duplicate inspector header removed on the sheet.
+- Release 3.0.0.

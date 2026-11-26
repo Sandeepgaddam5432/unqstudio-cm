@@ -91,3 +91,10 @@ GitHub: /api/auth/github?action=login → github.com authorize → callback (cod
 
 ## Deployment topology
 Cloudflare Pages: `npm run build` → `dist/`; `functions/` compiled by Pages automatically. See `DOCS/05-AUTH-SEO-DEPLOY.md`.
+
+## v3.0 architecture additions
+- **Shell**: `App.tsx` = `AppSidebar` + routed main (`Home` | `Workspace`). Phones use `BottomSheet` for every Modal/Drawer/Dropdown sheet; `useVisualViewport` publishes `--kb-inset`.
+- **Project record** (`ProjectMeta`): `thumbnail`, `starred`, `knowledge`, `bookmarks` (IndexedDB schema version unchanged).
+- **AI**: `chat.send` (stream + apply) ← wrapped by `core/ai/agentLoop.ts` (read/search/verify tools, 1–5 steps) ← driven from `runHeal`. `buildProjectContext` injects Project Knowledge and a symbol map with local import edges.
+- **Preview bridge**: adds `thumb:capture`/`thumb` and `route:*`/`route` messages.
+- Layering unchanged: `ui → store → core`; `lib/qrcode.ts`, `lib/haptics.ts` are framework-free.

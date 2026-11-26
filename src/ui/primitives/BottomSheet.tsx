@@ -80,7 +80,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
         ref={panel}
         data-sheet-panel
         style={{ transform: `translateY(${dy}px)`, transition: dragging ? 'none' : 'transform 220ms cubic-bezier(.32,.72,0,1)', pointerEvents: 'auto' }}
-        className={cn('animate-sheet relative flex min-h-0 flex-col overflow-hidden rounded-t-3xl border border-b-0 border-line bg-panel shadow-pop', tall ? 'h-[92dvh]' : 'max-h-[88dvh]', modeless && 'max-h-[46dvh]', className)}
+        className={cn('animate-sheet relative flex min-h-0 flex-col overflow-hidden rounded-t-3xl border border-b-0 border-line bg-panel shadow-pop', modeless ? 'max-h-[46dvh]' : tall ? 'h-[92dvh]' : 'max-h-[88dvh]', className)}
       >
         <div onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-sheet-handle style={{ touchAction: 'none' }} className="shrink-0 cursor-grab select-none active:cursor-grabbing">
           <div className="flex h-6 items-center justify-center"><span className="h-1.5 w-10 rounded-full bg-line-strong" /></div>
