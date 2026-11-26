@@ -2293,7 +2293,7 @@ Chat panel: 3-zone grid, composer, message rendering, model picker, chat setting
 ### `src/ui/chat/ModelPicker.tsx`
 
 **Purpose:** Model picker body: sticky search, provider filter pills, grouped model list.  
-**Size:** 216 lines · React component module
+**Size:** 220 lines · React component module
 
 **Exports:**
 

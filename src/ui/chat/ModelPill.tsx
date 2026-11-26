@@ -13,7 +13,7 @@ export function ModelPill({ align = 'start' }: { align?: 'start' | 'end' }) {
   const cfg = configFor(s.activeProvider, s.activeModel)
   return (
     <Dropdown
-      width={340}
+      width={440}
       align={align}
       mobileSheet
       sheetTitle="Select model"

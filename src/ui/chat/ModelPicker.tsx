@@ -170,12 +170,16 @@ export function ModelPicker({ close }: { close: () => void }) {
         onClick={() => pick(p.id, m.id)} onKeyDown={(e) => { if (e.key === 'Enter') pick(p.id, m.id) }}
         className="group flex cursor-pointer items-center gap-2 rounded-lg px-2.5 text-[13px] transition-colors duration-150 hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none">
         <ModelIcon modelId={m.id} modelName={m.name} providerId={p.id} providerName={p.name} providerLogo={p.logo} brand={p.brand} accent={p.accent} size={16} />
-        <span className="min-w-0 flex-1 truncate">{m.name}</span>
+        <span className="min-w-[5rem] flex-1 truncate">{m.name}</span>
         <span className="hidden shrink-0 items-center gap-1 text-faint md:flex" title={p.name}><ProviderIcon id={p.id} name={p.name} logo={p.logo} brand={p.brand} accent={p.accent} size={11} /></span>
         {m.context ? <Chip title="Context window">{formatTokens(m.context)}</Chip> : null}
-        {m.vision && <><Eye size={11} className="shrink-0 text-faint sm:hidden" aria-label="vision" /><Chip>Vision</Chip></>}
-        {m.reasoning && <><Brain size={11} className="shrink-0 text-faint sm:hidden" aria-label="reasoning" /><Chip>Reasoning</Chip></>}
-        {m.tool_call && <><Wrench size={11} className="hidden shrink-0 text-faint" aria-label="tools" /><Chip>Tools</Chip></>}
+        {(m.vision || m.reasoning || m.tool_call) && (
+          <span className="flex shrink-0 items-center gap-0.5 text-faint">
+            {m.vision && <span title="Vision" className="rounded bg-subtle p-0.5"><Eye size={11} aria-label="Vision" /></span>}
+            {m.reasoning && <span title="Reasoning" className="rounded bg-subtle p-0.5"><Brain size={11} aria-label="Reasoning" /></span>}
+            {m.tool_call && <span title="Tools" className="rounded bg-subtle p-0.5"><Wrench size={11} aria-label="Tools" /></span>}
+          </span>
+        )}
         {m.cost?.input != null ? <Chip title="USD per 1M tokens in/out">${m.cost.input}/{m.cost.output ?? '?'}</Chip> : null}
         {active && <Check size={13} className="shrink-0 text-accent" />}
         <button aria-label={fav ? `Unstar ${m.name}` : `Star ${m.name}`} aria-pressed={fav} data-star onClick={(e) => { e.stopPropagation(); useModelPrefs.getState().toggleFavorite(p.id, m.id) }} className={cn('shrink-0 rounded p-0.5 transition-opacity duration-150 hover:text-warn', fav ? 'text-warn' : 'text-faint opacity-60 group-hover:opacity-100')}>
@@ -198,7 +202,7 @@ export function ModelPicker({ close }: { close: () => void }) {
           ))}
         </div>
       </div>
-      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-1" data-picker-list role="listbox" aria-label="Models">
+      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-1 pb-1" data-picker-list role="listbox" aria-label="Models">
         <div className="relative" style={{ height: rows.length * ROW_H }}>
           {rows.slice(first, last).map((r, i) => renderRow(r, first + i))}
         </div>

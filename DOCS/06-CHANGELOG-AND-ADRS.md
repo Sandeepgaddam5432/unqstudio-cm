@@ -110,3 +110,6 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 
 ### V2.1-M7 — Verification
 - `scripts/e2e.mjs`: 68 checks in headless Chromium against `dist/` — zero upstream-brand text, zero broken images, 4-protocol custom-provider flow with mocked live `/models`, favorites + windowed scroll, inline ⌘K, canonical/JSON-LD, theme, auth UI, chat zero-overlap at 1440 and 375, SaaS compile, zero console errors. Screenshots: `DOCS/screenshots/v21-*.png`. Honest audit in `DOCS/08`.
+
+### V2.1-M7 visual-audit fix
+- Screenshot review found the picker's metadata chips starving the model name in the 340 px panel and the list scrolling sideways. Fix: horizontal overflow hidden, capability chips are compact icon chips with titles, name has a 5 rem floor, desktop panel widened to 440 px.
