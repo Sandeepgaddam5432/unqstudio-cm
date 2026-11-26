@@ -91,3 +91,8 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 - `CustomProviderModal` / `CustomProviderCards` + `useCustomProviders` store; vault-held key + headers; Test & Auto-Fetch with live preview.
 
 **ADR-V21-3 — Protocol = ProviderKind; secrets only in the Vault.** Context: “custom” was OpenAI-only and headers were static. Decision: one discriminated `kind` selects request builder + parser + models endpoint; custom provider records hold no secrets; header values (often tokens) are encrypted like keys. Consequence: adding a 5th protocol is one builder + one parser + one `liveEndpoint` branch.
+
+### V2.1-M4 — Picker & Settings reorganisation
+- ModelPicker rewritten around a windowed flat row list (ADR-V21-4), favorites/recents, capability search, icons + chips, skeleton rows, Add Custom Provider footer. Settings → grouped nav; Providers Hub sections; new Account tab.
+
+**ADR-V21-4 — Hand-rolled fixed-height windowing, no virtualization dependency.** Context: 327 providers × ~30 models froze the old grouped DOM list. Decision: flatten to rows of constant height and render `slice(first,last)` with absolute `translateY`; no new dependency (a 30-line window beats `react-virtual` for a constant row height). Consequence: O(visible) DOM; rows must stay 36px (variable height would need measurement).

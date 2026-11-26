@@ -42,7 +42,7 @@ export const useApp = create<AppState>()(
       mode: 'studio',
       projectId: null,
       settingsOpen: false,
-      settingsTab: 'general',
+      settingsTab: 'providers',
       publishOpen: false,
       paletteOpen: false,
       onboardingOpen: false,

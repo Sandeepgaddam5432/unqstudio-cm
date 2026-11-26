@@ -19,7 +19,7 @@ export function RegistryCard() {
       <div className="min-w-0">
         <p className="text-[13px] font-medium">Model Catalog {registry && <Badge tone="success" className="ml-1">{registry.providers.length} providers · {countModels(registry).toLocaleString()} models</Badge>}</p>
         <p className="mt-0.5 text-xs text-muted">
-          {registryStatus === 'error' ? <span className="text-danger">Could not load: {registryError}</span> : <>Source: {registrySource ?? '…'} · Last synced: {syncedAt ? new Date(syncedAt).toLocaleString() : 'never'}. New providers appear automatically.</>}
+          {registryStatus === 'error' ? <span className="text-danger">Could not load: {registryError}</span> : <>Catalog source: {({ edge: "live sync", directory: "provider directory", bundled: "bundled snapshot", cache: "local cache" } as Record<string, string>)[registrySource ?? ""] ?? "…"} · Last synced: {syncedAt ? new Date(syncedAt).toLocaleString() : 'never'}. New providers appear automatically.</>}
         </p>
       </div>
       <Button size="sm" onClick={() => void loadRegistry(true)} disabled={registryStatus === 'loading'}><RefreshCw size={13} className={registryStatus === 'loading' ? 'animate-spin-fast' : ''} />Refresh Catalog</Button>

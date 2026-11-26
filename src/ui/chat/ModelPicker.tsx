@@ -1,27 +1,44 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Brain, Check, Eye, RefreshCw, Search, Wrench } from 'lucide-react'
-import { allProviders, fetchLiveFor, isConfigured, isProviderEnabled, modelsForProvider } from '@/store/aiConfig'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { Brain, Check, Eye, Plus, RefreshCw, Search, Star, Wrench } from 'lucide-react'
+import { allProviders, configFor, fetchLiveFor, isConfigured, isProviderEnabled, modelsForProvider } from '@/store/aiConfig'
 import { useModels } from '@/store/models'
 import { useSettings } from '@/store/settings'
 import { useApp } from '@/store/app'
 import { useVault } from '@/store/vault'
-import { configFor } from '@/store/aiConfig'
+import { modelKey, useModelPrefs } from '@/store/modelPrefs'
+import { useCustomProviders } from '@/store/customProviders'
+import { matchesQuery, scoreModel } from '@/core/ai/modelSearch'
+import type { EnrichedModel } from '@/core/ai/modelFetcher'
+import type { ProviderDef } from '@/core/ai/providers'
 import { Spinner } from '@/ui/primitives'
+import { ModelIcon } from '@/ui/icons/ModelIcon'
+import { ProviderIcon } from '@/ui/icons/ProviderIcon'
 import { formatTokens } from '@/core/ai/tokens'
 import { cn } from '@/lib/cn'
 import { ago } from '@/ui/settings/registryUi'
 
-export type PickerTab = 'configured' | 'ready' | 'local' | 'all'
+export type PickerTab = 'configured' | 'favorites' | 'ready' | 'custom' | 'local' | 'all'
 const TABS: { id: PickerTab; label: string }[] = [
-  { id: 'configured', label: 'Configured ⭐' }, { id: 'ready', label: 'Browser-Ready 🟢' }, { id: 'local', label: 'Local 💻' }, { id: 'all', label: 'All Providers' },
+  { id: 'configured', label: 'Configured' }, { id: 'favorites', label: 'Favorites ⭐' }, { id: 'ready', label: 'Browser-Ready' },
+  { id: 'custom', label: 'Custom' }, { id: 'local', label: 'Local' }, { id: 'all', label: 'All Providers' },
 ]
-const MAX_GROUPS = 60
-const MAX_MODELS = 40
+const ROW_H = 36
+const OVERSCAN = 8
+const MAX_SEARCH = 300
+
+type Row =
+  | { t: 'section'; key: string; label: string }
+  | { t: 'head'; key: string; p: ProviderDef; open: boolean; total: number }
+  | { t: 'model'; key: string; p: ProviderDef; m: EnrichedModel; sub?: boolean }
+  | { t: 'skeleton'; key: string }
+  | { t: 'note'; key: string; text: string }
+
+const Chip = ({ children, title }: { children: React.ReactNode; title?: string }) => <span title={title} className="hidden shrink-0 rounded bg-subtle px-1 font-mono text-[10px] leading-4 text-muted sm:inline-block">{children}</span>
 
 /**
  * Model picker body (anchored popover on desktop, bottom sheet on mobile).
- * Sticky search + compatibility filter tabs on top; collapsible provider groups below.
- * Models are resolved live-first (see modelsForProvider) — nothing here is hard-coded.
+ * Sticky fuzzy search (names, providers, capability keywords) + filter pills; favorites/recents pinned on top;
+ * one WINDOWED flat row list so 300+ providers / 9,000+ models scroll at 60fps with a handful of DOM nodes.
  */
 export function ModelPicker({ close }: { close: () => void }) {
   const s = useSettings()
@@ -30,41 +47,142 @@ export function ModelPicker({ close }: { close: () => void }) {
   const live = useModels((m) => m.live)
   const syncedAt = useModels((m) => m.syncedAt)
   const status = useModels((m) => m.registryStatus)
+  const favorites = useModelPrefs((p) => p.favorites)
+  const recents = useModelPrefs((p) => p.recents)
+  const customCount = useCustomProviders((c) => c.providers)
   const providers = allProviders()
   const configuredList = providers.filter((p) => isProviderEnabled(p) && isConfigured(p))
   const [tab, setTab] = useState<PickerTab>(configuredList.length ? 'configured' : 'ready')
   const [q, setQ] = useState('')
+  const dq = useDeferredValue(q)
   const [open, setOpen] = useState<Set<string>>(() => new Set([s.activeProvider]))
-  const [more, setMore] = useState<Set<string>>(new Set())
 
   // Auto-fetch the live model list for configured providers that have not been queried yet.
   useEffect(() => { for (const p of configuredList) { const st = live[p.id]?.status; if (!st || st === 'idle') void fetchLiveFor(p) } }, [])
 
-  const groups = useMemo(() => {
-    const ql = q.trim().toLowerCase()
-    const list = providers.filter((p) => {
+  const rows = useMemo<Row[]>(() => {
+    const query = dq.trim()
+    const byId = new Map(providers.map((p) => [p.id, p]))
+    const modelRow = (p: ProviderDef, m: EnrichedModel, sub?: boolean): Row => ({ t: 'model', key: `${sub ? 's:' : ''}${p.id}::${m.id}`, p, m, sub })
+    const lookup = (k: string): Row | null => {
+      const [pid, ...rest] = k.split('::'); const mid = rest.join('::'); const p = byId.get(pid!)
+      if (!p) return null
+      const m = modelsForProvider(p).find((x) => x.id === mid) ?? { id: mid, name: mid, source: 'custom' as const }
+      return modelRow(p, m, true)
+    }
+    const pool = providers.filter((p) => {
       if (tab === 'configured') return isProviderEnabled(p) && isConfigured(p)
       if (tab === 'ready') return p.compat === 'browser-ready'
+      if (tab === 'custom') return !!p.custom
       if (tab === 'local') return p.compat === 'local'
       return true
     })
-    const out: { p: (typeof providers)[number]; models: ReturnType<typeof modelsForProvider>; total: number }[] = []
-    for (const p of list) {
-      if (!ql && !open.has(p.id)) { out.push({ p, models: [], total: -1 }); continue }
-      const all = p.compat === 'requires-proxy' ? [] : modelsForProvider(p)
-      const models = ql ? all.filter((m) => m.id.toLowerCase().includes(ql) || m.name.toLowerCase().includes(ql) || p.name.toLowerCase().includes(ql)) : all
-      if (ql && !models.length) continue
-      out.push({ p, models, total: models.length })
+    const out: Row[] = []
+    if (tab === 'favorites' || (!query && tab === 'configured')) {
+      const favRows = favorites.map(lookup).filter((r): r is Row => !!r)
+      if (favRows.length) { out.push({ t: 'section', key: 'sec-fav', label: 'Favorites' }, ...favRows) }
+      if (tab === 'configured') {
+        const rec = recents.filter((k) => !favorites.includes(k)).map(lookup).filter((r): r is Row => !!r)
+        if (rec.length) out.push({ t: 'section', key: 'sec-rec', label: 'Recently used' }, ...rec)
+      }
+      if (tab === 'favorites') {
+        const f = query ? favRows.filter((r) => r.t === 'model' && matchesQuery(r.m, r.p.name, query)) : favRows
+        return f.length ? [{ t: 'section', key: 'sec-fav', label: 'Favorites' }, ...f] : [{ t: 'note', key: 'nofav', text: query ? `No favorites match “${query}”.` : 'Star ⭐ any model to pin it here.' }]
+      }
+    }
+    if (query) {
+      const hits: { p: ProviderDef; m: EnrichedModel; sc: number }[] = []
+      for (const p of pool) {
+        if (p.compat === 'requires-proxy') continue
+        for (const m of modelsForProvider(p)) if (matchesQuery(m, p.name, query)) hits.push({ p, m, sc: scoreModel(m, query) })
+      }
+      hits.sort((a, b) => a.sc - b.sc)
+      if (!hits.length) return [{ t: 'note', key: 'none', text: `No models match “${query}”.` }]
+      out.push({ t: 'section', key: 'sec-res', label: `${hits.length} result${hits.length === 1 ? '' : 's'}${hits.length > MAX_SEARCH ? ` (showing ${MAX_SEARCH})` : ''}` })
+      for (const h of hits.slice(0, MAX_SEARCH)) out.push(modelRow(h.p, h.m))
+      return out
+    }
+    if (!pool.length) out.push({ t: 'note', key: 'empty', text: tab === 'configured' ? 'No configured providers yet. Add an API key in Providers Hub, or browse Browser-Ready.' : tab === 'custom' ? 'No custom providers yet — add one below.' : 'Nothing here.' })
+    for (const p of pool) {
+      const isOpen = open.has(p.id)
+      const ms = isOpen && p.compat !== 'requires-proxy' ? modelsForProvider(p) : []
+      out.push({ t: 'head', key: `h:${p.id}`, p, open: isOpen, total: ms.length })
+      if (!isOpen) continue
+      if (p.compat === 'requires-proxy') out.push({ t: 'note', key: `n:${p.id}`, text: 'Needs server-side credentials (IAM / signed requests) — route it through a gateway such as OpenRouter or your own proxy.' })
+      else if (live[p.id]?.status === 'loading' && !ms.length) out.push({ t: 'skeleton', key: `k1:${p.id}` }, { t: 'skeleton', key: `k2:${p.id}` }, { t: 'skeleton', key: `k3:${p.id}` })
+      else if (!ms.length) out.push({ t: 'note', key: `n:${p.id}`, text: 'No models yet — add a key or a model ID in Providers Hub.' })
+      else for (const m of ms) out.push(modelRow(p, m))
     }
     return out
-  }, [tab, q, open, registry, live, s.userModels, s.enabled, providers.length])
+  }, [tab, dq, open, registry, live, s.userModels, s.enabled, providers.length, favorites, recents, customCount])
+
+  // ── windowing ──
+  const scroller = useRef<HTMLDivElement>(null)
+  const [top, setTop] = useState(0)
+  const [vh, setVh] = useState(420)
+  useEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    const measure = () => setVh(el.clientHeight || 420)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  useEffect(() => { scroller.current?.scrollTo?.({ top: 0 }); setTop(0) }, [tab, dq])
+  const first = Math.max(0, Math.floor(top / ROW_H) - OVERSCAN)
+  const last = Math.min(rows.length, Math.ceil((top + vh) / ROW_H) + OVERSCAN)
 
   const toggle = (id: string) => setOpen((o) => { const n = new Set(o); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const pick = (providerId: string, id: string) => {
     const c = configFor(providerId)
     s.set({ activeProvider: providerId, activeModel: id, enabled: { ...s.enabled, [providerId]: true } })
+    useModelPrefs.getState().pushRecent(providerId, id)
     close()
     if (c.error === 'nokey') useApp.getState().openSettings('providers')
+  }
+
+  const renderRow = (r: Row, idx: number) => {
+    const style: React.CSSProperties = { position: 'absolute', top: 0, left: 0, right: 0, height: ROW_H, transform: `translateY(${idx * ROW_H}px)` }
+    if (r.t === 'section') return <div key={r.key} style={style} className="flex items-end px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-faint">{r.label}</div>
+    if (r.t === 'note') return <div key={r.key} style={style} className="flex items-center px-3 text-[11px] leading-snug text-muted"><span className="line-clamp-2">{r.text}</span></div>
+    if (r.t === 'skeleton') return <div key={r.key} style={style} className="flex items-center gap-2 px-3" aria-hidden="true"><span className="h-4 w-4 animate-pulse rounded bg-subtle" /><span className="h-3 flex-1 animate-pulse rounded bg-subtle" /><span className="h-3 w-10 animate-pulse rounded bg-subtle" /></div>
+    if (r.t === 'head') {
+      const { p } = r
+      const lv = live[p.id]
+      return (
+        <button key={r.key} style={style} onClick={() => toggle(p.id)} aria-expanded={r.open} data-provider-group={p.id} className="flex items-center gap-2 rounded-lg px-2.5 text-left transition-colors duration-150 hover:bg-subtle">
+          <ProviderIcon id={p.id} name={p.name} logo={p.logo} brand={p.brand} accent={p.accent} size={16} />
+          <span className="min-w-0 flex-1 truncate text-[12px] font-semibold tracking-tight">{p.name}</span>
+          {lv?.status === 'loading' && <Spinner size={11} />}
+          {lv?.status === 'ok' && <span className="shrink-0 rounded bg-success/10 px-1 text-[9px] font-medium text-success">live</span>}
+          {p.compat === 'requires-proxy' && <span className="shrink-0 text-[10px] text-warn">Requires Proxy</span>}
+          {p.compat !== 'requires-proxy' && !isConfigured(p) && <span className="shrink-0 text-[10px] text-warn">needs key</span>}
+        </button>
+      )
+    }
+    const { p, m } = r
+    const fav = favorites.includes(modelKey(p.id, m.id))
+    const active = s.activeProvider === p.id && s.activeModel === m.id
+    return (
+      <div key={r.key} style={style} role="option" aria-selected={active} tabIndex={0} title={`${p.name} · ${m.id}`} data-model-row={`${p.id}::${m.id}`}
+        onClick={() => pick(p.id, m.id)} onKeyDown={(e) => { if (e.key === 'Enter') pick(p.id, m.id) }}
+        className="group flex cursor-pointer items-center gap-2 rounded-lg px-2.5 text-[13px] transition-colors duration-150 hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none">
+        <ModelIcon modelId={m.id} modelName={m.name} providerId={p.id} providerName={p.name} providerLogo={p.logo} brand={p.brand} accent={p.accent} size={16} />
+        <span className="min-w-0 flex-1 truncate">{m.name}</span>
+        <span className="hidden shrink-0 items-center gap-1 text-faint md:flex" title={p.name}><ProviderIcon id={p.id} name={p.name} logo={p.logo} brand={p.brand} accent={p.accent} size={11} /></span>
+        {m.context ? <Chip title="Context window">{formatTokens(m.context)}</Chip> : null}
+        {m.vision && <><Eye size={11} className="shrink-0 text-faint sm:hidden" aria-label="vision" /><Chip>Vision</Chip></>}
+        {m.reasoning && <><Brain size={11} className="shrink-0 text-faint sm:hidden" aria-label="reasoning" /><Chip>Reasoning</Chip></>}
+        {m.tool_call && <><Wrench size={11} className="hidden shrink-0 text-faint" aria-label="tools" /><Chip>Tools</Chip></>}
+        {m.cost?.input != null ? <Chip title="USD per 1M tokens in/out">${m.cost.input}/{m.cost.output ?? '?'}</Chip> : null}
+        {active && <Check size={13} className="shrink-0 text-accent" />}
+        <button aria-label={fav ? `Unstar ${m.name}` : `Star ${m.name}`} aria-pressed={fav} data-star onClick={(e) => { e.stopPropagation(); useModelPrefs.getState().toggleFavorite(p.id, m.id) }} className={cn('shrink-0 rounded p-0.5 transition-opacity duration-150 hover:text-warn', fav ? 'text-warn' : 'text-faint opacity-60 group-hover:opacity-100')}>
+          <Star size={12} fill={fav ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -72,7 +190,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       <div className="sticky top-0 z-10 shrink-0 space-y-2 bg-panel p-2 pb-1.5">
         <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-subtle px-2.5 text-muted focus-within:border-line-strong focus-within:ring-2 focus-within:ring-accent/20">
           <Search size={14} className="shrink-0" />
-          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search models & providers…" aria-label="Search models" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
+          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search models, providers, vision, reasoning, free…" aria-label="Search models" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
         </label>
         <div className="scrollbar-none -mx-0.5 flex gap-1 overflow-x-auto px-0.5" role="tablist" aria-label="Provider filter">
           {TABS.map((t) => (
@@ -80,47 +198,16 @@ export function ModelPicker({ close }: { close: () => void }) {
           ))}
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-1" data-picker-list>
-        {groups.length === 0 && (
-          <p className="px-3 py-8 text-center text-xs text-muted">{tab === 'configured' && !q ? 'No configured providers yet. Add an API key in “All providers…”, or browse the Browser-Ready tab.' : q ? `No models match “${q}”.` : 'Nothing here.'}</p>
-        )}
-        {groups.slice(0, MAX_GROUPS).map(({ p, models, total }) => {
-          const expanded = total >= 0
-          const lv = live[p.id]
-          const showAll = more.has(p.id)
-          return (
-            <div key={p.id} className="mb-0.5" data-provider-group={p.id}>
-              <button onClick={() => toggle(p.id)} aria-expanded={expanded} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-150 hover:bg-subtle">
-                <span className="min-w-0 flex-1 truncate text-[10px] font-semibold uppercase tracking-wider text-faint">{p.name}</span>
-                {lv?.status === 'loading' && <Spinner size={11} />}
-                {lv?.status === 'ok' && <span className="shrink-0 rounded bg-success/10 px-1 text-[9px] font-medium normal-case text-success">live</span>}
-                {p.compat === 'requires-proxy' && <span className="shrink-0 text-[10px] normal-case text-warn">Requires Proxy 🔌</span>}
-                {p.compat !== 'requires-proxy' && !isConfigured(p) && <span className="shrink-0 text-[10px] normal-case text-warn">needs key</span>}
-              </button>
-              {expanded && p.compat === 'requires-proxy' && <p className="px-2.5 pb-2 text-[11px] leading-snug text-muted">Needs server-side credentials (IAM / signed requests) — route it through a gateway such as OpenRouter or your own proxy.</p>}
-              {expanded && (showAll ? models : models.slice(0, MAX_MODELS)).map((m) => (
-                <button key={m.id} onClick={() => pick(p.id, m.id)} title={m.id} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors duration-150 hover:bg-subtle sm:py-1.5">
-                  <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                  {m.vision && <Eye size={11} className="shrink-0 text-faint" aria-label="vision" />}
-                  {m.reasoning && <Brain size={11} className="shrink-0 text-faint" aria-label="reasoning" />}
-                  {m.tool_call && <Wrench size={11} className="hidden shrink-0 text-faint sm:block" aria-label="tools" />}
-                  {m.context ? <span className="hidden shrink-0 font-mono text-[10px] text-faint sm:block">{formatTokens(m.context)}</span> : null}
-                  {m.cost?.input != null ? <span className="hidden shrink-0 font-mono text-[10px] text-faint md:block">${m.cost.input}/{m.cost.output ?? '?'}</span> : null}
-                  {s.activeProvider === p.id && s.activeModel === m.id && <Check size={13} className="shrink-0 text-accent" />}
-                </button>
-              ))}
-              {expanded && models.length > MAX_MODELS && !showAll && <button onClick={() => setMore(new Set(more).add(p.id))} className="w-full px-2.5 py-1 text-left text-[11px] text-accent">Show all {models.length} models…</button>}
-              {expanded && p.compat !== 'requires-proxy' && models.length === 0 && <p className="px-2.5 pb-2 text-[11px] text-muted">{lv?.status === 'loading' ? 'Fetching live models…' : 'No models yet — add a key or a custom model ID in All providers…'}</p>}
-            </div>
-          )
-        })}
-        {groups.length > MAX_GROUPS && <p className="px-3 py-2 text-center text-[11px] text-muted">Showing {MAX_GROUPS} of {groups.length} providers — refine your search.</p>}
+      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-1" data-picker-list role="listbox" aria-label="Models">
+        <div className="relative" style={{ height: rows.length * ROW_H }}>
+          {rows.slice(first, last).map((r, i) => renderRow(r, first + i))}
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1 border-t border-line p-1">
-        <button onClick={() => { close(); useApp.getState().setOnboardingOpen(true) }} className="rounded-lg px-2 py-1.5 text-xs text-muted transition-colors hover:bg-subtle hover:text-fg">Quick setup…</button>
-        <button onClick={() => { close(); useApp.getState().openSettings('providers') }} className="rounded-lg px-2 py-1.5 text-xs text-muted transition-colors hover:bg-subtle hover:text-fg">All providers…</button>
+        <button onClick={() => { close(); useCustomProviders.getState().openNew() }} data-testid="picker-add-custom" className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/10"><Plus size={12} />Add Custom Provider</button>
+        <button onClick={() => { close(); useApp.getState().openSettings('providers') }} className="rounded-lg px-2 py-1.5 text-xs text-muted transition-colors hover:bg-subtle hover:text-fg">Providers Hub…</button>
         <button onClick={() => void useModels.getState().loadRegistry(true)} title="Refresh the model catalog" aria-label="Refresh Catalog" className="ml-auto flex min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-faint transition-colors hover:bg-subtle hover:text-fg">
-          <RefreshCw size={11} className={cn('shrink-0', status === 'loading' && 'animate-spin-fast')} /><span className="truncate">{syncedAt ? `synced ${ago(syncedAt)}` : 'Refresh Catalog'}</span>
+          <RefreshCw size={11} className={cn('shrink-0', status === 'loading' && 'animate-spin-fast')} /><span className="truncate">{syncedAt ? `Catalog synced ${ago(syncedAt)}` : 'Refresh Catalog'}</span>
         </button>
       </div>
     </div>

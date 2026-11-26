@@ -11,7 +11,7 @@ import { toast } from '@/store/toast'
 const host = (u: string) => { try { return new URL(u).host } catch { return u } }
 
 /** “+ Add Custom Provider” call-to-action + cards with Edit / Duplicate / Delete. */
-export function CustomProviderCards({ compact = false }: { compact?: boolean }) {
+export function CustomProviderCards({ compact = false, showAdd = true }: { compact?: boolean; showAdd?: boolean }) {
   const { providers, openNew, openEdit, duplicate, remove } = useCustomProviders()
   const vault = useVault()
   useVault((v) => v.rev)
@@ -35,9 +35,9 @@ export function CustomProviderCards({ compact = false }: { compact?: boolean }) 
 
   return (
     <div data-testid="custom-provider-cards">
-      <Button variant="primary" onClick={openNew} className="w-full sm:w-auto" data-testid="add-custom-provider"><Plus size={14} />Add Custom Provider</Button>
+      {showAdd && <Button variant="primary" onClick={openNew} className="w-full sm:w-auto" data-testid="add-custom-provider"><Plus size={14} />Add Custom Provider</Button>}
       {providers.length === 0 && !compact && <p className="mt-3 rounded-xl border border-dashed border-line px-3 py-5 text-center text-xs text-muted">No custom providers yet. Connect any OpenAI-, Anthropic-, Gemini- or Ollama-style endpoint — a private gateway, a proxy, or a self-hosted model.</p>}
-      <ul className="mt-3 space-y-1.5">
+      <ul className={showAdd ? 'mt-3 space-y-1.5' : 'space-y-1.5'}>
         {providers.map((p) => (
           <li key={p.id} className="flex items-center gap-3 rounded-xl border border-line bg-panel px-3 py-2.5" data-custom-provider={p.id}>
             <ProviderIcon id={p.id} name={p.name} brand={p.brand} accent={p.accent} size={20} />

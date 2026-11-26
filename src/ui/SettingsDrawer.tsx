@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { Drawer, Logo, Section, Segmented, Switch, Tabs } from '@/ui/primitives'
+import { type ReactNode } from 'react'
+import { cn } from '@/lib/cn'
+import { AccountTab } from '@/ui/settings/AccountTab'
+import { Drawer, Logo, Section, Segmented, Switch } from '@/ui/primitives'
 import { useApp, type ThemePref } from '@/store/app'
 import { useSettings } from '@/store/settings'
 import { ProvidersTab } from '@/ui/settings/ProvidersTab'
@@ -9,14 +11,22 @@ import { DataTab } from '@/ui/settings/DataTab'
 import { DebugTab } from '@/ui/settings/DebugTab'
 import { FeaturesTab } from '@/ui/settings/FeaturesTab'
 
-function General() {
-  const { theme, setTheme, mode, setMode } = useApp()
-  const s = useSettings()
+function Appearance() {
+  const { theme, setTheme } = useApp()
   return (
     <div className="p-5">
       <Section title="Appearance" description="Obsidian Dark and Paper Light, with a system option.">
         <Segmented<ThemePref> value={theme} onChange={setTheme} items={[{ id: 'system', label: 'System' }, { id: 'light', label: 'Paper Light' }, { id: 'dark', label: 'Obsidian Dark' }]} />
       </Section>
+    </div>
+  )
+}
+
+function ChatAndEditor() {
+  const { mode, setMode } = useApp()
+  const s = useSettings()
+  return (
+    <div className="p-5">
       <Section title="Default workspace" description="Studio is chat-first. Code is the full IDE. Switch any time with ⌘E.">
         <Segmented value={mode} onChange={setMode} items={[{ id: 'studio', label: 'Studio' }, { id: 'code', label: 'Code' }]} />
       </Section>
@@ -30,25 +40,40 @@ function General() {
   )
 }
 
-export const SETTINGS_TABS: { id: string; label: string; render: () => React.ReactNode }[] = [
-  { id: 'general', label: 'General', render: () => <General /> },
-  { id: 'providers', label: 'Providers', render: () => <ProvidersTab /> },
-  { id: 'connections', label: 'Connections', render: () => <ConnectionsTab /> },
-  { id: 'prompts', label: 'Prompts', render: () => <PromptsTab /> },
-  { id: 'data', label: 'Data', render: () => <DataTab /> },
-  { id: 'debug', label: 'Debug', render: () => <DebugTab /> },
-  { id: 'features', label: 'Features', render: () => <FeaturesTab /> },
+interface NavItem { id: string; label: string; render: () => ReactNode }
+export const SETTINGS_GROUPS: { label: string; items: NavItem[] }[] = [
+  { label: 'AI & Models', items: [{ id: 'providers', label: 'Providers Hub', render: () => <ProvidersTab /> }, { id: 'prompts', label: 'Prompt Rules', render: () => <PromptsTab /> }] },
+  { label: 'Workspace', items: [{ id: 'editor', label: 'Chat & Editor', render: () => <ChatAndEditor /> }, { id: 'appearance', label: 'Appearance', render: () => <Appearance /> }] },
+  { label: 'Account', items: [{ id: 'account', label: 'Sign In & Cloud Sync', render: () => <AccountTab /> }] },
+  { label: 'Integrations', items: [{ id: 'connections', label: 'Connections', render: () => <ConnectionsTab /> }, { id: 'features', label: 'Plugins & MCP', render: () => <FeaturesTab /> }] },
+  { label: 'System', items: [{ id: 'data', label: 'Data & Storage', render: () => <DataTab /> }, { id: 'debug', label: 'Debug & Logs', render: () => <DebugTab /> }] },
 ]
+const ALL = SETTINGS_GROUPS.flatMap((g) => g.items)
+/** Legacy tab ids (`general`) resolve to their new home. */
+const ALIAS: Record<string, string> = { general: 'editor' }
 
 export default function SettingsDrawer() {
   const { settingsOpen, closeSettings, settingsTab, openSettings } = useApp()
-  const [tabs] = useState(SETTINGS_TABS)
-  const active = tabs.find((t) => t.id === settingsTab) ?? tabs[0]
+  const active = ALL.find((t) => t.id === (ALIAS[settingsTab] ?? settingsTab)) ?? ALL[0]!
   return (
     <Drawer open={settingsOpen} onClose={closeSettings} title={<span className="flex items-center gap-2"><Logo size={18} />Settings</span>}>
-      <div className="flex h-full flex-col">
-        <Tabs size="sm" className="shrink-0 border-b border-line px-3" value={active.id} onChange={(id) => openSettings(id)} items={tabs.map((t) => ({ id: t.id, label: t.label }))} />
-        <div className="min-h-0 flex-1 overflow-auto">{active.render()}</div>
+      <div className="flex h-full min-h-0 flex-col md:flex-row" data-settings-hub>
+        <nav className="hidden w-52 shrink-0 overflow-y-auto border-r border-line p-2 md:block" role="tablist" aria-orientation="vertical" aria-label="Settings sections">
+          {SETTINGS_GROUPS.map((g) => (
+            <div key={g.label} className="mb-3">
+              <p className="px-2.5 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-faint">{g.label}</p>
+              {g.items.map((t) => (
+                <button key={t.id} role="tab" aria-selected={active.id === t.id} onClick={() => openSettings(t.id)} className={cn('flex h-8 w-full items-center rounded-lg px-2.5 text-left text-[13px] transition-colors duration-150', active.id === t.id ? 'bg-accent/10 font-medium text-accent' : 'text-muted hover:bg-subtle hover:text-fg')}>{t.label}</button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="shrink-0 border-b border-line p-2 md:hidden">
+          <select value={active.id} onChange={(e) => openSettings(e.target.value)} aria-label="Settings section" className="h-9 w-full rounded-lg border border-line bg-subtle px-2.5 text-[13px] text-fg">
+            {SETTINGS_GROUPS.map((g) => <optgroup key={g.label} label={g.label}>{g.items.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>)}
+          </select>
+        </div>
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto" data-settings-panel>{active.render()}</div>
       </div>
     </Drawer>
   )

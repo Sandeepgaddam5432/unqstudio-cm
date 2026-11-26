@@ -28,6 +28,9 @@ export const DIR_PURPOSES = {
   'functions/api/auth': 'Cloudflare Pages Functions for OAuth.',
 }
 export const PURPOSES = {
+  'src/core/ai/modelSearch.ts': 'Pure picker search: multi-term fuzzy match over name/id/provider plus capability keywords (vision, reasoning, tools, free) and a rank score.',
+  'src/store/modelPrefs.ts': 'Zustand store (localStorage `unq.modelPrefs.v1`): starred models and the last 3 recently used models.',
+  'src/ui/settings/AccountTab.tsx': 'Settings → Sign In & Cloud Sync: guest/signed-in state, back up / restore, sign out (wraps useAuth).',
   'src/core/ai/customProviders.ts': 'Pure custom-provider model: CustomProvider record (non-secret), the 4 PROTOCOLS (openai/anthropic/gemini/ollama) with hints + default URLs, slug/unique id, header cleaning/parsing, validation, toProviderDef.',
   'src/store/customProviders.ts': 'Zustand CRUD store (add/update/duplicate/remove + modal state) persisted to localStorage `unq.customProviders.v1` WITHOUT keys or header values (those live in the Vault).',
   'src/ui/ai/CustomProviderModal.tsx': 'The “Add / Edit Custom Provider” studio: name, icon preset + accent, protocol selector, base URL, vault-stored key, custom headers, 1-click Test & Auto-Fetch Models with live preview, manual model IDs.',
