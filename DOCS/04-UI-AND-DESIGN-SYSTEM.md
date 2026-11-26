@@ -91,3 +91,6 @@ Dark mode is class-based (`@custom-variant dark (&:where(.dark, .dark *))`); fon
 
 ## v3.0 Chat
 `MessageView` order for an assistant turn: BuildActivityCard → reasoning/text/op cards → footer → VersionCard → FollowUpChips → Plan card. Version numbers come from `core/ai/versions.ts`; bookmarks live in `ProjectMeta.bookmarks`. Model Picker rows are `id=mp-row-N`; the search box is an ARIA combobox controlling `#mp-list`.
+
+## v3.0 Preview
+`Preview` = `PreviewToolbar` + iframe + `VisualInspector`. Bridge protocol additions: host→iframe `route:navigate|back|forward`, iframe→host `route`. Selection overlay colour `#3B82F6`. On phones the inspector is a modeless sheet (max 46dvh) so the top of the preview stays visible.

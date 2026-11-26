@@ -13,7 +13,9 @@ import { postToPreview, setPreviewFrame } from './bridge'
 import { getAdapter } from '@/core/vfs/idbAdapter'
 import { useProjects } from '@/store/projects'
 import { persistThumbnail, rasterizeThumbnail, snapshotToThumbnail, type ThumbSnapshot } from '@/core/preview/thumbnail'
-import { InspectorPanel } from './Inspector'
+import { VisualInspector } from './VisualInspector'
+import { PreviewToolbar } from './PreviewToolbar'
+import { parseRouteMessage } from '@/core/runtime/routeBridge'
 import type { SerializedError } from '@/core/runtime/types'
 
 let lastThumbAt = 0
@@ -94,7 +96,8 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
   const box = useRef<HTMLDivElement>(null)
   const [avail, setAvail] = useState({ w: 0, h: 0 })
   useEffect(() => { setPreviewFrame(frame.current); return () => setPreviewFrame(null) })
-  const errCount = p.logs.filter((l) => l.level === 'error').length
+  const [fullscreen, setFullscreen] = useState(false)
+  useEffect(() => { if (!fullscreen) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false) }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [fullscreen])
 
   useEffect(() => {
     const el = box.current
@@ -128,6 +131,7 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
         case 'resource-error': S.addLog('warn', `Failed to load resource: ${d.url}`); break
         case 'ready': postToPreview(frame.current, { type: 'theme', dark: S.appearance === 'dark' }); if (S.inspectMode) postToPreview(frame.current, { type: 'inspect:enable', on: true }); scheduleThumb(); break
         case 'thumb': void saveThumb(d); break
+        case 'route': { const r = parseRouteMessage(d); if (r) S.set({ route: r.path }); break }
         case 'inspect:select': S.set({ selected: d.info }); break
         case 'screenshot': pending.get(d.id)?.(d); pending.delete(d.id); break
       }
@@ -169,47 +173,16 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
   const busy = p.status === 'initializing' || p.status === 'building'
 
   return (
-    <div className={cn('flex h-full min-h-0 flex-col bg-bg', className)}>
-      <div className="flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-line bg-panel px-2">
-        <Dropdown
-          width={170}
-          trigger={<Button size="sm" variant="ghost">{deviceIcon[p.device]}<span className="hidden sm:inline">{p.device === 'custom' ? `${p.customW}×${p.customH}` : DEVICE_SIZES[p.device].label}</span><ChevronDown size={11} /></Button>}
-          items={(['desktop', 'tablet', 'mobile', 'custom'] as Device[]).map((d) => ({ label: d === 'custom' ? 'Custom size' : DEVICE_SIZES[d].label, icon: deviceIcon[d], checked: p.device === d, hint: d === 'desktop' || d === 'custom' ? undefined : `${DEVICE_SIZES[d].w}px`, onSelect: () => p.set({ device: d }) }))}
-        />
-        {p.device === 'custom' && (
-          <div className="flex items-center gap-1">
-            <Input type="number" min={200} max={3000} value={p.customW} onChange={(e) => p.set({ customW: Math.max(200, Number(e.target.value) || 200) })} className="h-7 w-16 px-1.5 text-center text-xs" aria-label="Custom width" />
-            <span className="text-faint">×</span>
-            <Input type="number" min={200} max={3000} value={p.customH} onChange={(e) => p.set({ customH: Math.max(200, Number(e.target.value) || 200) })} className="h-7 w-16 px-1.5 text-center text-xs" aria-label="Custom height" />
-          </div>
-        )}
-        <Tooltip label="Rotate"><Button size="icon-sm" variant="ghost" disabled={!fixed} onClick={() => p.set({ rotated: !p.rotated })} aria-label="Rotate"><RotateCw size={14} className={cn(p.rotated && 'rotate-90')} /></Button></Tooltip>
-        <Dropdown
-          width={130}
-          trigger={<Button size="sm" variant="ghost"><ZoomIn size={14} /><span className="text-xs">{p.zoom === 'fit' ? 'Fit' : `${p.zoom}%`}</span></Button>}
-          items={(['fit', 50, 75, 100, 125, 150] as const).map((z) => ({ label: z === 'fit' ? 'Fit to panel' : `${z}%`, checked: p.zoom === z, onSelect: () => p.set({ zoom: z }) }))}
-        />
-        <div className="mx-1 h-4 w-px shrink-0 bg-line" />
-        <Tooltip label="Reload preview"><Button size="icon-sm" variant="ghost" onClick={p.reload} aria-label="Reload"><RotateCw size={14} /></Button></Tooltip>
-        <Tooltip label={p.appearance === 'dark' ? 'Preview in light mode' : 'Preview in dark mode'}><Button size="icon-sm" variant="ghost" onClick={() => p.set({ appearance: p.appearance === 'dark' ? 'light' : 'dark' })} aria-label="Toggle preview appearance">{p.appearance === 'dark' ? <Sun size={14} /> : <Moon size={14} />}</Button></Tooltip>
-        <Tooltip label={p.inspectMode ? 'Stop selecting' : 'Select an element to edit'}><Button size="icon-sm" variant="ghost" active={p.inspectMode} className={p.inspectMode ? 'text-accent' : ''} disabled={!p.html} onClick={() => p.set({ inspectMode: !p.inspectMode, selected: null })} aria-label="Select element"><MousePointer2 size={14} /></Button></Tooltip>
-        {toolbarExtra}
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          {busy && <span className="flex items-center gap-1.5 pr-1 text-[11px] text-muted"><Spinner size={12} />{p.status === 'initializing' ? 'Starting compiler' : 'Building'}</span>}
-          {!busy && p.durationMs != null && p.status === 'ready' && <span className="hidden pr-1 font-mono text-[10px] text-faint sm:block">{p.durationMs}ms</span>}
-          <Tooltip label="Screenshot"><Button size="icon-sm" variant="ghost" disabled={!p.html} onClick={screenshot} aria-label="Capture screenshot"><Camera size={14} /></Button></Tooltip>
-          <Tooltip label="Open in new tab"><Button size="icon-sm" variant="ghost" disabled={!p.html} onClick={popout} aria-label="Pop out preview"><ExternalLink size={14} /></Button></Tooltip>
-          <Tooltip label="Console"><Button size="icon-sm" variant="ghost" active={p.consoleOpen} onClick={() => p.set({ consoleOpen: !p.consoleOpen })} aria-label="Console"><Terminal size={14} />{errCount > 0 && <span className="ml-0.5 text-[10px] text-danger">{errCount}</span>}</Button></Tooltip>
-        </div>
-      </div>
+    <div data-preview-root className={cn('flex min-h-0 flex-col bg-bg', fullscreen ? 'fixed inset-0 z-[60] h-[100dvh]' : 'h-full', className)}>
+      <PreviewToolbar frame={frame} onScreenshot={screenshot} onPopout={popout} fullscreen={fullscreen} onFullscreen={() => setFullscreen((v) => !v)} extra={toolbarExtra} />
 
       <div ref={box} className={cn('relative min-h-0 flex-1 overflow-auto', fixed && 'dot-grid')}>
         <ErrorBanner />
-        <InspectorPanel />
+        <VisualInspector />
         {p.html ? (
           fixed ? (
             <div className="flex min-h-full min-w-full items-center justify-center p-4">
-              <div style={{ width: size.w * scale, height: size.h * scale }} className="shrink-0 overflow-hidden rounded-[18px] border border-line-strong bg-white shadow-pop">
+              <div style={{ width: size.w * scale + (p.device === 'mobile' ? 16 : p.device === 'tablet' ? 20 : 0), height: size.h * scale + (p.device === 'mobile' ? 16 : p.device === 'tablet' ? 20 : 0), boxSizing: 'border-box' }} data-device-frame={p.device} className={cn('shrink-0 overflow-hidden bg-white shadow-pop', p.device === 'mobile' ? 'rounded-[38px] border-[8px] border-zinc-800' : p.device === 'tablet' ? 'rounded-[28px] border-[10px] border-zinc-800' : 'rounded-[18px] border border-line-strong')}>
                 <iframe
                   key={p.reloadKey}
                   ref={frame}

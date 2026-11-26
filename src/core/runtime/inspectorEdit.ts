@@ -1,6 +1,6 @@
 /** Pure helpers behind the Visual Click-to-Edit inspector: map DOM edits back to source files. */
 export interface InspectedInfo { tag: string; classes: string; text: string; editableText?: boolean; html?: string; selector?: string }
-export interface QuickEdit { text?: string; color?: string; bg?: string; padding?: number; radius?: number; fontSize?: number }
+export interface QuickEdit { text?: string; color?: string; bg?: string; padding?: number; radius?: number; fontSize?: number; fontWeight?: number }
 
 export function rgbToHex(rgb: string): string {
   const m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?/.exec(rgb)
@@ -26,6 +26,7 @@ export function applyQuickEditToClasses(classes: string, e: QuickEdit): string {
   if (e.padding !== undefined) { strip(isPadding); list.push(`p-[${Math.round(e.padding)}px]`) }
   if (e.radius !== undefined) { strip(isRadius); list.push(`rounded-[${Math.round(e.radius)}px]`) }
   if (e.fontSize !== undefined) { strip((c) => FONT_SIZE.test(c)); list.push(`text-[${Math.round(e.fontSize)}px]`) }
+  if (e.fontWeight !== undefined) { strip((c) => /^font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black|\[\d+\])$/.test(c)); list.push(`font-[${Math.round(e.fontWeight)}]`) }
   return list.join(' ')
 }
 
@@ -67,7 +68,7 @@ export function planSourceEdit(files: Record<string, string>, info: InspectedInf
   }
 
   if (e.text !== undefined && info.text && e.text !== info.text) replaceUnique(info.text, e.text, 'Text', false)
-  const styleEdit = e.color || e.bg || e.padding !== undefined || e.radius !== undefined || e.fontSize !== undefined
+  const styleEdit = e.color || e.bg || e.padding !== undefined || e.radius !== undefined || e.fontSize !== undefined || e.fontWeight !== undefined
   if (styleEdit) {
     if (!info.classes.trim()) failed.push('Styles: this element has no class names to edit — use “Edit with AI”.')
     else replaceUnique(info.classes, applyQuickEditToClasses(info.classes, e), 'Styles', true)
@@ -82,4 +83,9 @@ export function buildInspectorPrompt(info: InspectedInfo, hint: { path: string; 
     (hint ? `\nLikely source: ${hint.path}:${hint.line}` : '') +
     `\n\nChange: `
   )
+}
+
+/** Chat message for the inline “Ask AI to edit this element” box: the exact DOM node, classes and source hint plus the user's request. */
+export function composeAskPrompt(info: InspectedInfo, hint: { path: string; line: number } | null, request: string): string {
+  return `${buildInspectorPrompt(info, hint)}\n\nRequested change: ${request.trim()}`
 }

@@ -4,13 +4,14 @@ import { Button, Input, Label } from '@/ui/primitives'
 import { usePreview } from '@/store/preview'
 import { useWorkspace } from '@/store/workspace'
 import { useChatBus } from '@/store/chatBus'
-import { buildInspectorPrompt, findSourceHint, planSourceEdit, rgbToHex, type QuickEdit } from '@/core/runtime/inspectorEdit'
+import { composeAskPrompt, buildInspectorPrompt, findSourceHint, planSourceEdit, rgbToHex, type QuickEdit } from '@/core/runtime/inspectorEdit'
 import { toast } from '@/store/toast'
+import { useApp } from '@/store/app'
 import { postToPreview } from './bridge'
 
 const px = (v: string) => Math.round(parseFloat(v) || 0)
 
-export function InspectorPanel() {
+export function InspectorForm() {
   const sel = usePreview((s) => s.selected)
   const set = usePreview((s) => s.set)
   const vfs = useWorkspace((s) => s.vfs)
@@ -20,6 +21,8 @@ export function InspectorPanel() {
   const [padding, setPadding] = useState(0)
   const [radius, setRadius] = useState(0)
   const [fontSize, setFontSize] = useState(16)
+  const [fontWeight, setFontWeight] = useState(400)
+  const [ask, setAsk] = useState('')
   const [dirty, setDirty] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -30,6 +33,7 @@ export function InspectorPanel() {
     setPadding(px(sel.styles.paddingTop))
     setRadius(px(sel.styles.borderRadius))
     setFontSize(px(sel.styles.fontSize))
+    setFontWeight(Number(sel.styles.fontWeight) || 400)
     setDirty(new Set())
   }, [sel?.selector])
 
@@ -40,7 +44,7 @@ export function InspectorPanel() {
   }
   const edit: QuickEdit = {
     ...(dirty.has('text') ? { text } : {}), ...(dirty.has('color') ? { color } : {}), ...(dirty.has('bg') ? { bg } : {}),
-    ...(dirty.has('padding') ? { padding } : {}), ...(dirty.has('radius') ? { radius } : {}), ...(dirty.has('fontSize') ? { fontSize } : {}),
+    ...(dirty.has('padding') ? { padding } : {}), ...(dirty.has('radius') ? { radius } : {}), ...(dirty.has('fontSize') ? { fontSize } : {}), ...(dirty.has('fontWeight') ? { fontWeight } : {}),
   }
   const hint = findSourceHint(vfs.textFiles(), sel)
 
@@ -66,7 +70,7 @@ export function InspectorPanel() {
   )
 
   return (
-    <div className="animate-pop absolute bottom-3 right-3 z-20 max-h-[calc(100%-1.5rem)] w-72 overflow-auto rounded-2xl border border-line bg-panel p-3 shadow-pop">
+    <div data-inspector-form className="min-w-0">
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[13px] font-semibold"><MousePointerClick size={13} className="text-accent" />&lt;{sel.tag}&gt; <span className="font-mono text-[10px] font-normal text-faint">{sel.rect.w}×{sel.rect.h}</span></p>
@@ -83,8 +87,13 @@ export function InspectorPanel() {
           {num('Padding px', padding, setPadding, 'padding', (n) => ({ padding: `${n}px` }))}
           {num('Radius px', radius, setRadius, 'radius', (n) => ({ borderRadius: `${n}px` }))}
           {num('Font size px', fontSize, setFontSize, 'fontSize', (n) => ({ fontSize: `${n}px` }))}
+          <div><Label>Font weight</Label><select value={fontWeight} onChange={(e) => { const n = Number(e.target.value); setFontWeight(n); live('fontWeight', { fontWeight: String(n) }) }} aria-label="Font weight" className="h-8 w-full rounded-lg border border-line bg-subtle px-2 text-xs">{[300, 400, 500, 600, 700, 800].map((w) => <option key={w} value={w}>{w}</option>)}</select></div>
         </div>
       </div>
+      <form data-ask-ai className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!ask.trim()) return; useChatBus.getState().enqueue({ text: composeAskPrompt(sel, hint, ask), mode: 'build' }); toast.info('Sent to the AI', 'The element, its classes and source hint were attached.'); useApp.getState().requestTab('chat'); set({ selected: null, inspectMode: false }) }}>
+        <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Ask AI to edit this element…" aria-label="Ask AI to edit this element" className="h-9 min-w-0 flex-1 text-xs" />
+        <Button size="sm" variant="accent" type="submit" disabled={!ask.trim()} className="min-h-[36px]"><Sparkles size={13} />Ask</Button>
+      </form>
       <div className="mt-3 flex gap-2">
         <Button size="sm" variant="primary" className="flex-1" disabled={!dirty.size} onClick={save}><Save size={13} />Save to source</Button>
         <Button size="sm" variant="accent" className="flex-1" onClick={askAi}><Sparkles size={13} />Edit with AI</Button>

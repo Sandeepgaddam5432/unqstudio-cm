@@ -38,6 +38,8 @@ interface PreviewState {
   inspectMode: boolean
   selected: ElementInfo | null
   reloadKey: number
+  /** Current in-app route reported by the preview bridge (e.g. `/dashboard`). */
+  route: string
   errorDismissed: boolean
   set: (p: Partial<Omit<PreviewState, 'set'>>) => void
   addLog: (level: LogLevel, text: string, ts?: number) => void
@@ -49,7 +51,7 @@ interface PreviewState {
 export const usePreview = create<PreviewState>((set) => ({
   status: 'idle', progress: null, html: null, lastHash: null, buildErrors: [], runtimeErrors: [], warnings: [], durationMs: null, logs: [],
   device: 'desktop', customW: 1024, customH: 768, rotated: false, zoom: 'fit', appearance: 'light', consoleOpen: false,
-  inspectMode: false, selected: null, reloadKey: 0, errorDismissed: false,
+  inspectMode: false, selected: null, reloadKey: 0, route: '/', errorDismissed: false,
   set: (p) => set(p),
   addLog: (level, text, ts) => set((s) => ({ logs: [...s.logs.slice(-299), { id: uid('l'), level, text, ts: ts ?? Date.now() }] })),
   clearLogs: () => set({ logs: [], runtimeErrors: [] }),

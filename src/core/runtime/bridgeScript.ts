@@ -1,8 +1,8 @@
 /**
  * Script injected as the very first thing in every preview document. It is a plain string (not a bundled function)
  * so minifiers cannot rewrite it. It implements the iframe side of the postMessage bridge:
- *   iframe → host : console, error, resource-error, ready, inspect:select, screenshot
- *   host → iframe : inspect:enable, inspect:apply, theme, theme-css, screenshot
+ *   iframe → host : console, error, resource-error, ready, inspect:select, screenshot, thumb, route
+ *   host → iframe : inspect:enable, inspect:apply, theme, theme-css, screenshot, thumb:capture, route:navigate, route:back, route:forward
  * NOTE: keep this free of backticks and dollar-brace sequences.
  */
 export const BRIDGE_SCRIPT = String.raw`(function () {
@@ -75,9 +75,9 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
     if (box) return;
     box = document.createElement('div');
     box.setAttribute('data-unq-inspector', '1');
-    box.style.cssText = 'position:fixed;z-index:2147483646;pointer-events:none;border:2px solid #ff6a3d;background:rgba(255,106,61,.10);border-radius:2px;transition:all .06s;display:none';
+    box.style.cssText = 'position:fixed;z-index:2147483646;pointer-events:none;border:2px solid #3B82F6;background:rgba(59,130,246,.10);border-radius:2px;transition:all .06s;display:none';
     label = document.createElement('div');
-    label.style.cssText = 'position:absolute;left:-2px;top:-22px;background:#09090b;color:#fafafa;font:11px/1 ui-monospace,monospace;padding:4px 6px;border-radius:4px;white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis';
+    label.style.cssText = 'position:absolute;left:-2px;top:-22px;background:#3B82F6;color:#ffffff;font:11px/1 ui-monospace,monospace;padding:4px 6px;border-radius:4px;white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis';
     box.appendChild(label);
     document.documentElement.appendChild(box);
   }
@@ -151,6 +151,25 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     } catch (err) { send({ type: 'screenshot', id: id, error: String(err) }); }
   }
+  function routePath() {
+    var h = location.hash || '';
+    if (h.indexOf('#/') === 0) return h.slice(1);
+    return location.protocol === 'about:' ? '/' : (location.pathname || '/');
+  }
+  function sendRoute() { send({ type: 'route', path: routePath() }); }
+  ['pushState', 'replaceState'].forEach(function (k) {
+    var o = history[k];
+    history[k] = function () { var r = o.apply(history, arguments); setTimeout(sendRoute, 0); return r; };
+  });
+  window.addEventListener('hashchange', sendRoute);
+  window.addEventListener('popstate', sendRoute);
+  function goRoute(path) {
+    path = String(path || '/');
+    if (location.protocol !== 'about:') {
+      try { history.pushState(null, '', path); window.dispatchEvent(new PopStateEvent('popstate')); sendRoute(); return; } catch (e) {}
+    }
+    location.hash = '#' + path;
+  }
   function thumb(id) {
     try {
       var W = Math.max(document.documentElement.clientWidth, 320), H = Math.min(Math.max(window.innerHeight, 200), 900);
@@ -180,6 +199,9 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
     else if (m.type === 'theme') document.documentElement.classList.toggle('dark', !!m.dark);
     else if (m.type === 'screenshot') shot(m.id);
     else if (m.type === 'thumb:capture') thumb(m.id);
+    else if (m.type === 'route:navigate') goRoute(m.path);
+    else if (m.type === 'route:back') history.back();
+    else if (m.type === 'route:forward') history.forward();
     else if (m.type === 'theme-css') {
       var st = document.getElementById('__unq_live_theme');
       if (!st) { st = document.createElement('style'); st.id = '__unq_live_theme'; document.head.appendChild(st); }
@@ -194,5 +216,5 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
       send({ type: 'inspect:select', info: describe(el), silent: true });
     }
   });
-  window.addEventListener('load', function () { send({ type: 'ready' }); });
+  window.addEventListener('load', function () { send({ type: 'ready' }); sendRoute(); });
 })();`

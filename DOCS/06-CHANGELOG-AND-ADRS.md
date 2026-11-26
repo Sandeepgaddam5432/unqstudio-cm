@@ -142,3 +142,10 @@ The preview iframe is an opaque-origin sandbox, so canvas capture of its DOM is 
 
 ### ADR-014 Follow-up chips are rules, not a second LLM call
 Chips must be instant, free and work offline on phones; a rule table over the project text is deterministic and unit-testable. Trade-off: less tailored than a model-written suggestion.
+
+### V3.0-M4 — Preview canvas, route bar, mobile visual click-to-edit
+- `PreviewToolbar`: back/forward/reload, editable route bar (hash or history routes via bridge `route:navigate|back|forward`; the bridge reports `route`), viewport pills with device frames, Visual edit pill, console badge, new tab and fullscreen (CSS fixed overlay, Esc exits).
+- Inspector overlay is now signature blue `#3B82F6` with a tag + size badge. `VisualInspector` = Floating-UI popover (desktop) / modeless BottomSheet (phones); form adds font weight and an inline **Ask AI to edit this element** box that enqueues the DOM node, classes and source hint into chat.
+
+### ADR-015 Route navigation by hash fallback
+The preview is an opaque-origin `srcdoc` iframe where `history.pushState` to a path throws; the bridge therefore uses `pushState` only on http(s) documents (pop-out, tests) and `location.hash` inside srcdoc. Apps using hash routing (the templates) navigate; BrowserRouter apps are best-effort.
