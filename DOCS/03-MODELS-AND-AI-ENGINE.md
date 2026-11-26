@@ -98,3 +98,6 @@ Per-provider `headers` are merged LAST into both chat and `/models` requests (cu
 
 ## v3.0 Project Knowledge
 `ProjectMeta.knowledge` (markdown, ≤ `KNOWLEDGE_MAX` = 8,000 chars) is emitted as `### Project Knowledge` directly under `## Project:` in `buildProjectContext()`, so every turn (chat, heal, inline edit via the shared context builder) sees the author's standing instructions.
+
+## v3.0 Multi-step agent loop
+Flow: Build turn applies artifacts → `runHeal` → (flag `agentLoop`, default on) `runAgentLoop({ startWithVerify })` → per step: model turn via `chat.send({auto:true})` → parse `<read_file|list_files|search_project|verify_build>` → observations → next step; green stops, `max-steps`/`aborted`/`answered` end. Safety: max 5 steps, abort via the status pill, locks enforced by `applyOp`, one `Undo turn` restores the pre-turn checkpoint. Symbol graph: `buildSymbolGraph()` + `resolveImport()` in `repoMap.ts`.

@@ -17,12 +17,14 @@ export interface FeatureFlags {
   autoFixErrors: boolean
   /** v2.1: autonomous self-healing build loop (default on in Build mode). */
   autoHeal: boolean
+  /** v3.0: bounded multi-step agent loop (read/search tools + verify_build self-heal) replaces the plain heal loop. */
+  agentLoop: boolean
   reasoningUI: boolean
   includeAllFiles: boolean
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
-  approvalTray: false, autoCheckpoint: true, showTokenMeter: true, autoFixErrors: false, autoHeal: true, reasoningUI: true, includeAllFiles: true,
+  approvalTray: false, autoCheckpoint: true, showTokenMeter: true, autoFixErrors: false, autoHeal: true, agentLoop: true, reasoningUI: true, includeAllFiles: true,
 }
 
 export interface SettingsState {
@@ -33,6 +35,8 @@ export interface SettingsState {
   userModels: Record<string, string[]>
   /** v2.1: max automatic heal rounds (1–3). */
   maxAutoHealSteps: number
+  /** v3.0: max agent loop steps (1–5, default 3). */
+  agentMaxSteps: number
   aiMode: AIMode
   flags: FeatureFlags
   customPrompts: CustomPrompt[]
@@ -52,6 +56,7 @@ export const useSettings = create<SettingsState>()(
       baseUrls: {},
       userModels: {},
       maxAutoHealSteps: 3,
+      agentMaxSteps: 3,
       aiMode: 'build',
       flags: DEFAULT_FLAGS,
       customPrompts: [],

@@ -74,6 +74,7 @@ function OpCard({ op, msgId }: { op: OpRecord; msgId: string }) {
 
 export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) {
   const { retry, undoTurn, forkAt, approveOps, rejectOps, send, busy } = useChat()
+  const agentSteps = useChat((s) => (s.agent?.originId === m.id ? s.agent.steps : undefined))
   const showBadges = useChatPrefs((p) => p.showBadges)
   const showActivity = useChatPrefs((p) => p.showActivity)
   if (m.role === 'user') {
@@ -99,7 +100,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
         {m.model && <span className="truncate">{m.model.split('/').pop()}</span>}
         {m.mode !== 'build' && <Badge tone="accent">{m.mode}</Badge>}
       </div>
-      {(m.streaming || ops.length > 0) && <BuildActivityCard m={m} />}
+      {(m.streaming || ops.length > 0) && <BuildActivityCard m={m} agent={agentSteps} />}
       {m.parts?.map((p, i) =>
         p.kind === 'text' ? <Markdown key={i} text={p.text ?? ''} />
         : p.kind === 'think' ? <ThinkBlock key={i} text={p.text ?? ''} done={p.done} />

@@ -94,3 +94,6 @@ Dark mode is class-based (`@custom-variant dark (&:where(.dark, .dark *))`); fon
 
 ## v3.0 Preview
 `Preview` = `PreviewToolbar` + iframe + `VisualInspector`. Bridge protocol additions: host→iframe `route:navigate|back|forward`, iframe→host `route`. Selection overlay colour `#3B82F6`. On phones the inspector is a modeless sheet (max 46dvh) so the top of the preview stays visible.
+
+## v3.0 Agent steps in chat
+`BuildActivityCard` renders `useChat().agent.steps` (read_file / verify_build / edits) between the file edits and the compile row; the heal pill shows `Healing n/max` while the agent runs.

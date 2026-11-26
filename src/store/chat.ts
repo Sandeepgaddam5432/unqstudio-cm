@@ -4,6 +4,9 @@ import { getAdapter } from '@/core/vfs/idbAdapter'
 import { forkFromCheckpoint } from '@/core/vfs/projects'
 import { applyPendingOps, runTurn, summarizeOps, type HistoryItem, type TurnEvent } from '@/core/ai/orchestrator'
 import { estimateCost } from '@/core/ai/tokens'
+import { AGENT_TOOLS_PROMPT, agentStepsToBuild, clampAgentSteps, formatErrors, runAgentLoop } from '@/core/ai/agentLoop'
+import type { BuildStep } from '@/core/ai/buildSteps'
+import { buildHealPrompt } from '@/core/ai/selfHeal'
 import { clampHealSteps, pollUntil, selfHealLoop, type HealError } from '@/core/ai/selfHeal'
 import { findModel } from '@/core/ai/providers'
 import type { OpRecord } from '@/core/ai/apply'
@@ -48,6 +51,8 @@ interface ChatState {
   autoFix: number
   /** v2.1 self-heal status (null when idle). `originId` = the assistant turn that started the series. */
   heal: { attempt: number; max: number; phase: 'waiting' | 'healing'; originId: string } | null
+  /** v3.0: live agent-loop steps for the turn that started it (rendered in BuildActivityCard). */
+  agent: { originId: string; steps: BuildStep[] } | null
   stopHeal: () => void
   undoHeal: () => Promise<void>
   controller: AbortController | null
@@ -113,6 +118,34 @@ export const useChat = create<ChatState>((set, get) => {
       const p = usePreview.getState()
       return [...p.buildErrors, ...p.runtimeErrors].map((e) => ({ message: e.message, file: e.file, line: e.line, column: e.column, snippet: e.snippet, source: e.source }))
     }
+    if (useSettings.getState().flags.agentLoop !== false) {
+      const amax = clampAgentSteps(useSettings.getState().agentMaxSteps)
+      set({ heal: { attempt: 0, max: amax, phase: 'waiting', originId } })
+      const live: import('@/core/ai/agentLoop').AgentStep[] = []
+      try {
+        const res = await runAgentLoop({
+          verify: async () => { const errors = await waitBuild(); return { ok: errors.length === 0, errors: errors.map((e) => ({ message: e.message, file: e.file, line: e.line })) } },
+          readFile: (path) => vfs.read(path),
+          listFiles: () => vfs.paths().filter((p) => !p.endsWith('/.keep')),
+          search: (q) => vfs.search(q).slice(0, 20).map((h) => ({ path: h.path, line: h.line, text: h.text })),
+          isAborted: () => healAbort,
+          onStep: (s) => { live.splice(0, live.length, ...[...live.filter((x) => x.id !== s.id), s]); set({ agent: { originId, steps: agentStepsToBuild(live) } }) },
+          model: async (p) => {
+            set({ heal: { attempt: p.step, max: p.max, phase: 'healing', originId } })
+            const errs = usePreview.getState()
+            const text = p.observations.length ? `OBSERVATIONS\n${p.observations.join('\n\n')}` : buildHealPrompt([...errs.buildErrors, ...errs.runtimeErrors].map((e) => ({ message: e.message, file: e.file, line: e.line, column: e.column, snippet: e.snippet, source: e.source })), (path) => vfs.read(path), { attempt: p.step, max: p.max })
+            const ok = await get().send({ text: `${AGENT_TOOLS_PROMPT}\n\n${text}`, mode: 'build', auto: true })
+            if (!ok) return { text: '', applied: 0 }
+            const last = [...get().messages].reverse().find((m) => m.role === 'assistant')
+            return { text: (last?.parts ?? []).filter((x) => x.kind === 'text').map((x) => x.text).join(''), applied: last?.ops?.filter((o) => o.status === 'applied').length ?? 0 }
+          },
+        }, { maxSteps: amax, startWithVerify: true })
+        if (res.status === 'green' && res.stepsUsed > 0) toast.success('Build healed', `Green after ${res.stepsUsed} agent step${res.stepsUsed === 1 ? '' : 's'}.`)
+        else if (res.status === 'max-steps') toast.info('Agent stopped at its step limit', `${formatErrors(res.errors).split('\n').length} issue(s) remain — you can undo the turn or send a follow-up.`)
+        logEvent('ai', `agent loop ${res.status} after ${res.stepsUsed} step(s)`)
+      } finally { set({ heal: null, agent: null }) }
+      return
+    }
     try {
       const res = await selfHealLoop({
         getErrors: waitBuild,
@@ -133,7 +166,7 @@ export const useChat = create<ChatState>((set, get) => {
   }
 
   return {
-    projectId: null, messages: [], busy: false, autoFix: 0, heal: null, controller: null,
+    projectId: null, messages: [], busy: false, autoFix: 0, heal: null, agent: null, controller: null,
 
     load: async (projectId) => {
       get().controller?.abort()

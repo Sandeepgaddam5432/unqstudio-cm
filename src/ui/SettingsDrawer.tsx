@@ -44,6 +44,14 @@ function ChatAndEditor() {
             <div><p className="text-sm font-medium">Auto-heal in Build mode</p><p className="text-xs text-muted">On by default. Stop or undo the whole turn from the status pill.</p></div>
             <Switch checked={s.flags.autoHeal !== false} onChange={(v) => s.setFlag('autoHeal', v)} label="Auto-heal builds" />
           </div>
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-line p-3">
+            <div><p className="text-sm font-medium">Multi-step agent loop</p><p className="text-xs text-muted">Lets the model read files, search and verify the build over several steps. Stop or undo the whole turn from the status pill.</p></div>
+            <Switch checked={s.flags.agentLoop !== false} onChange={(v) => s.setFlag('agentLoop', v)} label="Multi-step agent loop" />
+          </div>
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-line p-3">
+            <div><p className="text-sm font-medium">Max agent steps</p><p className="text-xs text-muted">Model turns per request (1–5).</p></div>
+            <Segmented value={String(Math.min(5, Math.max(1, s.agentMaxSteps ?? 3)))} onChange={(v) => s.set({ agentMaxSteps: Number(v) })} items={['1', '2', '3', '4', '5'].map((n) => ({ id: n, label: n }))} />
+          </div>
           <div className="flex items-center justify-between rounded-xl border border-line p-3">
             <div><p className="text-sm font-medium">Max heal attempts</p><p className="text-xs text-muted">Automatic follow-up turns per request.</p></div>
             <Segmented value={String(Math.min(3, Math.max(1, s.maxAutoHealSteps ?? 3)))} onChange={(v) => s.set({ maxAutoHealSteps: Number(v) })} items={[{ id: '1', label: '1' }, { id: '2', label: '2' }, { id: '3', label: '3' }]} />

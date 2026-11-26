@@ -157,3 +157,10 @@ The preview is an opaque-origin `srcdoc` iframe where `history.pushState` to a p
 
 ### ADR-016 Own QR encoder instead of a dependency
 A QR encoder is ~200 lines, keeps the main chunk free of a library, and the correctness risk is covered by decoding real output with jsQR in CI. Limit: versions 1–10 (≤ 154 bytes at ECC M), enough for deploy URLs; longer input throws `RangeError` and the UI hides the QR.
+
+### V3.0-M6 — Multi-step agent loop & upgraded symbol graph (closes DOCS/08 P0 #1, P1 #4 partially)
+- `core/ai/agentLoop.ts`: after a Build turn applies edits, the loop verifies the real esbuild-wasm compile (`startWithVerify`), then runs up to `agentMaxSteps` (1–5, default 3, Settings → Chat & Editor) model turns. The model can emit `<read_file>`, `<list_files>`, `<search_project>`, `<verify_build>`; results return as OBSERVATIONS. File edits keep using the streaming XML artifact tags (locks enforced by `applyOp`). Steps stream into `BuildActivityCard`; the status pill's Stop and whole-turn Undo apply.
+- `repoMap.ts` now reports component prop interface names (function, arrow, memo/forwardRef, `FC<Props>`), custom hooks vs zustand store slices, type aliases, re-exports and resolved local import edges (`Local import edges` block in the symbol map).
+
+### ADR-017 Agent loop wraps `send()` instead of replacing the streaming orchestrator
+The streaming parser, approval tray, usage metering and checkpoints all live in `runTurn`/`send`. The loop treats each `send` as one model step (edits are applied there), adds client-side read/search tools and build verification around it, and is testable in isolation through injected deps. Trade-off: tool tags are plain text rather than provider-native function calling (works on every provider/protocol).
