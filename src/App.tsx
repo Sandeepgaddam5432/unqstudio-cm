@@ -5,6 +5,7 @@ import CommandPalette from '@/ui/CommandPalette'
 import { Logo } from '@/ui/primitives'
 import { useVault } from '@/store/vault'
 import { OnboardingWizard } from '@/ui/ai/OnboardingWizard'
+import { CustomProviderModal } from '@/ui/ai/CustomProviderModal'
 import { VaultUnlock } from '@/ui/ai/VaultUnlock'
 import '@/ui/commandsExtra'
 import { logEvent } from '@/store/events'
@@ -60,6 +61,7 @@ export default function App() {
       </Suspense>
       <CommandPalette />
       <OnboardingWizard />
+      <CustomProviderModal />
       <AuthModal />
       <VaultUnlock />
       <Toaster />

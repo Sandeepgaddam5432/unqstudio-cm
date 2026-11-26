@@ -1,4 +1,5 @@
 import type { ProviderDef } from './providers'
+import { liveEndpoint } from './modelFetcher'
 import { ProviderError, type ContentPart, type StreamChunk, type StreamRequest } from './types'
 
 /* ── SSE ─────────────────────────────────────────────────── */
@@ -68,6 +69,12 @@ function splitDataUrl(u: string) {
   return { media_type: m?.[1] ?? 'image/png', data: m?.[2] ?? '' }
 }
 
+/** `https://host` → `https://host/v1`; `https://host/v1` and proxy paths that already carry a version are left alone. */
+export const anthropicBase = (base: string) => (/\/v\d+$/.test(base) ? base : `${base}/v1`)
+/** Gemini/Ollama roots: strip OpenAI-compat or version suffixes so one base URL works for streaming + `/models`. */
+export const geminiRoot = (base: string) => trimSlash(base || 'https://generativelanguage.googleapis.com').replace(/\/v1(beta)?(\/openai)?$/, '')
+export const ollamaRoot = (base: string) => trimSlash(base || 'http://localhost:11434').replace(/\/(v1|api)$/, '')
+
 export function buildAnthropicRequest(req: StreamRequest): { url: string; init: RequestInit } {
   const base = trimSlash(req.baseUrl || req.provider.baseUrl)
   const system = req.messages.filter((m) => m.role === 'system').map((m) => (typeof m.content === 'string' ? m.content : m.content.map((p) => (p.type === 'text' ? p.text : '')).join('\n'))).join('\n\n')
@@ -81,11 +88,12 @@ export function buildAnthropicRequest(req: StreamRequest): { url: string; init: 
     'Content-Type': 'application/json',
     'x-api-key': req.apiKey ?? '',
     'anthropic-version': '2023-06-01',
-    'anthropic-dangerous-direct-browser-access': 'true',
+    ...(req.provider.browserAccess === false ? {} : { 'anthropic-dangerous-direct-browser-access': 'true' }),
+    ...(req.provider.headers ?? {}),
   }
   const body: Record<string, unknown> = { model: req.model, max_tokens: req.maxTokens ?? 16000, system, messages, stream: true }
   if (req.temperature !== undefined) body.temperature = req.temperature
-  return { url: `${base}/messages`, init: { method: 'POST', headers, body: JSON.stringify(body), signal: req.signal } }
+  return { url: `${anthropicBase(base)}/messages`, init: { method: 'POST', headers, body: JSON.stringify(body), signal: req.signal } }
 }
 
 /* ── chunk parsers (pure, unit-tested) ───────────────────── */
@@ -124,6 +132,116 @@ export function parseAnthropicEvent(ev: SseEvent, state: { inputTokens: number }
   }
 }
 
+/* ── Gemini native (streamGenerateContent, SSE) ─────────── */
+export function buildGeminiRequest(req: StreamRequest): { url: string; init: RequestInit } {
+  const root = geminiRoot(req.baseUrl || req.provider.baseUrl)
+  const text = (c: string | ContentPart[]) => (typeof c === 'string' ? c : c.map((p) => (p.type === 'text' ? p.text : '')).join('\n'))
+  const system = req.messages.filter((m) => m.role === 'system').map((m) => text(m.content)).join('\n\n')
+  const contents = req.messages.filter((m) => m.role !== 'system').map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: typeof m.content === 'string' ? [{ text: m.content }] : m.content.map((p) => (p.type === 'text' ? { text: p.text } : { inlineData: { mimeType: splitDataUrl(p.dataUrl).media_type, data: splitDataUrl(p.dataUrl).data } })),
+  }))
+  const body: Record<string, unknown> = { contents }
+  if (system) body.systemInstruction = { parts: [{ text: system }] }
+  const gen: Record<string, unknown> = {}
+  if (req.temperature !== undefined) gen.temperature = req.temperature
+  if (req.maxTokens) gen.maxOutputTokens = req.maxTokens
+  if (Object.keys(gen).length) body.generationConfig = gen
+  const model = req.model.replace(/^models\//, '')
+  const key = req.apiKey ? `&key=${encodeURIComponent(req.apiKey)}` : ''
+  const headers = { 'Content-Type': 'application/json', ...(req.provider.headers ?? {}) }
+  return { url: `${root}/v1beta/models/${model}:streamGenerateContent?alt=sse${key}`, init: { method: 'POST', headers, body: JSON.stringify(body), signal: req.signal } }
+}
+
+export interface GeminiState { inThink: boolean; pending: string; usage?: { inputTokens: number; outputTokens: number } }
+
+/** Split streamed text on `<think>…</think>` (models that inline their reasoning); holds back a partial tag at a chunk edge. */
+export function thinkSplit(st: Pick<GeminiState, 'inThink' | 'pending'>, text: string, flush = false): StreamChunk[] {
+  st.pending += text
+  const out: StreamChunk[] = []
+  for (;;) {
+    const tag = st.inThink ? '</think>' : '<think>'
+    const i = st.pending.indexOf(tag)
+    if (i >= 0) {
+      const before = st.pending.slice(0, i)
+      if (before) out.push({ type: st.inThink ? 'reasoning' : 'text', text: before })
+      st.pending = st.pending.slice(i + tag.length)
+      st.inThink = !st.inThink
+      continue
+    }
+    let keep = 0
+    if (!flush) for (let k = Math.min(tag.length - 1, st.pending.length); k > 0; k--) if (tag.startsWith(st.pending.slice(-k))) { keep = k; break }
+    const emit = st.pending.slice(0, st.pending.length - keep)
+    if (emit) out.push({ type: st.inThink ? 'reasoning' : 'text', text: emit })
+    st.pending = st.pending.slice(st.pending.length - keep)
+    return out
+  }
+}
+
+export function parseGeminiData(data: string, st: GeminiState): StreamChunk[] {
+  let j: any
+  try { j = JSON.parse(data) } catch { return [] }
+  if (j.error) throw new ProviderError(typeof j.error === 'string' ? j.error : j.error.message ?? 'Gemini error')
+  const out: StreamChunk[] = []
+  for (const part of j.candidates?.[0]?.content?.parts ?? []) {
+    if (typeof part?.text !== 'string' || !part.text) continue
+    if (part.thought === true) out.push({ type: 'reasoning', text: part.text })
+    else out.push(...thinkSplit(st, part.text))
+  }
+  const u = j.usageMetadata
+  if (u) st.usage = { inputTokens: u.promptTokenCount ?? 0, outputTokens: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0) }
+  return out
+}
+
+/* ── Ollama native (/api/chat, NDJSON) ───────────────────── */
+export function buildOllamaRequest(req: StreamRequest): { url: string; init: RequestInit } {
+  const root = ollamaRoot(req.baseUrl || req.provider.baseUrl)
+  const messages = req.messages.map((m) => {
+    if (typeof m.content === 'string') return { role: m.role, content: m.content }
+    return {
+      role: m.role,
+      content: m.content.map((p) => (p.type === 'text' ? p.text : '')).join('\n'),
+      images: m.content.flatMap((p) => (p.type === 'image' ? [splitDataUrl(p.dataUrl).data] : [])),
+    }
+  })
+  const body: Record<string, unknown> = { model: req.model, messages, stream: true }
+  const options: Record<string, unknown> = {}
+  if (req.temperature !== undefined) options.temperature = req.temperature
+  if (req.maxTokens) options.num_predict = req.maxTokens
+  if (Object.keys(options).length) body.options = options
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(req.provider.headers ?? {}) }
+  if (req.apiKey) headers.Authorization = `Bearer ${req.apiKey}`
+  return { url: `${root}/api/chat`, init: { method: 'POST', headers, body: JSON.stringify(body), signal: req.signal } }
+}
+
+export async function* ndjsonLines(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+  const reader = body.getReader()
+  const dec = new TextDecoder()
+  let buf = ''
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += dec.decode(value, { stream: true })
+      let i: number
+      while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (l) yield l }
+    }
+    buf += dec.decode()
+    if (buf.trim()) yield buf.trim()
+  } finally { reader.releaseLock() }
+}
+
+export function parseOllamaLine(line: string): { chunks: StreamChunk[]; done: boolean } {
+  let j: any
+  try { j = JSON.parse(line) } catch { return { chunks: [], done: false } }
+  if (j.error) throw new ProviderError(typeof j.error === 'string' ? j.error : 'Ollama error')
+  const chunks: StreamChunk[] = []
+  if (typeof j.message?.thinking === 'string' && j.message.thinking) chunks.push({ type: 'reasoning', text: j.message.thinking })
+  if (typeof j.message?.content === 'string' && j.message.content) chunks.push({ type: 'text', text: j.message.content })
+  if (j.done) chunks.push({ type: 'usage', usage: { inputTokens: j.prompt_eval_count ?? 0, outputTokens: j.eval_count ?? 0 } })
+  return { chunks, done: !!j.done }
+}
+
 /* ── network ─────────────────────────────────────────────── */
 export async function explainHttpError(res: Response, provider: ProviderDef): Promise<ProviderError> {
   let msg = `${provider.name} returned HTTP ${res.status}`
@@ -154,17 +272,33 @@ export function explainNetworkError(e: unknown, provider: ProviderDef): Provider
 
 export async function* streamChat(req: StreamRequest): AsyncGenerator<StreamChunk> {
   const f = req.fetchImpl ?? fetch
-  const { url, init } = req.provider.kind === 'anthropic' ? buildAnthropicRequest(req) : buildOpenAIRequest(req)
+  const kind = req.provider.kind
+  const { url, init } = kind === 'anthropic' ? buildAnthropicRequest(req) : kind === 'gemini' ? buildGeminiRequest(req) : kind === 'ollama' ? buildOllamaRequest(req) : buildOpenAIRequest(req)
   let res: Response
   try { res = await f(url, init) } catch (e) { throw explainNetworkError(e, req.provider) }
   if (!res.ok) throw await explainHttpError(res, req.provider)
   if (!res.body) throw new ProviderError('The provider returned an empty response body.')
-  const state = { inputTokens: 0 }
   try {
+    if (kind === 'ollama') {
+      for await (const line of ndjsonLines(res.body)) {
+        const { chunks, done } = parseOllamaLine(line)
+        for (const c of chunks) yield c
+        if (done) return
+      }
+      return
+    }
+    if (kind === 'gemini') {
+      const gs: GeminiState = { inThink: false, pending: '' }
+      for await (const ev of sseEvents(res.body)) for (const c of parseGeminiData(ev.data, gs)) yield c
+      for (const c of thinkSplit(gs, '', true)) yield c
+      if (gs.usage) yield { type: 'usage', usage: gs.usage }
+      return
+    }
+    const state = { inputTokens: 0 }
     for await (const ev of sseEvents(res.body)) {
-      const out = req.provider.kind === 'anthropic' ? parseAnthropicEvent(ev, state) : parseOpenAIData(ev.data)
+      const out = kind === 'anthropic' ? parseAnthropicEvent(ev, state) : parseOpenAIData(ev.data)
       if (out === 'done') {
-        if (req.provider.kind !== 'anthropic') continue // keep reading: usage may follow [DONE]-less
+        if (kind !== 'anthropic') continue // keep reading: usage may follow [DONE]-less
         return
       }
       for (const c of out) yield c
@@ -183,17 +317,9 @@ export async function completeOnce(req: StreamRequest): Promise<{ text: string; 
 }
 
 export async function listModels(provider: ProviderDef, apiKey: string | undefined, baseUrl?: string, f: typeof fetch = fetch): Promise<string[]> {
-  const base = trimSlash(baseUrl || provider.baseUrl)
-  const headers: Record<string, string> = { ...(provider.headers ?? {}) }
-  if (provider.kind === 'anthropic') {
-    headers['x-api-key'] = apiKey ?? ''
-    headers['anthropic-version'] = '2023-06-01'
-    headers['anthropic-dangerous-direct-browser-access'] = 'true'
-  } else if (apiKey) headers.Authorization = `Bearer ${apiKey}`
+  const ep = liveEndpoint({ id: provider.id, kind: provider.kind, baseUrl: provider.baseUrl, headers: provider.headers, browserAccess: provider.browserAccess }, apiKey, baseUrl)
   let res: Response
-  try { res = await f(`${base}/models`, { headers }) } catch (e) { throw explainNetworkError(e, provider) }
+  try { res = await f(ep.url, { headers: ep.headers }) } catch (e) { throw explainNetworkError(e, provider) }
   if (!res.ok) throw await explainHttpError(res, provider)
-  const j = await res.json()
-  const arr: any[] = Array.isArray(j) ? j : j.data ?? j.models ?? []
-  return arr.map((m) => (typeof m === 'string' ? m : (m.id ?? m.name ?? '')).replace(/^models\//, '')).filter(Boolean)
+  return ep.parse(await res.json()).map((m) => m.id)
 }

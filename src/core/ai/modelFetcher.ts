@@ -1,4 +1,5 @@
 import type { RegModel, RegProvider } from './modelsDev'
+import type { ProviderKind } from './providers'
 
 /** A model as shown in the picker: live id enriched with models.dev metadata. */
 export interface EnrichedModel {
@@ -13,7 +14,7 @@ export interface EnrichedModel {
   source: 'live' | 'catalog' | 'custom' | 'builtin'
 }
 
-export interface LiveTarget { id: string; kind: 'openai' | 'anthropic'; baseUrl: string }
+export interface LiveTarget { id: string; kind: ProviderKind; baseUrl: string; /** Custom HTTP headers merged into the request. */ headers?: Record<string, string>; /** Anthropic wire: send the direct-browser-access header (default true). */ browserAccess?: boolean }
 export interface Endpoint { url: string; headers: Record<string, string>; parse: (json: unknown) => RawLive[] }
 export interface RawLive { id: string; name?: string; context?: number; output?: number }
 
@@ -49,19 +50,23 @@ export function parseOllamaModels(json: unknown): RawLive[] {
   return arr(rec(json).models).flatMap((m) => { const o = rec(m); const id = (o.name ?? o.model) as string | undefined; return id ? [{ id }] : [] })
 }
 
-/** Decide the live `/models` endpoint for a provider (see DOCS/03). */
+/** Decide the live models endpoint for a provider's wire protocol (see DOCS/03). Custom headers are merged last (they win). */
 export function liveEndpoint(p: LiveTarget, apiKey?: string, baseOverride?: string): Endpoint {
   const base = trim(baseOverride || p.baseUrl)
-  if (p.id === 'gemini' || p.id === 'google' || /generativelanguage\.googleapis\.com/.test(base)) {
-    return { url: `https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=${encodeURIComponent(apiKey ?? '')}`, headers: {}, parse: parseGeminiModels }
+  const extra = p.headers ?? {}
+  const gemRoot = () => trim(base || 'https://generativelanguage.googleapis.com').replace(/\/v1(beta)?(\/openai)?$/, '')
+  if (p.kind === 'gemini' || p.id === 'gemini' || p.id === 'google' || /generativelanguage\.googleapis\.com/.test(base)) {
+    const root = p.kind === 'gemini' ? gemRoot() : 'https://generativelanguage.googleapis.com'
+    return { url: `${root}/v1beta/models?pageSize=1000${apiKey ? `&key=${encodeURIComponent(apiKey)}` : ''}`, headers: { ...extra }, parse: parseGeminiModels }
   }
   if (p.kind === 'anthropic') {
-    return { url: `${base}/models?limit=1000`, headers: { 'x-api-key': apiKey ?? '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, parse: parseAnthropicModels }
+    const root = /\/v\d+$/.test(base) ? base : `${base}/v1`
+    return { url: `${root}/models?limit=1000`, headers: { 'x-api-key': apiKey ?? '', 'anthropic-version': '2023-06-01', ...(p.browserAccess === false ? {} : { 'anthropic-dangerous-direct-browser-access': 'true' }), ...extra }, parse: parseAnthropicModels }
   }
-  if (p.id === 'ollama' || /:11434(\/|$)/.test(base)) {
-    return { url: `${base.replace(/\/v1$/, '')}/api/tags`, headers: {}, parse: parseOllamaModels }
+  if (p.kind === 'ollama' || p.id === 'ollama' || /:11434(\/|$)/.test(base)) {
+    return { url: `${trim(base || 'http://localhost:11434').replace(/\/(v1|api)$/, '')}/api/tags`, headers: { ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}), ...extra }, parse: parseOllamaModels }
   }
-  return { url: `${base}/models`, headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {}, parse: parseOpenAIModels }
+  return { url: `${base}/models`, headers: { ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}), ...extra }, parse: parseOpenAIModels }
 }
 
 const norm = (s: string) => s.toLowerCase()

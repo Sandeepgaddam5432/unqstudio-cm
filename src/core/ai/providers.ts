@@ -1,5 +1,6 @@
 /** Registry of direct-browser BYOK LLM providers. Add a provider by appending to PROVIDERS. */
-export type ProviderKind = 'openai' | 'anthropic'
+/** The four real-world AI wire protocols. */
+export type ProviderKind = 'openai' | 'anthropic' | 'gemini' | 'ollama'
 
 export interface ModelDef {
   id: string
@@ -32,6 +33,13 @@ export interface ProviderDef {
   dynamic?: boolean
   logo?: string
   doc?: string
+  /** v2.1: user-defined provider (CRUD in the Providers Hub). */
+  custom?: boolean
+  /** v2.1 custom providers: bundled brand glyph preset + accent colour. */
+  brand?: string
+  accent?: string
+  /** Anthropic wire only: send `anthropic-dangerous-direct-browser-access` (default true). */
+  browserAccess?: boolean
 }
 
 const m = (id: string, extra: Partial<ModelDef> = {}): ModelDef => ({ id, ...extra })

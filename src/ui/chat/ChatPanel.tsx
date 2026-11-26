@@ -1,6 +1,6 @@
 import { ModelIcon } from '@/ui/icons/ModelIcon'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eraser, MessageSquarePlus, Sparkles } from 'lucide-react'
+import { Eraser, MessageSquarePlus } from 'lucide-react'
 import { ChatSettings } from './ChatSettings'
 import { CHAT_FONT_PX, useChatPrefs } from '@/store/chatPrefs'
 import { Button, Dropdown, Tooltip } from '@/ui/primitives'

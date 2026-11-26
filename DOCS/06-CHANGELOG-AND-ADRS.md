@@ -85,3 +85,9 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 - `src/ui/icons/*`: `ProviderIcon`, `ModelIcon`, `detectModelFamily` (38 pattern tests), 35 bundled glyphs, monogram fallback. Replaced the raw `<img src={logo}>` in `ProvidersTab`.
 
 **ADR-V21-2 — Three-layer icons, preload-then-render.** Context: remote logos 404 / are blocked, leaving broken-image glyphs. Decision: bundle the top brands; for the rest preload the remote candidate and only mount it after it decodes; otherwise a deterministic monogram. Consequence: zero broken images by construction (verified in E2E: every `img` has `naturalWidth > 0`); +~42 KB (≈11 KB gzip) source for glyphs.
+
+### V2.1-M3 — First-class custom providers, 4 wire protocols
+- `stream.ts`: native Gemini (SSE) + Ollama (NDJSON) adapters, Anthropic base normalisation + browser-access toggle, custom headers merged everywhere; `modelFetcher.liveEndpoint` covers all four `/models` shapes; `listModels` now delegates to it.
+- `CustomProviderModal` / `CustomProviderCards` + `useCustomProviders` store; vault-held key + headers; Test & Auto-Fetch with live preview.
+
+**ADR-V21-3 — Protocol = ProviderKind; secrets only in the Vault.** Context: “custom” was OpenAI-only and headers were static. Decision: one discriminated `kind` selects request builder + parser + models endpoint; custom provider records hold no secrets; header values (often tokens) are encrypted like keys. Consequence: adding a 5th protocol is one builder + one parser + one `liveEndpoint` branch.

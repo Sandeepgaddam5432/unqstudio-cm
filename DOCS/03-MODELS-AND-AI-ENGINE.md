@@ -78,3 +78,12 @@ Keys are stored in IndexedDB as `VaultBlob {v:1, mode:'plain'|'encrypted', salt,
 
 ## v2.1 — Four-source unified catalog
 `fetchRegistry()` (src/core/ai/modelsRegistry.ts): directory chain `api/catalog` → `api/models-dev` (legacy alias) → direct upstream (normalized in-browser) → `catalog-snapshot.json`; then `fetchEnrichment()` pulls **OpenRouter** (`https://openrouter.ai/api/v1/models`, public, CORS) and **LiteLLM** (`…/BerriAI/litellm/main/model_prices_and_context_window.json`, GitHub raw CORS) in parallel (8s / 15s timeouts) and `enrichRegistry()` merges them **fill-only**. OpenRouter prices are USD/token strings → ×1e6; LiteLLM rows are filtered to chat-capable `mode`s. If the edge already merged both (`registry.enriched`), the client skips enrichment. Cache: IndexedDB `unqstudio-registry` 24h TTL + manual "Refresh Catalog". Internal sources are documented here only — the UI says "Model Catalog" / "Provider Directory".
+
+## v2.1 — Four wire protocols (`ProviderKind = 'openai' | 'anthropic' | 'gemini' | 'ollama'`)
+| Kind | Chat | Models | Notes |
+|---|---|---|---|
+| `openai` | `POST {base}/chat/completions` (SSE) | `GET {base}/models` | `stream_options.include_usage` except Gemini-compat/Cohere/GitHub/Perplexity |
+| `anthropic` | `POST {base}/messages` (SSE; `/v1` auto-appended when the base has no version) | `GET {base}/v1/models?limit=1000` | `anthropic-dangerous-direct-browser-access` unless `browserAccess === false` |
+| `gemini` | `POST {root}/v1beta/models/{model}:streamGenerateContent?alt=sse&key=…` | `GET {root}/v1beta/models?pageSize=1000` | `thought` parts + inline `<think>` (hold-back splitter `thinkSplit`) → `reasoning`; images → `inlineData`; `usageMetadata` emitted once at stream end; `root` strips `/v1`, `/v1beta`, `/v1beta/openai` |
+| `ollama` | `POST {root}/api/chat` (NDJSON) | `GET {root}/api/tags` | `message.thinking` → `reasoning`; images → base64 `images[]`; `eval_count` → usage |
+Per-provider `headers` are merged LAST into both chat and `/models` requests (custom headers win). Custom providers (`custom:<slug>`) persist only non-secret fields in `unq.customProviders.v1`; the key is vault secret `provider:<id>` and header values are vault secret `provider-headers:<id>`.

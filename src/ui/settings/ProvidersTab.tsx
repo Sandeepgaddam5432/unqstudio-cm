@@ -1,3 +1,4 @@
+import { CustomProviderCards } from '@/ui/ai/CustomProviderCards'
 import { ProviderIcon } from '@/ui/icons/ProviderIcon'
 import { useState } from 'react'
 import { ChevronRight, Lock, ShieldCheck, Unlock } from 'lucide-react'
@@ -55,6 +56,7 @@ export function ProvidersTab() {
   return (
     <div className="p-5">
       <VaultCard />
+      <Section title="Custom providers" description="Any endpoint, any wire protocol."><CustomProviderCards /></Section>
       <RegistryCard />
       <Section title="LLM providers" description="Direct-from-browser BYOK. Enter a key and the live model list is fetched automatically. Providers from the Provider Directory work instantly through the universal OpenAI-compatible adapter.">
         <div className="mb-3 space-y-2">

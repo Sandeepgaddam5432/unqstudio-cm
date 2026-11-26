@@ -2,8 +2,10 @@ import { PROVIDERS, getProvider, setModelLookup, type ProviderDef } from '@/core
 import { REGISTRY_ALIAS, type RegProvider } from '@/core/ai/modelsDev'
 import { catalogModels, type EnrichedModel, type FetchOutcome } from '@/core/ai/modelFetcher'
 import { useModels } from './models'
+import { useCustomProviders } from './customProviders'
+import { parseHeaders, secretNames, toProviderDef } from '@/core/ai/customProviders'
 import { useSettings } from './settings'
-import { getSecret, providerSecretName, vault } from './vault'
+import { getSecret, providerSecretName, useVault, vault } from './vault'
 
 /** A models.dev provider becomes a first-class provider immediately — the universal OpenAI-compatible adapter just uses its base URL. */
 export function registryProviderToDef(rp: RegProvider): ProviderDef {
@@ -14,21 +16,24 @@ export function registryProviderToDef(rp: RegProvider): ProviderDef {
   }
 }
 
-let memo: { reg: unknown; plug: unknown; out: ProviderDef[] } | null = null
+let memo: { reg: unknown; plug: unknown; cust: unknown; rev: number; out: ProviderDef[] } | null = null
 
 /** Built-in providers + user plugin providers + EVERY provider discovered from the models.dev registry. */
 export function allProviders(): ProviderDef[] {
   const reg = useModels.getState().registry
   const plug = useSettings.getState().plugins.providers
-  if (memo && memo.reg === reg && memo.plug === plug) return memo.out
+  const cust = useCustomProviders.getState().providers
+  const rev = useVault.getState().rev
+  if (memo && memo.reg === reg && memo.plug === plug && memo.cust === cust && memo.rev === rev) return memo.out
   const plugins = plug.map<ProviderDef>((p) => ({
     id: `plugin:${p.id}`, name: p.name, kind: 'openai', baseUrl: p.baseUrl, models: p.models.map((id) => ({ id })), userModels: true, compat: 'browser-ready', blurb: 'Custom provider from the plugin registry.',
   }))
   const builtins = PROVIDERS.map((p) => ({ ...p, compat: p.compat ?? (p.local ? 'local' as const : 'browser-ready' as const) }))
   const taken = new Set([...PROVIDERS.map((p) => p.id), ...Object.values(REGISTRY_ALIAS)])
   const dynamic = (reg?.providers ?? []).filter((p) => !taken.has(p.id)).map(registryProviderToDef)
-  const out = [...builtins, ...plugins, ...dynamic]
-  memo = { reg, plug, out }
+  const customs = cust.map((c) => toProviderDef(c, parseHeaders(getSecret(secretNames(c.id).headers))))
+  const out = [...builtins, ...customs, ...plugins, ...dynamic]
+  memo = { reg, plug, cust, rev, out }
   return out
 }
 
@@ -51,7 +56,7 @@ export function modelsForProvider(p: ProviderDef): EnrichedModel[] {
     : rp?.models.length ? catalogModels(rp)
     : p.models.map((m) => ({ id: m.id, name: m.label ?? m.id, vision: m.vision, reasoning: m.reasoning, cost: { input: m.priceIn, output: m.priceOut }, source: 'builtin' as const }))
   const have = new Set(base.map((m) => m.id))
-  const custom = (useSettings.getState().userModels[p.id] ?? []).filter((id) => !have.has(id)).map<EnrichedModel>((id) => ({ id, name: id, source: 'custom' }))
+  const custom = [...(useSettings.getState().userModels[p.id] ?? []), ...(p.custom ? p.models.map((m) => m.id) : [])].filter((id, i, a) => !have.has(id) && a.indexOf(id) === i).map<EnrichedModel>((id) => ({ id, name: id, source: 'custom' }))
   return [...base, ...custom]
 }
 
@@ -59,7 +64,7 @@ export function modelsForProvider(p: ProviderDef): EnrichedModel[] {
 export function fetchLiveFor(p: ProviderDef, o: { apiKey?: string; baseUrl?: string } = {}): Promise<FetchOutcome> {
   return useModels.getState().fetchLive({
     providerId: p.id,
-    target: { id: p.id, kind: p.kind, baseUrl: p.baseUrl, noKey: p.noKey },
+    target: { id: p.id, kind: p.kind, baseUrl: p.baseUrl, noKey: p.noKey, headers: p.headers, browserAccess: p.browserAccess },
     apiKey: o.apiKey ?? getSecret(providerSecretName(p.id)),
     baseUrl: o.baseUrl ?? (useSettings.getState().baseUrls[p.id] || undefined),
     registryProvider: registryProviderFor(p),

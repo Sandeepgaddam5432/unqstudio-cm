@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { loadRegistry, type RegistrySource } from '@/core/ai/modelsRegistry'
-import { fetchLiveModels, type EnrichedModel, type FetchOutcome } from '@/core/ai/modelFetcher'
+import { fetchLiveModels, type EnrichedModel, type FetchOutcome, type LiveTarget } from '@/core/ai/modelFetcher'
 import type { Registry, RegProvider } from '@/core/ai/modelsDev'
 
 export interface LiveState {
@@ -19,7 +19,7 @@ interface ModelsState {
   registryError?: string
   live: Record<string, LiveState>
   loadRegistry: (force?: boolean) => Promise<void>
-  fetchLive: (a: { providerId: string; target: { id: string; kind: 'openai' | 'anthropic'; baseUrl: string; noKey?: boolean }; apiKey?: string; baseUrl?: string; registryProvider?: RegProvider }) => Promise<FetchOutcome>
+  fetchLive: (a: { providerId: string; target: LiveTarget & { noKey?: boolean }; apiKey?: string; baseUrl?: string; registryProvider?: RegProvider }) => Promise<FetchOutcome>
 }
 
 export const useModels = create<ModelsState>()(
