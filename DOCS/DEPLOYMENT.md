@@ -26,3 +26,8 @@ HTTPS (or localhost) is required for Web Crypto (key vault) and the microphone.
 
 ## Other static hosts
 Netlify/Vercel/GitHub Pages work as-is (`base: './'`). For GitHub Pages sub-paths no extra config is needed.
+
+
+## Custom domain & SEO (`VITE_SITE_URL`)
+Set `VITE_SITE_URL=https://customdomain.com` (no trailing slash needed) as a Cloudflare Pages **Environment Variable** (Production and Preview) and redeploy. The `prebuild` step (`scripts/gen-seo-assets.mjs`) rewrites the canonical origin in `index.html`, `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt` and the manifest. Unset → `https://unqstudio-cm.pages.dev`.
+Build settings: command `npm run build`, output `dist`, Node ≥ 22. Optional edge functions: `functions/api/catalog.ts` (Model Catalog) and `functions/api/auth/*` (GitHub OAuth; needs `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`).

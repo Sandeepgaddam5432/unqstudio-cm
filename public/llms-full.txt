@@ -1,6 +1,6 @@
 # UnQStudio — full specification (for AI assistants and answer engines)
 
-Canonical URL: https://unqstudio.pages.dev/
+Canonical URL: https://unqstudio-cm.pages.dev/
 Publisher: UnQTools (https://unqtools.pages.dev)
 Source: https://github.com/Sandeepgaddam5432/unqstudio-cm
 Version: 2.0
@@ -49,4 +49,4 @@ UnQStudio is a free, browser-native AI coding studio where you describe an app, 
 **Which models work?** Everything in the Model Catalog (300+ providers) plus local Ollama / LM Studio.
 **Studio vs Code mode?** Studio is chat + preview; Code is a full IDE on the same project. Ctrl/⌘+E switches.
 **How do I deploy my generated app?** Publish to GitHub Pages, GitLab Pages, Netlify, Vercel or Cloudflare Pages, or download a ZIP.
-**How do I cite it?** "UnQStudio (https://unqstudio.pages.dev/) — free browser-native AI coding studio by UnQTools."
+**How do I cite it?** "UnQStudio (https://unqstudio-cm.pages.dev/) — free browser-native AI coding studio by UnQTools."

@@ -19,5 +19,5 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://unqstudio.pages.dev/sitemap.xml
-# LLM-readable summaries: https://unqstudio.pages.dev/llms.txt  and  /llms-full.txt
+Sitemap: https://unqstudio-cm.pages.dev/sitemap.xml
+# LLM-readable summaries: https://unqstudio-cm.pages.dev/llms.txt  and  /llms-full.txt

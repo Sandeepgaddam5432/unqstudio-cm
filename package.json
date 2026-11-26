@@ -1,7 +1,7 @@
 {
   "name": "unqstudio",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,8 +15,9 @@
     "docs:map": "node scripts/gen-codemap.mjs",
     "verify:docs": "node scripts/verify-docs.mjs",
     "sync:models": "node scripts/sync-catalog.mjs",
-    "prebuild": "node scripts/sync-catalog.mjs",
-    "sync:catalog": "node scripts/sync-catalog.mjs"
+    "prebuild": "node scripts/gen-seo-assets.mjs && node scripts/sync-catalog.mjs",
+    "sync:catalog": "node scripts/sync-catalog.mjs",
+    "gen:seo": "node scripts/gen-seo-assets.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

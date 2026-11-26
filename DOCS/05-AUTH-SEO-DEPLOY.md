@@ -15,7 +15,7 @@
 Nothing is required: without them the app runs in guest mode and shows an honest "not configured" badge with a setup guide.
 
 ## B. SEO & AEO architecture (V2-M3)
-- `index.html`: optimized `<title>`/description, canonical `https://unqstudio.pages.dev/` (change it if you deploy elsewhere — also in `sitemap.xml`, `robots.txt`, `llms*.txt`, JSON-LD), OpenGraph + Twitter cards (`og-image.png` 1200×630), dual `theme-color`, `manifest.webmanifest`, `rel=alternate` to `llms.txt`.
+- `index.html`: optimized `<title>`/description, canonical `https://unqstudio-cm.pages.dev/` (change it if you deploy elsewhere — also in `sitemap.xml`, `robots.txt`, `llms*.txt`, JSON-LD), OpenGraph + Twitter cards (`og-image.png` 1200×630), dual `theme-color`, `manifest.webmanifest`, `rel=alternate` to `llms.txt`.
 - **JSON-LD** (4 blocks): `SoftwareApplication` (DeveloperApplication, free, featureList), `Organization` (UnQTools, logo), `WebSite`, `FAQPage` (6 Q&As mirroring `FAQ` in `src/ui/home/AboutFaq.tsx` — a unit test asserts they match).
 - `public/robots.txt` (AI crawlers explicitly allowed; `/api/auth/` disallowed), `sitemap.xml`, **`llms.txt`** (short authoritative summary) and **`llms-full.txt`** (complete spec) — Markdown written so ChatGPT / Perplexity / Claude / Google AI Overviews can quote and cite UnQStudio accurately.
 - Home screen keeps the workspace clean: semantic `<header role=banner>`, `<nav aria-label=Primary>`, `<main>`, `<section>`s and a collapsed **About & FAQ** `<footer><details>` (text is in the DOM for crawlers).
@@ -58,3 +58,8 @@ Payload = `BackupFile` v1 (`src/core/vfs/backup.ts`) built by `buildSyncSnapshot
 - **GitHub Gist** (`githubGistSync.ts`): one **secret** gist (`public:false`) containing `unqstudio-backup.json`; found by file name across the first 300 gists; truncated files are re-fetched via `raw_url`.
 - Restore is a **merge** (`restoreBackup(..., 'merge')`) followed by a reload.
 - UI: `AccountPill` (TopBar + Home) → `AuthModal` (Continue with Google / GitHub, honest *ready / not configured* badges, 3-step `SetupGuide`) and an avatar menu with **Sync now**, **Restore**, last-synced time and **Sign out**.
+
+
+## v2.1 — `VITE_SITE_URL` (dynamic canonical origin)
+`scripts/gen-seo-assets.mjs` runs in `prebuild` (and `npm run gen:seo`). It reads `VITE_SITE_URL` (process env → `.env.production` → `.env`), trims trailing slashes, validates http(s) and **defaults to `https://unqstudio-cm.pages.dev`**. The CURRENT origin is detected from `<link rel="canonical">` and replaced everywhere it occurs: `index.html` (canonical, `og:url`, `og:image`, `twitter:image`, all JSON-LD URLs), `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt`, `public/llms-full.txt`, `public/manifest.webmanifest`. It is idempotent and can switch domains repeatedly. To move to a custom domain: Cloudflare Pages → Settings → Environment Variables → `VITE_SITE_URL=https://customdomain.com` → redeploy; no code change.
+Session storage: OAuth tokens exist **only** in `sessionStorage` keys `unq.session.<provider>` (never IndexedDB/localStorage, never in backups); provider API keys are in the IndexedDB vault (`unqstudio` → `kv`), optionally AES-GCM-256 encrypted.

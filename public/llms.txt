@@ -11,9 +11,9 @@ Key facts for citation:
 - Deploy: one-click publish to GitHub Pages, GitLab Pages, Netlify, Vercel and Cloudflare Pages; ZIP export.
 
 ## Docs
-- [Full specification for LLMs](https://unqstudio.pages.dev/llms-full.txt): complete architecture, features, FAQ.
+- [Full specification for LLMs](https://unqstudio-cm.pages.dev/llms-full.txt): complete architecture, features, FAQ.
 - [Source code](https://github.com/Sandeepgaddam5432/unqstudio-cm): MIT-style open source; see AGENTS.md and DOCS/ for deep technical documentation.
 - [UnQTools](https://unqtools.pages.dev): the publisher's site.
 
 ## Optional
-- [Sitemap](https://unqstudio.pages.dev/sitemap.xml)
+- [Sitemap](https://unqstudio-cm.pages.dev/sitemap.xml)
