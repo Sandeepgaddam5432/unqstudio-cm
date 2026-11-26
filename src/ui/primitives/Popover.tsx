@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { autoUpdate, flip, offset, shift, size, useDismiss, useFloating, useInteractions, type Placement } from '@floating-ui/react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useMedia } from '@/lib/useMedia'
+import { BottomSheet } from './BottomSheet'
 
 export interface MenuItem {
   label?: string
@@ -64,15 +65,6 @@ export function Dropdown({ trigger, items, content, align = 'start', className, 
   const dismiss = useDismiss(context, { outsidePress: true, escapeKey: true })
   const { getFloatingProps } = useInteractions([dismiss])
 
-  useEffect(() => {
-    if (!open || !sheet) return
-    const key = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    window.addEventListener('keydown', key)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { window.removeEventListener('keydown', key); document.body.style.overflow = prev }
-  }, [open, sheet])
-
   const onMenuKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
     const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button[data-item]:not(:disabled)'))
@@ -121,17 +113,11 @@ export function Dropdown({ trigger, items, content, align = 'start', className, 
           </div>,
           document.body,
         )}
-      {open && sheet &&
-        createPortal(
-          <div className="fixed inset-0 z-[90] flex flex-col justify-end" data-dropdown-sheet role="dialog" aria-modal="true" aria-label={sheetTitle ?? 'Options'}>
-            <div className="absolute inset-0 animate-fade bg-black/40 backdrop-blur-sm" onClick={close} />
-            <div onKeyDown={onMenuKey} className="animate-sheet relative flex max-h-[82dvh] min-h-0 flex-col overflow-hidden rounded-t-2xl border border-b-0 border-line bg-panel pb-[env(safe-area-inset-bottom)] shadow-pop">
-              <button onClick={close} aria-label="Dismiss" className="flex h-5 shrink-0 items-center justify-center"><span className="h-1 w-9 rounded-full bg-line-strong" /></button>
-              <div className="flex min-h-0 flex-1 flex-col overflow-auto p-1">{body}</div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      {open && sheet && (
+        <BottomSheet open onClose={close} title={sheetTitle ?? 'Options'} flush>
+          <div onKeyDown={onMenuKey} className="flex min-h-0 flex-1 flex-col p-1 pb-3" data-dropdown-sheet>{body}</div>
+        </BottomSheet>
+      )}
     </>
   )
 }

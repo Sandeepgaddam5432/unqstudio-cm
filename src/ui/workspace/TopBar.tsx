@@ -1,13 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bookmark, Code2, Command, MoreHorizontal, Moon, Redo2, Rocket, Settings, Sparkles, Sun, Undo2 } from 'lucide-react'
-import { Button, Dropdown, Logo, Segmented, Tooltip, Kbd } from '@/ui/primitives'
+import { Bookmark, ChevronDown, Code2, Command, Moon, PanelLeft, Redo2, Rocket, Settings, SlidersHorizontal, Sparkles, Sun, Undo2 } from 'lucide-react'
+import { Button, Logo, Segmented, Tooltip, Kbd } from '@/ui/primitives'
 import { navigateHome, useApp } from '@/store/app'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
 import { toast } from '@/store/toast'
 import { AccountPill } from '@/ui/auth/AccountPill'
+import { useIsMobile } from '@/lib/useMedia'
+import { haptic } from '@/lib/haptics'
+
+/** Zero-clutter phone header: sidebar/home trigger, tappable Project Pill, Publish pill. Everything else lives in the Project sheet. */
+function MobileTopBar() {
+  const { setPublishOpen, setSwitcherOpen, setSidebarOpen } = useApp()
+  const vfs = useWorkspace((s) => s.vfs)
+  useVfsVersion(vfs)
+  return (
+    <header data-topbar data-topbar-mobile className="flex min-w-0 shrink-0 items-center gap-2 border-b border-line bg-panel/90 px-2 pb-1.5 backdrop-blur-xl" style={{ paddingTop: 'calc(var(--sat, 0px) + 6px)' }}>
+      <button onClick={() => { haptic('tap'); setSidebarOpen(true) }} aria-label="Open menu" className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-subtle"><PanelLeft size={19} /></button>
+      <button onClick={() => { haptic('tap'); setSwitcherOpen(true) }} data-project-pill aria-label="Project menu" className="press flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-subtle px-4 text-[14px] font-semibold">
+        <span className="truncate">{vfs?.meta.name ?? '…'}</span><ChevronDown size={15} className="shrink-0 text-muted" />
+      </button>
+      <button onClick={() => { haptic('tap'); setPublishOpen(true) }} data-publish-pill aria-label="Publish" className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-semibold text-accent-fg"><Rocket size={14} />Publish</button>
+    </header>
+  )
+}
 
 export function TopBar() {
-  const { mode, setMode, resolvedTheme, toggleTheme, openSettings, setPublishOpen, setPaletteOpen } = useApp()
+  const mobile = useIsMobile()
+  return mobile ? <MobileTopBar /> : <DesktopTopBar />
+}
+
+function DesktopTopBar() {
+  const { mode, setMode, resolvedTheme, toggleTheme, openSettings, setPublishOpen, setPaletteOpen, setSidebarOpen, toggleSidebarCollapsed, openProjectSettings } = useApp()
   const vfs = useWorkspace((s) => s.vfs)
   const rename = useWorkspace((s) => s.renameProject)
   useVfsVersion(vfs)
@@ -20,14 +43,8 @@ export function TopBar() {
     setEditing(false)
     if (name.trim() && name.trim() !== vfs?.meta.name) await rename(name)
   }
-  const undo = async () => {
-    if (!vfs) return
-    toast.info((await vfs.undo()) ? 'Restored previous checkpoint' : 'Nothing to undo')
-  }
-  const redo = async () => {
-    if (!vfs) return
-    toast.info((await vfs.redo()) ? 'Re-applied next checkpoint' : 'Nothing to redo')
-  }
+  const undo = async () => { if (vfs) toast.info((await vfs.undo()) ? 'Restored previous checkpoint' : 'Nothing to undo') }
+  const redo = async () => { if (vfs) toast.info((await vfs.redo()) ? 'Re-applied next checkpoint' : 'Nothing to redo') }
   const checkpoint = async () => {
     if (!vfs) return
     const cp = await vfs.checkpoint(`Manual checkpoint ${new Date().toLocaleTimeString()}`, 'manual')
@@ -35,70 +52,39 @@ export function TopBar() {
   }
   const canUndo = !!vfs?.canUndo()
   const canRedo = !!vfs?.canRedo()
+  void setSidebarOpen
 
   return (
-    <header data-topbar className="flex h-12 min-w-0 shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-2 sm:px-3">
-      <div className="flex min-w-0 flex-1 items-center gap-1.5 md:flex-none">
+    <header data-topbar className="flex h-12 min-w-0 shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-3">
+      <div className="flex min-w-0 flex-none items-center gap-1.5">
+        <Tooltip label="Toggle sidebar"><button onClick={toggleSidebarCollapsed} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-subtle" aria-label="Toggle sidebar"><PanelLeft size={16} /></button></Tooltip>
         <Tooltip label="All projects"><button onClick={navigateHome} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-subtle" aria-label="Back to projects"><Logo size={20} /></button></Tooltip>
-        <span className="hidden text-faint sm:block">/</span>
+        <span className="text-faint">/</span>
         {editing ? (
-          <input
-            ref={input}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => { if (e.key === 'Enter') void commit(); if (e.key === 'Escape') setEditing(false) }}
-            className="h-7 w-36 rounded-md border border-accent/60 bg-subtle px-2 text-sm font-medium outline-none sm:w-52"
-            aria-label="Project name"
-          />
+          <input ref={input} value={name} onChange={(e) => setName(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') void commit(); if (e.key === 'Escape') setEditing(false) }} className="h-7 w-52 rounded-md border border-accent/60 bg-subtle px-2 text-sm font-medium outline-none" aria-label="Project name" />
         ) : (
           <Tooltip label="Rename project">
-            <button onClick={() => { setName(vfs?.meta.name ?? ''); setEditing(true) }} className="max-w-[9rem] truncate rounded-md px-2 py-1 text-sm font-medium hover:bg-subtle sm:max-w-[16rem]">
-              {vfs?.meta.name ?? '…'}
-            </button>
+            <button onClick={() => { setName(vfs?.meta.name ?? ''); setEditing(true) }} className="max-w-[16rem] truncate rounded-md px-2 py-1 text-sm font-medium hover:bg-subtle">{vfs?.meta.name ?? '…'}</button>
           </Tooltip>
         )}
+        <Tooltip label="Project settings"><Button variant="ghost" size="icon-sm" onClick={() => openProjectSettings()} aria-label="Project settings"><SlidersHorizontal size={14} /></Button></Tooltip>
       </div>
 
       <Tooltip label="Switch workspace" hint="⌘E">
-        <span className="hidden md:inline-flex">
-          <Segmented
-            value={mode}
-            onChange={setMode}
-            items={[
-              { id: 'studio', label: <span className="hidden sm:inline">Studio</span>, icon: <Sparkles size={13} /> },
-              { id: 'code', label: <span className="hidden sm:inline">Code</span>, icon: <Code2 size={13} /> },
-            ]}
-          />
+        <span className="inline-flex">
+          <Segmented value={mode} onChange={setMode} items={[{ id: 'studio', label: <span>Studio</span>, icon: <Sparkles size={13} /> }, { id: 'code', label: <span>Code</span>, icon: <Code2 size={13} /> }]} />
         </span>
       </Tooltip>
 
-      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-        <div className="hidden items-center gap-0.5 sm:flex">
-          <Tooltip label="Undo to previous checkpoint"><Button variant="ghost" size="icon-sm" disabled={!canUndo} onClick={undo} aria-label="Undo"><Undo2 size={15} /></Button></Tooltip>
-          <Tooltip label="Redo"><Button variant="ghost" size="icon-sm" disabled={!canRedo} onClick={redo} aria-label="Redo"><Redo2 size={15} /></Button></Tooltip>
-          <Tooltip label="Save checkpoint"><Button variant="ghost" size="icon-sm" onClick={checkpoint} aria-label="Save checkpoint"><Bookmark size={15} /></Button></Tooltip>
-          <Tooltip label="Command palette" hint="⌘K"><Button variant="ghost" size="sm" onClick={() => setPaletteOpen(true)} aria-label="Command palette"><Command size={14} /><Kbd>K</Kbd></Button></Tooltip>
-        </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Tooltip label="Undo to previous checkpoint"><Button variant="ghost" size="icon-sm" disabled={!canUndo} onClick={undo} aria-label="Undo"><Undo2 size={15} /></Button></Tooltip>
+        <Tooltip label="Redo"><Button variant="ghost" size="icon-sm" disabled={!canRedo} onClick={redo} aria-label="Redo"><Redo2 size={15} /></Button></Tooltip>
+        <Tooltip label="Save checkpoint"><Button variant="ghost" size="icon-sm" onClick={checkpoint} aria-label="Save checkpoint"><Bookmark size={15} /></Button></Tooltip>
+        <Tooltip label="Command palette" hint="⌘K"><Button variant="ghost" size="sm" onClick={() => setPaletteOpen(true)} aria-label="Command palette"><Command size={14} /><Kbd>K</Kbd></Button></Tooltip>
         <Tooltip label="Toggle theme"><Button variant="ghost" size="icon-sm" onClick={toggleTheme} aria-label="Toggle theme">{resolvedTheme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}</Button></Tooltip>
         <AccountPill />
         <Tooltip label="Settings"><Button variant="ghost" size="icon-sm" onClick={() => openSettings()} aria-label="Settings"><Settings size={15} /></Button></Tooltip>
-        <div className="sm:hidden">
-          <Dropdown
-            align="end"
-            trigger={<Button variant="ghost" size="icon-sm" aria-label="More"><MoreHorizontal size={15} /></Button>}
-            items={[
-              { label: 'Undo', icon: <Undo2 size={14} />, disabled: !canUndo, onSelect: undo },
-              { label: 'Redo', icon: <Redo2 size={14} />, disabled: !canRedo, onSelect: redo },
-              { label: 'Save checkpoint', icon: <Bookmark size={14} />, onSelect: checkpoint },
-              { label: 'Command palette', icon: <Command size={14} />, onSelect: () => setPaletteOpen(true) },
-            ]}
-          />
-        </div>
-        <Button variant="accent" size="sm" onClick={() => setPublishOpen(true)} className="ml-1">
-          <Rocket size={13} />
-          <span className="hidden sm:inline">Publish</span>
-        </Button>
+        <Button variant="accent" size="sm" onClick={() => setPublishOpen(true)} className="ml-1"><Rocket size={13} /><span>Publish</span></Button>
       </div>
     </header>
   )

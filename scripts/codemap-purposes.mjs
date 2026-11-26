@@ -1,5 +1,6 @@
 // Hand-written purposes used by scripts/gen-codemap.mjs. Add an entry whenever a new file is added.
 export const DIR_PURPOSES = {
+  'src/ui/hooks': 'Browser-environment React hooks (visual viewport / on-screen keyboard).',
   'src': 'Application entry points.',
   'src/core/ai': 'AI engine: provider registry, streaming adapters, artifact parser, patch engine, orchestrator, key vault, unified Model Catalog pipeline (directory + OpenRouter + LiteLLM).',
   'src/core/auth': 'Optional local-first authentication (Google GIS, GitHub OAuth) and cloud sync (Drive AppData, Gist).',
@@ -28,6 +29,14 @@ export const DIR_PURPOSES = {
   'functions/api/auth': 'Cloudflare Pages Functions for OAuth.',
 }
 export const PURPOSES = {
+  'src/lib/haptics.ts': 'Safe navigator.vibrate wrapper with named patterns (tap/select/send/success/warning/error) and a persisted on/off toggle; no-ops on desktop, iOS and tests.',
+  'src/ui/hooks/useVisualViewport.ts': 'Tracks window.visualViewport, derives the on-screen keyboard inset and publishes it as --kb-inset / [data-keyboard] so the chat composer lifts above the keyboard.',
+  'src/ui/primitives/sheetPhysics.ts': 'Pure drag physics for the BottomSheet: rubber-band resistance, trailing-window velocity and the dismiss threshold rule.',
+  'src/ui/primitives/BottomSheet.tsx': 'Touch-draggable mobile bottom sheet: drag handle, rubber-banded upward drag, velocity/threshold swipe-to-dismiss, fading blurred backdrop, body scroll lock, Escape and safe-area padding.',
+  'src/ui/primitives/primitives-v3.test.tsx': 'Unit tests for sheet physics, BottomSheet dismissal, haptics fallbacks, visual-viewport keyboard inset and the mobile segment index.',
+  'src/ui/workspace/ProjectSwitcher.tsx': 'Project Pill sheet: inline rename, quick actions (undo/redo/checkpoint/commands/theme/settings), project settings entry and recent-project switcher.',
+  'src/ui/workspace/TopBar.tsx': 'Workspace top bar: clean phone header (menu, Project Pill, Publish pill) and the full desktop bar (sidebar toggle, rename, mode switch, undo/redo, palette, theme, publish).',
+  'src/ui/workspace/Body.tsx': 'Adaptive Studio/Code layout; on phones a sliding two-pane Chat/Preview strip with the floating Chat | Preview | Code segmented bar and live build/error dot.',
   'src/core/ai/selfHeal.ts': 'Pure self-healing build loop: selfHealLoop (fail -> heal -> green, max-retry guard, abort, no-progress guard), buildHealPrompt with exact errors + numbered file excerpts, clampHealSteps (1-3), pollUntil.',
   'src/core/ai/inlineEdit.ts': 'Pure helpers for the inline selection edit: expandToLines, spliceRange, extractReplacement (strips fences), buildInlineMessages, surroundingContext, diffPreview (green/red lines).',
   'src/core/ai/repoMap.ts': 'Project Symbol Map: regex extraction of exports (components, hooks, types, classes), imports and CSS structure from ts/tsx/js/jsx/css files, formatted as one compact line per file.',
@@ -53,7 +62,6 @@ export const PURPOSES = {
   'src/store/chatPrefs.ts': 'Persisted chat customization preferences (`unq.chatprefs.v1`).',
   'src/ui/chat/ChatPanel.tsx': 'Chat screen: strict 3-zone CSS grid (`auto minmax(0,1fr) auto`): header / messages / composer.',
   'src/ui/chat/Composer.tsx': 'Docked composer: multiline textarea on top, wrapped toolbar row below (attach, @file, voice, enhance, rules, mode, model pill, send/stop).',
-  'src/ui/workspace/Body.tsx': 'Adaptive workspace body: split panes ≥768px, mobile bottom navigation (Chat | Preview | Code) below.',
   'src/core/ai/modelsDev.ts': 'Pure, import-free models.dev normalizer + compatibility classifier (KNOWN_API, REGISTRY_ALIAS). Shared by the build script, the edge function and the browser.',
   'src/core/ai/modelsRegistry.ts': 'Tier-2 client registry: edge → models.dev → bundled fetch chain, IndexedDB cache (24h TTL), overlay merge.',
   'src/core/ai/modelFetcher.ts': 'Tier-3 live per-provider /models fetchers (OpenAI-compatible, Gemini, Anthropic, Ollama), parsers, enrichment with models.dev metadata, catalog fallback.',
@@ -198,6 +206,5 @@ Object.assign(PURPOSES, {
   'src/ui/theme/applyTheme.ts': 'Applies a theme preset to the open project (writes tokens + fonts).',
   'src/ui/workspace/HistoryPanel.tsx': 'Checkpoint timeline: restore, fork, diff and delete.',
   'src/ui/workspace/RightPanel.tsx': 'Right-hand panel that switches between Preview, Inspector, Theme and History.',
-  'src/ui/workspace/TopBar.tsx': 'Workspace top bar: project name, mode switch, undo/redo, publish, settings and account pill.',
   'src/ui/workspace/Workspace.tsx': 'Workspace shell: adaptive Studio/Code layout (chat + preview or full IDE) and mobile tabs.',
 })

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export type ThemePref = 'system' | 'dark' | 'light'
 export type WorkspaceMode = 'studio' | 'code'
+export type AccentPreset = 'signature' | 'warm'
 
 export interface PendingPrompt { text: string; images?: string[] }
 
@@ -16,6 +17,12 @@ interface AppState {
   publishOpen: boolean
   paletteOpen: boolean
   onboardingOpen: boolean
+  accent: AccentPreset
+  sidebarOpen: boolean
+  sidebarCollapsed: boolean
+  switcherOpen: boolean
+  projectSettingsOpen: boolean
+  projectSettingsTab: string
   pendingPrompt: PendingPrompt | null
   setTheme: (t: ThemePref) => void
   toggleTheme: () => void
@@ -29,6 +36,12 @@ interface AppState {
   setPaletteOpen: (v: boolean) => void
   setOnboardingOpen: (v: boolean) => void
   setPendingPrompt: (p: PendingPrompt | null) => void
+  setAccent: (a: AccentPreset) => void
+  setSidebarOpen: (v: boolean) => void
+  toggleSidebarCollapsed: () => void
+  setSwitcherOpen: (v: boolean) => void
+  openProjectSettings: (tab?: string) => void
+  closeProjectSettings: () => void
 }
 
 export const systemTheme = (): 'dark' | 'light' =>
@@ -46,6 +59,12 @@ export const useApp = create<AppState>()(
       publishOpen: false,
       paletteOpen: false,
       onboardingOpen: false,
+      accent: 'signature',
+      sidebarOpen: false,
+      sidebarCollapsed: false,
+      switcherOpen: false,
+      projectSettingsOpen: false,
+      projectSettingsTab: 'overview',
       pendingPrompt: null,
       setTheme: (theme) => set({ theme, resolvedTheme: theme === 'system' ? systemTheme() : theme }),
       toggleTheme: () => get().setTheme(get().resolvedTheme === 'dark' ? 'light' : 'dark'),
@@ -59,8 +78,14 @@ export const useApp = create<AppState>()(
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
       setOnboardingOpen: (onboardingOpen) => set({ onboardingOpen }),
       setPendingPrompt: (pendingPrompt) => set({ pendingPrompt }),
+      setAccent: (accent) => set({ accent }),
+      setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+      toggleSidebarCollapsed: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
+      setSwitcherOpen: (switcherOpen) => set({ switcherOpen }),
+      openProjectSettings: (tab) => set({ projectSettingsOpen: true, projectSettingsTab: tab ?? 'overview' }),
+      closeProjectSettings: () => set({ projectSettingsOpen: false }),
     }),
-    { name: 'unq.app.v1', partialize: (s) => ({ theme: s.theme, mode: s.mode }) },
+    { name: 'unq.app.v1', partialize: (s) => ({ theme: s.theme, mode: s.mode, accent: s.accent, sidebarCollapsed: s.sidebarCollapsed }) },
   ),
 )
 
@@ -71,7 +96,19 @@ export function applyThemeClass(resolved: 'dark' | 'light', animate = true) {
     setTimeout(() => root.classList.remove('theme-transition'), 320)
   }
   root.classList.toggle('dark', resolved === 'dark')
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#09090B' : '#FAFAFA')
+  syncThemeColorMeta(resolved)
+}
+
+/** Keep the browser/PWA status-bar colour in lock-step with the active theme (replaces the media-query variants). */
+export function syncThemeColorMeta(resolved: 'dark' | 'light') {
+  const color = resolved === 'dark' ? '#09090B' : '#FAFAFA'
+  const metas = document.querySelectorAll('meta[name="theme-color"]')
+  metas.forEach((m, i) => { if (i === 0) { m.removeAttribute('media'); m.setAttribute('content', color) } else m.remove() })
+}
+
+export function applyAccent(a: AccentPreset) {
+  if (a === 'warm') document.documentElement.dataset.accent = 'warm'
+  else delete document.documentElement.dataset.accent
 }
 
 export function navigateToProject(id: string) { location.hash = `#/p/${id}` }

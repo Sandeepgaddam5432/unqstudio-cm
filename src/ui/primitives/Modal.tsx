@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from './Button'
+import { BottomSheet } from './BottomSheet'
+import { useIsMobile } from '@/lib/useMedia'
 
 const sizes = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl', xl: 'sm:max-w-4xl' }
 
@@ -31,8 +33,10 @@ export interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }: ModalProps) {
-  useEscape(open, onClose)
+  const mobile = useIsMobile()
+  useEscape(open && !mobile, onClose)
   if (!open) return null
+  if (mobile) return <BottomSheet open onClose={onClose} title={title} description={description} footer={footer}>{children}</BottomSheet>
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-4">
       <div className="animate-fade absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={onClose} />
@@ -64,8 +68,10 @@ export function Modal({ open, onClose, title, description, children, footer, siz
 }
 
 export function Drawer({ open, onClose, title, children, width = 760 }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; width?: number }) {
-  useEscape(open, onClose)
+  const mobile = useIsMobile()
+  useEscape(open && !mobile, onClose)
   if (!open) return null
+  if (mobile) return <BottomSheet open onClose={onClose} title={title} tall flush>{children}</BottomSheet>
   return createPortal(
     <div className="fixed inset-0 z-[65] flex justify-end">
       <div className="animate-fade absolute inset-0 bg-black/45" onClick={onClose} />

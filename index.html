@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual" />
     <title>UnQStudio — Free Browser-Native AI Coding Studio (BYOK, No Backend)</title>
     <meta name="description" content="UnQStudio is a free AI coding studio that runs entirely in your browser. Describe an app, bring your own key for 300+ AI models, and watch it build live. No backend, no sign-up." />
     <meta name="keywords" content="AI coding studio, AI app builder, browser IDE, esbuild-wasm, BYOK, vibe coding, React, Cloudflare Pages" />
@@ -17,6 +17,11 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090B" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAFAF9" />
     <meta name="color-scheme" content="dark light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="UnQStudio" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="UnQStudio" />
@@ -158,6 +163,8 @@
         var t = p.theme || 'system';
         var d = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.classList.toggle('dark', d);
+        if (p.accent === 'warm') document.documentElement.dataset.accent = 'warm';
+        var tc = document.querySelectorAll('meta[name="theme-color"]'); for (var i = 1; i < tc.length; i++) tc[i].remove(); if (tc[0]) { tc[0].removeAttribute('media'); tc[0].setAttribute('content', d ? '#09090B' : '#FAFAFA'); }
       } catch (e) {}
     </script>
   </head>

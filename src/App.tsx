@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { applyThemeClass, parseRoute, systemTheme, useApp } from '@/store/app'
+import { applyAccent, applyThemeClass, parseRoute, systemTheme, useApp } from '@/store/app'
 import { Toaster } from '@/ui/primitives'
 import CommandPalette from '@/ui/CommandPalette'
 import { Logo } from '@/ui/primitives'
@@ -42,6 +42,8 @@ export default function App() {
   useEffect(() => { void useVault.getState().init(); logEvent('system', 'UnQStudio started') }, [])
   useEffect(() => { applyThemeClass(theme === 'system' ? systemTheme() : theme, false) }, [])
   useEffect(() => { applyThemeClass(resolvedTheme) }, [resolvedTheme])
+  const accent = useApp((s) => s.accent)
+  useEffect(() => { applyAccent(accent) }, [accent])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

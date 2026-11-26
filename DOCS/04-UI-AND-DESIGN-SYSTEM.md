@@ -78,3 +78,9 @@ Source of truth: `src/core/runtime/bridgeScript.ts` (injected in the sandboxed i
 | `--c-success` | `#16a34a` | `#4ade80` |
 | `--c-warn` | `#d97706` | `#fbbf24` |
 Dark mode is class-based (`@custom-variant dark (&:where(.dark, .dark *))`); fonts are Inter Variable (UI) and JetBrains Mono Variable (code).
+
+## v3.0 Native mobile shell
+- **BottomSheet** (`src/ui/primitives/BottomSheet.tsx`, physics in `sheetPhysics.ts`): used automatically by `Modal`, `Drawer` and `Dropdown mobileSheet` below 768px.
+- **Top bar (phone)**: menu · Project Pill (opens `ProjectSwitcher`) · Publish pill. Undo/redo/theme/palette moved into the Project sheet.
+- **Floating view switcher**: `Chat | Preview | Code` with sliding indicator, two-pane sliding strip and a live dot on Preview (amber building / red errors). Hidden while the keyboard is open.
+- **Tokens**: `--sat/--sab` safe-area vars, `.bg-mesh`, `.composer-float`, `.surface-1/2`, `.press` spring tap feedback, `[data-accent=warm]` Lovable Warm preset (Settings → Appearance), haptics toggle.

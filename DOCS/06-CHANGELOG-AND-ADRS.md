@@ -113,3 +113,15 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 
 ### V2.1-M7 visual-audit fix
 - Screenshot review found the picker's metadata chips starving the model name in the 340 px panel and the list scrolling sideways. Fix: horizontal overflow hidden, capability chips are compact icon chips with titles, name has a 5 rem floor, desktop panel widened to 440 px.
+
+## v3.0 — Lovable-class studio & native mobile UX (in progress)
+
+### V3.0-M1 — Native mobile shell, draggable BottomSheet, PWA & visual elevation
+- `BottomSheet` (spring physics in `sheetPhysics.ts`) now backs every `Modal`, `Drawer` and `Dropdown mobileSheet` below 768px (Model Picker, Publish, Settings, Project switcher).
+- PWA shell: `viewport-fit=cover`, `apple-mobile-web-app-capable`, manifest `id`/`shortcuts`, theme-color synced to the active theme, safe-area CSS variables, no overscroll, 44px touch targets.
+- `useVisualViewport` publishes `--kb-inset`; the workspace pads by it so the composer sits above the keyboard.
+- `haptics.ts` + Appearance toggle; accent preset **Lovable Warm** (`data-accent="warm"`).
+- Phone top bar = menu · Project Pill · Publish; floating `Chat | Preview | Code` bar with sliding indicator and build/error dot.
+
+### ADR-012 One BottomSheet primitive instead of per-feature drawers
+Modal/Drawer/Dropdown switch to the same sheet on phones so drag, scroll-lock and safe-area handling live in one tested place. Cost: Modal consumers get sheet chrome on <768px (title bar replaces the dialog header).

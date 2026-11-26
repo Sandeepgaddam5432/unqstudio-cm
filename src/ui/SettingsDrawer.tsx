@@ -1,8 +1,9 @@
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { haptic, hapticsEnabled, hapticsSupported, setHapticsEnabled } from '@/lib/haptics'
 import { cn } from '@/lib/cn'
 import { AccountTab } from '@/ui/settings/AccountTab'
 import { Drawer, Logo, Section, Segmented, Switch } from '@/ui/primitives'
-import { useApp, type ThemePref } from '@/store/app'
+import { useApp, type AccentPreset, type ThemePref } from '@/store/app'
 import { useSettings } from '@/store/settings'
 import { ProvidersTab } from '@/ui/settings/ProvidersTab'
 import { ConnectionsTab } from '@/ui/settings/ConnectionsTab'
@@ -12,11 +13,18 @@ import { DebugTab } from '@/ui/settings/DebugTab'
 import { FeaturesTab } from '@/ui/settings/FeaturesTab'
 
 function Appearance() {
-  const { theme, setTheme } = useApp()
+  const { theme, setTheme, accent, setAccent } = useApp()
+  const [haptics, setHaptics] = useState(hapticsEnabled())
   return (
     <div className="p-5">
       <Section title="Appearance" description="Obsidian Dark and Paper Light, with a system option.">
         <Segmented<ThemePref> value={theme} onChange={setTheme} items={[{ id: 'system', label: 'System' }, { id: 'light', label: 'Paper Light' }, { id: 'dark', label: 'Obsidian Dark' }]} />
+      </Section>
+      <Section title="Accent" description="Signature keeps the Obsidian/Paper ember accent. Lovable Warm is a soft ambient orange.">
+        <Segmented<AccentPreset> value={accent} onChange={setAccent} items={[{ id: 'signature', label: 'Signature' }, { id: 'warm', label: 'Lovable Warm' }]} />
+      </Section>
+      <Section title="Haptics" description={hapticsSupported() ? 'Subtle vibration on tab switch, send, restore, build complete and errors.' : 'Vibration is not available on this device or browser.'}>
+        <label className="flex items-center gap-3 text-sm"><Switch checked={haptics} onChange={(v) => { setHaptics(v); setHapticsEnabled(v); if (v) haptic('success') }} />Tactile feedback</label>
       </Section>
     </div>
   )

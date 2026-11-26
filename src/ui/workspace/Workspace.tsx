@@ -5,6 +5,8 @@ import { useApp } from '@/store/app'
 import { Button, EmptyState } from '@/ui/primitives'
 import { navigateHome } from '@/store/app'
 import { TopBar } from './TopBar'
+import { ProjectSwitcher } from './ProjectSwitcher'
+import { useVisualViewport } from '@/ui/hooks/useVisualViewport'
 import { PublishModal } from '@/ui/publish/PublishModal'
 import { WorkspaceBody } from './Body'
 import { useChatController } from '@/ui/chat/useChatController'
@@ -14,6 +16,7 @@ export default function Workspace({ projectId }: { projectId: string }) {
   useVfsVersion(vfs)
   const setProjectId = useApp((s) => s.setProjectId)
   useChatController()
+  useVisualViewport()
 
   useEffect(() => {
     setProjectId(projectId)
@@ -34,10 +37,11 @@ export default function Workspace({ projectId }: { projectId: string }) {
     return <div className="flex h-full items-center justify-center text-muted"><Loader2 className="animate-spin-fast" /></div>
   }
   return (
-    <div className="flex h-[100dvh] min-w-0 flex-col overflow-hidden">
+    <div className="flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-bg" style={{ paddingBottom: 'var(--kb-inset, 0px)' }} data-workspace-root>
       <TopBar />
       <div className="min-h-0 min-w-0 flex-1"><WorkspaceBody /></div>
       <PublishModal />
+      <ProjectSwitcher />
     </div>
   )
 }
