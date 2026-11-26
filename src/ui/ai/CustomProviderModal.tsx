@@ -134,7 +134,7 @@ function Form({ editing, onClose }: { editing: ReturnType<typeof useCustomProvid
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant="secondary" onClick={() => void testFetch()} disabled={fetched.status === 'loading'} data-testid="cp-test">{fetched.status === 'loading' ? <Spinner size={12} /> : <RefreshCw size={12} />}Test & Auto-Fetch Models</Button>
             <span className="font-mono text-[10px] text-faint">{info.modelsPath}</span>
-            {fetched.status === 'ok' && <Badge tone="success" data-testid="cp-fetched"><Check size={10} />{fetched.models.length} models · {fetched.ms}ms</Badge>}
+            {fetched.status === 'ok' && <span data-testid="cp-fetched"><Badge tone="success"><Check size={10} />{fetched.models.length} models · {fetched.ms}ms</Badge></span>}
           </div>
           {fetched.status === 'error' && <p className="mt-2 text-xs text-danger" role="alert">{fetched.message} You can still add model IDs manually below.</p>}
           {fetched.status === 'ok' && (

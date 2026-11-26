@@ -1,7 +1,7 @@
 # HANDOFF
 
-**State:** V2-M1…M6 complete — all gates green (verify:docs, tsc, lint, 147 unit tests, 78 E2E checks, build). Read `AGENTS.md` first.
-**Run everything:** `export PATH=<node22>:$PATH; npm run verify:docs && npx tsc --noEmit && npm run lint && npm test && npm run build && npm run e2e`.
-**Environment notes:** unit tests need Node >= 22 (jsdom 31); Playwright Chromium needs system libs (libnss3, libnspr4, libatk1.0-0, libgbm1, libasound2, fonts-noto-color-emoji).
-**Optional deployment config:** `VITE_GOOGLE_CLIENT_ID`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` (see `DOCS/05-AUTH-SEO-DEPLOY.md`). Canonical URL assumed `https://unqstudio-cm.pages.dev/` — change it everywhere if you deploy elsewhere.
-**Ideas next:** virtualize the "All (models.dev)" list; per-provider CORS capability probe cache; Gist/Drive conflict resolution (currently last-write-wins merge).
+**State:** V2.1-M1…M7 complete — all gates green (verify:docs, tsc, lint, 353 unit tests, build, 68 E2E checks). Read `AGENTS.md` first, then `DOCS/08` for the honest roadmap.
+**Run everything:** `npm run verify:docs && npx tsc --noEmit && npm run lint && npm test && npm run build && npm run e2e`.
+**E2E environment:** needs `npx playwright install chromium` and the system libs (libnss3, libnspr4, libatk1.0-0, libatk-bridge2.0-0, libgbm1, libxkbcommon0, libasound2, libxi6, …). Without root, unpack the `.deb`s into a folder and export `LD_LIBRARY_PATH`.
+**Optional deployment config:** `VITE_SITE_URL` (custom domain; default https://unqstudio-cm.pages.dev), `VITE_GOOGLE_CLIENT_ID`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` (see `DOCS/05-AUTH-SEO-DEPLOY.md`).
+**Next (P0):** agent tool loop, opt-in CORS relay, runtime-error capture in Auto-Heal (see `DOCS/08`).

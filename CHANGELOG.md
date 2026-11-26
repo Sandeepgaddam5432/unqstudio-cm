@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.0 — Universal AI Studio
+- **M1** Zero-leak branding (Model Catalog / Provider Directory / All Providers) + 4-source unified catalog (live /models → Provider Directory → OpenRouter → LiteLLM, fill-only, fail-safe); `sync:catalog`, edge `/api/catalog` (+ `/api/models-dev` alias).
+- **M2** Zero-broken-icon system: 35 bundled glyphs → preloaded CDN glyph → deterministic monogram; model-family detection.
+- **M3** `+ Add Custom Provider`: OpenAI / Anthropic / Gemini-native / Ollama-native adapters, custom headers, vault-held secrets, Test & Auto-Fetch Models, full CRUD.
+- **M4** Windowed Model Picker (favorites, recents, capability search), categorised Settings hub, Providers Hub sections.
+- **M5** Auto-Heal Builds, inline ⌘K selection edit in CodeMirror, Project Symbol Map context.
+- **M6** `VITE_SITE_URL` SEO/AEO generator; hardened code map (persistence inventory, class methods, 100% real purposes); `DOCS/07`, `DOCS/08`; stricter `verify:docs`.
+- **M7** 68-check headless-Chromium E2E against `dist/`, fresh `v21-*` screenshots, honest benchmark audit.
+
+
 (Full timestamped history and ADRs: [DOCS/06-CHANGELOG-AND-ADRS.md](./DOCS/06-CHANGELOG-AND-ADRS.md).)
 
 ## 2.0.0

@@ -102,3 +102,11 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 
 **ADR-V21-5 — Self-heal = bounded, observable, undoable.** Context: the old auto-fix fired a blind 5 s timer. Decision: wait for the actual compile result, retry ≤3 with exact errors + excerpts, stop on green / no progress / abort, and keep a single Undo that rolls back the whole series. Consequence: heal turns appear in chat (transparent) and cost tokens; users can disable or cap them.
 **ADR-V21-6 — Symbol map instead of embeddings.** Context: no backend, no vector DB. Decision: regex export/import extraction (no parser dependency, ~1 ms for 100 files); full text only for pinned/mentioned/entry files. Consequence: approximate (re-exports via `export *` are not resolved) but deterministic, offline and ≥60% cheaper on mid-size projects.
+
+### V2.1-M6 — SEO generator + documentation gaps
+- `scripts/gen-seo-assets.mjs` (`prebuild`, `gen:seo`) driven by `VITE_SITE_URL`; code map now lists every IndexedDB database/store/index, all `sessionStorage` + `localStorage` keys, public class methods, never lists template-literal text as exports, and has a real purpose for 100% of files; `DOCS/07` written; `DOCS/04` bridge contract + colour tokens synced to the code; README/DOCS 05/DEPLOYMENT corrected; `verify:docs` fails on lazy purposes, missing DOCS 01–08, undocumented bridge events or missing `VITE_SITE_URL` docs.
+
+**ADR-V21-7 — Detect-and-replace canonical origin.** Context: the canonical URL is hard-coded in 6 static files. Decision: keep committed, working files and rewrite the *detected* current origin at `prebuild` from `VITE_SITE_URL` (no template placeholders, so `vite dev` and raw `index.html` stay valid). Consequence: idempotent, reversible, zero code changes for a custom domain; the rewrite touches the working tree at build time only.
+
+### V2.1-M7 — Verification
+- `scripts/e2e.mjs`: 68 checks in headless Chromium against `dist/` — zero upstream-brand text, zero broken images, 4-protocol custom-provider flow with mocked live `/models`, favorites + windowed scroll, inline ⌘K, canonical/JSON-LD, theme, auth UI, chat zero-overlap at 1440 and 375, SaaS compile, zero console errors. Screenshots: `DOCS/screenshots/v21-*.png`. Honest audit in `DOCS/08`.

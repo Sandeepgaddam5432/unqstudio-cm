@@ -48,7 +48,7 @@ Deploys as a plain `dist/` folder on Cloudflare Pages.
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm run test         # 350+ unit tests (vitest, Node >= 22)
+npm run test         # 353 unit tests (vitest, Node >= 22)
 npm run verify:docs  # doc-sync guard (also: npm run docs:map to regenerate the code map)
 npm run sync:catalog # refresh public/catalog-snapshot.json: directory + OpenRouter + LiteLLM (alias: sync:models; runs on prebuild)
 npm run gen:seo      # rewrite canonical URLs from VITE_SITE_URL (runs on prebuild)
