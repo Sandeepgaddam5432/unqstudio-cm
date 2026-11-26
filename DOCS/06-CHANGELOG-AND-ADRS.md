@@ -96,3 +96,9 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 - ModelPicker rewritten around a windowed flat row list (ADR-V21-4), favorites/recents, capability search, icons + chips, skeleton rows, Add Custom Provider footer. Settings → grouped nav; Providers Hub sections; new Account tab.
 
 **ADR-V21-4 — Hand-rolled fixed-height windowing, no virtualization dependency.** Context: 327 providers × ~30 models froze the old grouped DOM list. Decision: flatten to rows of constant height and render `slice(first,last)` with absolute `translateY`; no new dependency (a 30-line window beats `react-virtual` for a constant row height). Consequence: O(visible) DOM; rows must stay 36px (variable height would need measurement).
+
+### V2.1-M5 — Leapfrog IDE features
+- Auto-Heal Builds (default on; Settings → Chat & Editor, quick toggle in Chat settings), inline ⌘K edit in CodeMirror, Project Symbol Map in `buildProjectContext`.
+
+**ADR-V21-5 — Self-heal = bounded, observable, undoable.** Context: the old auto-fix fired a blind 5 s timer. Decision: wait for the actual compile result, retry ≤3 with exact errors + excerpts, stop on green / no progress / abort, and keep a single Undo that rolls back the whole series. Consequence: heal turns appear in chat (transparent) and cost tokens; users can disable or cap them.
+**ADR-V21-6 — Symbol map instead of embeddings.** Context: no backend, no vector DB. Decision: regex export/import extraction (no parser dependency, ~1 ms for 100 files); full text only for pinned/mentioned/entry files. Consequence: approximate (re-exports via `export *` are not resolved) but deterministic, offline and ≥60% cheaper on mid-size projects.

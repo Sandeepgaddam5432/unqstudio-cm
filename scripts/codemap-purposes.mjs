@@ -28,6 +28,10 @@ export const DIR_PURPOSES = {
   'functions/api/auth': 'Cloudflare Pages Functions for OAuth.',
 }
 export const PURPOSES = {
+  'src/core/ai/selfHeal.ts': 'Pure self-healing build loop: selfHealLoop (fail -> heal -> green, max-retry guard, abort, no-progress guard), buildHealPrompt with exact errors + numbered file excerpts, clampHealSteps (1-3), pollUntil.',
+  'src/core/ai/inlineEdit.ts': 'Pure helpers for the inline selection edit: expandToLines, spliceRange, extractReplacement (strips fences), buildInlineMessages, surroundingContext, diffPreview (green/red lines).',
+  'src/core/ai/repoMap.ts': 'Project Symbol Map: regex extraction of exports (components, hooks, types, classes), imports and CSS structure from ts/tsx/js/jsx/css files, formatted as one compact line per file.',
+  'src/ui/code/InlineEditWidget.tsx': 'Floating Cursor-style inline AI edit prompt: streams a replacement for the selected lines, shows a green/red diff, Accept / Reject.',
   'src/core/ai/modelSearch.ts': 'Pure picker search: multi-term fuzzy match over name/id/provider plus capability keywords (vision, reasoning, tools, free) and a rank score.',
   'src/store/modelPrefs.ts': 'Zustand store (localStorage `unq.modelPrefs.v1`): starred models and the last 3 recently used models.',
   'src/ui/settings/AccountTab.tsx': 'Settings → Sign In & Cloud Sync: guest/signed-in state, back up / restore, sign out (wraps useAuth).',

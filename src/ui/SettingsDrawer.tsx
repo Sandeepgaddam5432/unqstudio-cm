@@ -30,6 +30,18 @@ function ChatAndEditor() {
       <Section title="Default workspace" description="Studio is chat-first. Code is the full IDE. Switch any time with ⌘E.">
         <Segmented value={mode} onChange={setMode} items={[{ id: 'studio', label: 'Studio' }, { id: 'code', label: 'Code' }]} />
       </Section>
+      <Section title="Auto-Heal Builds" description="After an AI turn, wait for the real esbuild compile (plus a short runtime window); if it fails, feed the exact errors and file excerpts back to the model until the build is green.">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-xl border border-line p-3">
+            <div><p className="text-sm font-medium">Auto-heal in Build mode</p><p className="text-xs text-muted">On by default. Stop or undo the whole turn from the status pill.</p></div>
+            <Switch checked={s.flags.autoHeal !== false} onChange={(v) => s.setFlag('autoHeal', v)} label="Auto-heal builds" />
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-line p-3">
+            <div><p className="text-sm font-medium">Max heal attempts</p><p className="text-xs text-muted">Automatic follow-up turns per request.</p></div>
+            <Segmented value={String(Math.min(3, Math.max(1, s.maxAutoHealSteps ?? 3)))} onChange={(v) => s.set({ maxAutoHealSteps: Number(v) })} items={[{ id: '1', label: '1' }, { id: '2', label: '2' }, { id: '3', label: '3' }]} />
+          </div>
+        </div>
+      </Section>
       <Section title="Agent behaviour">
         <div className="flex items-center justify-between rounded-xl border border-line p-3">
           <div><p className="text-sm font-medium">Require approval for file changes</p><p className="text-xs text-muted">Hold AI edits in an approval tray instead of applying immediately.</p></div>

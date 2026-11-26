@@ -4,6 +4,7 @@ import { getAdapter } from '@/core/vfs/idbAdapter'
 import { forkFromCheckpoint } from '@/core/vfs/projects'
 import { applyPendingOps, runTurn, summarizeOps, type HistoryItem, type TurnEvent } from '@/core/ai/orchestrator'
 import { estimateCost } from '@/core/ai/tokens'
+import { clampHealSteps, pollUntil, selfHealLoop, type HealError } from '@/core/ai/selfHeal'
 import { findModel } from '@/core/ai/providers'
 import type { OpRecord } from '@/core/ai/apply'
 import type { Usage } from '@/core/ai/types'
@@ -45,6 +46,10 @@ interface ChatState {
   messages: ChatMessage[]
   busy: boolean
   autoFix: number
+  /** v2.1 self-heal status (null when idle). `originId` = the assistant turn that started the series. */
+  heal: { attempt: number; max: number; phase: 'waiting' | 'healing'; originId: string } | null
+  stopHeal: () => void
+  undoHeal: () => Promise<void>
   controller: AbortController | null
   load: (projectId: string) => Promise<void>
   send: (p: { text: string; images?: string[]; mode?: AIMode; auto?: boolean }) => Promise<boolean>
@@ -60,6 +65,7 @@ interface ChatState {
 
 const chatKey = (id: string) => `chat:${id}`
 let saveTimer: ReturnType<typeof setTimeout> | undefined
+let healAbort = false
 
 function persist(projectId: string | null, messages: ChatMessage[]) {
   if (!projectId) return
@@ -92,8 +98,42 @@ export const useChat = create<ChatState>((set, get) => {
       return { messages }
     })
 
+  /** Autonomous self-healing build loop (see core/ai/selfHeal.ts). */
+  const runHeal = async (originId: string) => {
+    const vfs = useWorkspace.getState().vfs
+    if (!vfs) return
+    const max = clampHealSteps(useSettings.getState().maxAutoHealSteps)
+    healAbort = false
+    set({ heal: { attempt: 0, max, phase: 'waiting', originId } })
+    const waitBuild = async (): Promise<HealError[]> => {
+      const hash0 = usePreview.getState().lastHash
+      await pollUntil(() => { const p = usePreview.getState(); return healAbort || p.status === 'building' || p.status === 'initializing' || p.lastHash !== hash0 }, 3000, 150)
+      await pollUntil(() => { const st = usePreview.getState().status; return healAbort || (st !== 'building' && st !== 'initializing') }, 30000, 200)
+      await new Promise((r) => setTimeout(r, 1800)) // brief runtime-crash window
+      const p = usePreview.getState()
+      return [...p.buildErrors, ...p.runtimeErrors].map((e) => ({ message: e.message, file: e.file, line: e.line, column: e.column, snippet: e.snippet, source: e.source }))
+    }
+    try {
+      const res = await selfHealLoop({
+        getErrors: waitBuild,
+        readFile: (path) => vfs.read(path),
+        isAborted: () => healAbort,
+        onPhase: (ph) => set({ heal: { ...ph, originId } }),
+        runTurn: async (prompt) => {
+          const ok = await get().send({ text: prompt, mode: 'build', auto: true })
+          if (!ok) return { applied: 0 }
+          const last = [...get().messages].reverse().find((m) => m.role === 'assistant')
+          return { applied: last?.ops?.filter((o) => o.status === 'applied').length ?? 0 }
+        },
+      }, max)
+      if (res.status === 'green' && res.attempts > 0) toast.success('Build healed', `Green after ${res.attempts} auto-fix${res.attempts === 1 ? '' : 'es'}.`)
+      else if (res.status === 'gave-up' || res.status === 'no-progress') toast.info('Auto-heal stopped', `${res.remaining.length} error${res.remaining.length === 1 ? '' : 's'} remain — you can fix them manually or undo the turn.`)
+      logEvent('ai', `self-heal ${res.status} after ${res.attempts} attempt(s)`)
+    } finally { set({ heal: null }) }
+  }
+
   return {
-    projectId: null, messages: [], busy: false, autoFix: 0, controller: null,
+    projectId: null, messages: [], busy: false, autoFix: 0, heal: null, controller: null,
 
     load: async (projectId) => {
       get().controller?.abort()
@@ -175,8 +215,9 @@ export const useChat = create<ChatState>((set, get) => {
         set({ busy: false, controller: null })
       }
 
-      // optional: feed runtime errors straight back to the model (max 2 automatic rounds)
-      if (applied > 0 && st.flags.autoFixErrors && get().autoFix < 2) {
+      if (applied > 0 && !auto && useMode === 'build' && st.flags.autoHeal !== false) void runHeal(asst.id)
+      else if (applied > 0 && st.flags.autoFixErrors && get().autoFix < 2) {
+        // legacy single-shot auto-fix (kept for users who disabled Auto-Heal): feed the first error back (max 2 rounds)
         setTimeout(() => {
           const p = usePreview.getState()
           const err = [...p.buildErrors, ...p.runtimeErrors][0]
@@ -189,7 +230,14 @@ export const useChat = create<ChatState>((set, get) => {
       return true
     },
 
-    stop: () => get().controller?.abort(),
+    stop: () => { healAbort = true; get().controller?.abort() },
+    stopHeal: () => { healAbort = true; get().controller?.abort() },
+    undoHeal: async () => {
+      const id = get().heal?.originId
+      healAbort = true
+      get().controller?.abort()
+      if (id) { await new Promise((r) => setTimeout(r, 50)); await get().undoTurn(id) }
+    },
 
     clear: async () => {
       get().controller?.abort()

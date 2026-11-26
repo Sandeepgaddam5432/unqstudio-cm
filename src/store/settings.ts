@@ -15,12 +15,14 @@ export interface FeatureFlags {
   autoCheckpoint: boolean
   showTokenMeter: boolean
   autoFixErrors: boolean
+  /** v2.1: autonomous self-healing build loop (default on in Build mode). */
+  autoHeal: boolean
   reasoningUI: boolean
   includeAllFiles: boolean
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
-  approvalTray: false, autoCheckpoint: true, showTokenMeter: true, autoFixErrors: false, reasoningUI: true, includeAllFiles: true,
+  approvalTray: false, autoCheckpoint: true, showTokenMeter: true, autoFixErrors: false, autoHeal: true, reasoningUI: true, includeAllFiles: true,
 }
 
 export interface SettingsState {
@@ -29,6 +31,8 @@ export interface SettingsState {
   enabled: Record<string, boolean>
   baseUrls: Record<string, string>
   userModels: Record<string, string[]>
+  /** v2.1: max automatic heal rounds (1–3). */
+  maxAutoHealSteps: number
   aiMode: AIMode
   flags: FeatureFlags
   customPrompts: CustomPrompt[]
@@ -47,6 +51,7 @@ export const useSettings = create<SettingsState>()(
       enabled: {},
       baseUrls: {},
       userModels: {},
+      maxAutoHealSteps: 3,
       aiMode: 'build',
       flags: DEFAULT_FLAGS,
       customPrompts: [],

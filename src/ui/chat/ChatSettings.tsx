@@ -1,3 +1,4 @@
+import { useSettings } from '@/store/settings'
 import { SlidersHorizontal } from 'lucide-react'
 import { Button, Dropdown, Segmented, Tooltip } from '@/ui/primitives'
 import { useChatPrefs, type ChatFont, type Density } from '@/store/chatPrefs'
@@ -18,6 +19,7 @@ function OnOff({ value, onChange, label }: { value: boolean; onChange: (v: boole
 /** Chat customization popover shown in the chat header. */
 export function ChatSettings() {
   const p = useChatPrefs()
+  const heal = useSettings()
   return (
     <Dropdown
       align="end"
@@ -35,6 +37,8 @@ export function ChatSettings() {
           <Row label="Token & cost badges"><OnOff label="badges" value={p.showBadges} onChange={(v) => p.setPref('showBadges', v)} /></Row>
           <Row label="Agent file activity"><OnOff label="activity" value={p.showActivity} onChange={(v) => p.setPref('showActivity', v)} /></Row>
           <Row label="Auto-scroll streaming"><OnOff label="scroll" value={p.autoScroll} onChange={(v) => p.setPref('autoScroll', v)} /></Row>
+          <div className="mx-2 my-1 h-px bg-line" />
+          <Row label="Auto-Heal Builds"><OnOff label="heal" value={heal.flags.autoHeal !== false} onChange={(v) => heal.setFlag('autoHeal', v)} /></Row>
           <div className="px-2 pb-1.5 pt-1"><Button size="xs" variant="ghost" onClick={p.reset}>Reset to defaults</Button></div>
         </div>
       )}

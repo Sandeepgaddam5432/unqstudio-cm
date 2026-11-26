@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import { Annotation, Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView, drawSelection, dropCursor, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
@@ -11,7 +12,10 @@ import { html } from '@codemirror/lang-html'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { tags as t } from '@lezer/highlight'
-import type { Reveal } from '@/store/workspace'
+import { useWorkspace, type Reveal } from '@/store/workspace'
+import { toast } from '@/store/toast'
+import { expandToLines, surroundingContext } from '@/core/ai/inlineEdit'
+import { InlineEditWidget, type InlineEditTarget } from './InlineEditWidget'
 
 const External = Annotation.define<boolean>()
 
@@ -78,6 +82,21 @@ export default function CodeEditor({ path, value, dark, onChange, isDirty, revea
   const hl = useRef(new Compartment())
   const cb = useRef(onChange)
   cb.current = onChange
+  const wrap = useRef<HTMLDivElement>(null)
+  const [sel, setSel] = useState<{ left: number; top: number } | null>(null)
+  const [inline, setInline] = useState<InlineEditTarget | null>(null)
+  const openRef = useRef<(v: EditorView) => void>(() => {})
+  openRef.current = (v: EditorView) => {
+    const m = v.state.selection.main
+    const doc = v.state.doc.toString()
+    const r = expandToLines(doc, m.from, m.to)
+    const c = v.coordsAtPos(r.from)
+    const box = wrap.current?.getBoundingClientRect()
+    if (!c || !box) return
+    const ctx = surroundingContext(doc, r)
+    setSel(null)
+    setInline({ ...r, ...ctx, left: Math.max(8, Math.min(c.left - box.left, box.width - 488)), top: c.bottom - box.top + 6 })
+  }
 
   useEffect(() => {
     const v = new EditorView({
@@ -87,8 +106,19 @@ export default function CodeEditor({ path, value, dark, onChange, isDirty, revea
         extensions: [
           lineNumbers(), highlightActiveLineGutter(), foldGutter(), history(), drawSelection(), dropCursor(), indentOnInput(), bracketMatching(), closeBrackets(),
           autocompletion(), highlightActiveLine(), highlightSelectionMatches(), EditorState.tabSize.of(2), EditorView.lineWrapping,
+          // Cursor-style inline edit: Mod-i (current line or selection) and Mod-k (selection only — else the command palette keeps ⌘K).
+          keymap.of([{ key: 'Mod-i', preventDefault: true, run: (v) => { openRef.current(v); return true } }]),
+          EditorView.domEventHandlers({ keydown: (e, v) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k' && !v.state.selection.main.empty) { e.preventDefault(); e.stopPropagation(); openRef.current(v); return true } return false } }),
           keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap, indentWithTab]),
           lang(path), base, hl.current.of(highlight(dark)),
+          EditorView.updateListener.of((u) => {
+            if (u.selectionSet || u.docChanged) {
+              const m = u.state.selection.main
+              const box = wrap.current?.getBoundingClientRect()
+              const c = !m.empty && box ? u.view.coordsAtPos(m.to) : null
+              setSel(c && box ? { left: Math.max(8, Math.min(c.left - box.left, box.width - 130)), top: Math.max(4, c.top - box.top - 30) } : null)
+            }
+          }),
           EditorView.updateListener.of((u) => { if (u.docChanged && !u.transactions.some((tr) => tr.annotation(External))) cb.current(u.state.doc.toString()) }),
         ],
       }),
@@ -116,5 +146,30 @@ export default function CodeEditor({ path, value, dark, onChange, isDirty, revea
     v.focus()
   }, [reveal?.nonce, path])
 
-  return <div ref={host} className="h-full overflow-hidden" />
+  const accept = async (replacement: string) => {
+    const v = view.current
+    const t = inline
+    if (!v || !t) return
+    if (v.state.doc.sliceString(t.from, t.to) !== t.text) { toast.error('The selection changed', 'Run the edit again.'); return }
+    const vfs = useWorkspace.getState().vfs
+    if (vfs?.isLocked(path)) { toast.error('This file is locked', 'Unlock it before applying AI edits.'); return }
+    try { await vfs?.checkpoint(`Inline AI edit · ${path.split('/').pop()}`, 'auto') } catch { /* checkpoint is best-effort */ }
+    v.dispatch({ changes: { from: t.from, to: t.to, insert: replacement }, selection: { anchor: t.from + replacement.length }, scrollIntoView: true })
+    setInline(null)
+    v.focus()
+    toast.success('Inline edit applied', 'Undo with ⌘Z or restore the checkpoint from History.')
+  }
+
+  return (
+    <div ref={wrap} className="relative h-full overflow-hidden" data-code-editor-wrap>
+      <div ref={host} className="h-full overflow-hidden" />
+      {sel && !inline && (
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => view.current && openRef.current(view.current)} style={{ left: sel.left, top: sel.top }} data-testid="inline-edit-button"
+          className="absolute z-10 flex h-6 items-center gap-1 rounded-full border border-line-strong bg-panel px-2 text-[11px] font-medium text-muted shadow-pop transition-colors duration-150 hover:text-fg">
+          <Sparkles size={11} className="text-accent" />AI Edit (⌘K)
+        </button>
+      )}
+      {inline && <InlineEditWidget path={path} target={inline} onAccept={(r) => void accept(r)} onClose={() => { setInline(null); view.current?.focus() }} />}
+    </div>
+  )
 }

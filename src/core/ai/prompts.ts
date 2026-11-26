@@ -1,3 +1,4 @@
+import { buildRepoMap, isMappable } from './repoMap'
 import { isBinaryPath, isUnder, normalizePath, type VirtualFileSystem } from '@/core/vfs/vfs'
 import type { AIMode } from '@/store/settings'
 
@@ -54,8 +55,11 @@ export function systemInstructions(mode: AIMode, customPrompts: string[] = []): 
 export const ENHANCER_SYSTEM = `You rewrite vague app ideas into rich, structured prompts for an AI web-app builder. Keep the user's intent. Output ONLY the improved prompt (no preamble, no quotes, no markdown fences), 120–220 words, containing: the product & audience, key screens/sections, specific features and interactions, visual style (palette, typography, spacing, tone — modern, minimal, polished), responsive + accessibility expectations, and sample realistic content to use. Stack: React + TypeScript + Tailwind (client-side only).`
 
 /* ── project context ─────────────────────────────────────── */
-export interface ContextOptions { pinned?: string[]; mentioned?: string[]; includeAll?: boolean; budgetChars?: number; perFileChars?: number }
-export interface ContextFile { path: string; chars: number; lines: number; included: boolean; truncated: boolean; locked: boolean }
+export interface ContextOptions { pinned?: string[]; mentioned?: string[]; includeAll?: boolean; budgetChars?: number; perFileChars?: number; /** Share of the budget non-priority files may use as FULL text before falling back to the symbol map (default 0.4). */ fullShare?: number; /** Disable the Project Symbol Map (default on). */ symbolMap?: boolean }
+export interface ContextFile { path: string; chars: number; lines: number; included: boolean; truncated: boolean; locked: boolean; /** Content replaced by a symbol-map line. */ mapped?: boolean }
+
+/** Files whose FULL text is always sent (when present): the app entry points. */
+export const ENTRY_FILES = ['/index.html', '/src/main.tsx', '/src/main.ts', '/src/main.jsx', '/src/App.tsx', '/src/App.jsx', '/src/index.tsx']
 
 const SKIP_CONTENT = /(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|\.keep|\.gitignore)$/
 
@@ -64,7 +68,11 @@ export function buildProjectContext(vfs: VirtualFileSystem, opts: ContextOptions
   const perFile = opts.perFileChars ?? 14_000
   const all = vfs.paths().filter((p) => !p.endsWith('/.keep'))
   const priority = new Set([...(opts.pinned ?? []), ...(opts.mentioned ?? [])])
-  const rank = (p: string) => (priority.has(p) ? 0 : p.startsWith('/src/') ? 1 : 2)
+  const entry = new Set(ENTRY_FILES.filter((p) => all.includes(p)))
+  const useMap = opts.symbolMap !== false
+  const fullBudget = Math.floor(budget * (opts.fullShare ?? 0.4))
+  const mapEntries: { path: string; content: string }[] = []
+  const rank = (p: string) => (priority.has(p) ? 0 : entry.has(p) ? 1 : p.startsWith('/src/') ? 2 : 3)
   const ordered = [...all].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
   let used = 0
   const files: ContextFile[] = []
@@ -80,19 +88,25 @@ export function buildProjectContext(vfs: VirtualFileSystem, opts: ContextOptions
     if (wanted) {
       let c = rec.content
       if (c.length > perFile) { c = c.slice(0, perFile) + '\n/* …truncated… */'; truncated = true }
-      if (used + c.length <= budget || priority.has(p)) {
+      const must = priority.has(p) || entry.has(p)
+      const cap = useMap ? fullBudget : budget
+      if (must ? (used + c.length <= budget || priority.has(p)) : used + c.length <= cap) {
         body += `\n--- ${p}${locked ? ' [LOCKED]' : ''} ---\n${c}\n`
         used += c.length
         included = true
       }
     }
-    files.push({ path: p, chars: rec.content.length, lines, included, truncated, locked })
+    const mapped = useMap && !included && !binary && isMappable(p)
+    if (mapped) mapEntries.push({ path: p, content: rec.content })
+    files.push({ path: p, chars: rec.content.length, lines, included, truncated, locked, mapped })
   }
-  const tree = files.map((f) => `${f.path}${f.locked ? ' [LOCKED]' : ''}${f.lines ? ` (${f.lines} lines)` : ''}${!f.included && f.lines ? ' (content omitted)' : ''}`).join('\n')
+  const tree = files.map((f) => `${f.path}${f.locked ? ' [LOCKED]' : ''}${f.lines ? ` (${f.lines} lines)` : ''}${!f.included && f.lines ? (f.mapped ? ' (in symbol map)' : ' (content omitted)') : ''}`).join('\n')
+  const map = mapEntries.length ? buildRepoMap(mapEntries) : null
   const locks = vfs.getLocks()
   const text =
     `## Project: ${vfs.meta.name}\n### File tree\n${tree || '(empty project)'}\n` +
     (locks.length ? `\n### LOCKED paths (do not modify)\n${locks.join('\n')}\n` : '') +
+    (map ? `\n### Project symbol map (files whose full text is omitted; @mention a file or ask to see it before editing it)\n${map.text}\n` : '') +
     `\n### File contents${body || '\n(none)'}`
   return { text, files }
 }

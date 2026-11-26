@@ -1,6 +1,6 @@
 import { ModelIcon } from '@/ui/icons/ModelIcon'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eraser, MessageSquarePlus } from 'lucide-react'
+import { Eraser, MessageSquarePlus, RefreshCw, Undo2 } from 'lucide-react'
 import { ChatSettings } from './ChatSettings'
 import { CHAT_FONT_PX, useChatPrefs } from '@/store/chatPrefs'
 import { Button, Dropdown, Tooltip } from '@/ui/primitives'
@@ -23,6 +23,23 @@ const IDEAS = [
   'A recipe finder with ingredient filters and a saved-recipes drawer',
   'A markdown note-taking app with live preview and tags',
 ]
+
+function HealPill() {
+  const heal = useChat((s) => s.heal)
+  const stopHeal = useChat((s) => s.stopHeal)
+  const undoHeal = useChat((s) => s.undoHeal)
+  if (!heal) return null
+  const n = Math.max(1, heal.attempt)
+  const verifying = heal.attempt === 0
+  return (
+    <div data-heal-pill className="flex min-w-0 shrink items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 py-0.5 pl-2 pr-1 text-[11px] font-medium text-accent" role="status" aria-live="polite">
+      <RefreshCw size={11} className="shrink-0 animate-spin-fast" />
+      <span className="min-w-0 truncate">{verifying ? 'Verifying build…' : <><span className="@lg:hidden">Healing {n}/{heal.max}</span><span className="hidden @lg:inline">Auto-healing build · Attempt {n}/{heal.max}</span></>}</span>
+      <button onClick={stopHeal} aria-label="Stop auto-heal" className="shrink-0 rounded-full bg-accent/15 px-1.5 py-px hover:bg-accent/25">Stop</button>
+      <button onClick={() => void undoHeal()} aria-label="Undo whole turn" title="Undo the whole turn (including heals)" className="shrink-0 rounded-full p-0.5 hover:bg-accent/25"><Undo2 size={11} /></button>
+    </div>
+  )
+}
 
 export function ChatPanel() {
   const { messages, busy, send, stop, clear } = useChat()
@@ -71,7 +88,7 @@ export function ChatPanel() {
   return (
     <div className="@container grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden bg-bg" data-chat-root>
       <div className="flex h-11 min-w-0 items-center justify-between gap-2 border-b border-line bg-panel px-3" data-chat-header>
-        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted"><ModelIcon modelId={cfg.model} providerId={cfg.provider?.id ?? ''} providerName={cfg.provider?.name} providerLogo={cfg.provider?.logo} size={14} /><span className="truncate">Assistant</span></div>
+        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted"><ModelIcon modelId={cfg.model} providerId={cfg.provider?.id ?? ''} providerName={cfg.provider?.name} providerLogo={cfg.provider?.logo} size={14} /><span className="truncate">Assistant</span><HealPill /></div>
         <div className="flex shrink-0 items-center gap-1">
           {meter && prefs.showBadges && (
             <Tooltip label="Session tokens in/out · est. cost. Next request sends ≈ context tokens.">
