@@ -13,7 +13,7 @@ import { ago } from '@/ui/settings/registryUi'
 
 export type PickerTab = 'configured' | 'ready' | 'local' | 'all'
 const TABS: { id: PickerTab; label: string }[] = [
-  { id: 'configured', label: 'Configured ⭐' }, { id: 'ready', label: 'Browser-Ready 🟢' }, { id: 'local', label: 'Local 💻' }, { id: 'all', label: 'All (models.dev)' },
+  { id: 'configured', label: 'Configured ⭐' }, { id: 'ready', label: 'Browser-Ready 🟢' }, { id: 'local', label: 'Local 💻' }, { id: 'all', label: 'All Providers' },
 ]
 const MAX_GROUPS = 60
 const MAX_MODELS = 40
@@ -119,8 +119,8 @@ export function ModelPicker({ close }: { close: () => void }) {
       <div className="flex shrink-0 items-center gap-1 border-t border-line p-1">
         <button onClick={() => { close(); useApp.getState().setOnboardingOpen(true) }} className="rounded-lg px-2 py-1.5 text-xs text-muted transition-colors hover:bg-subtle hover:text-fg">Quick setup…</button>
         <button onClick={() => { close(); useApp.getState().openSettings('providers') }} className="rounded-lg px-2 py-1.5 text-xs text-muted transition-colors hover:bg-subtle hover:text-fg">All providers…</button>
-        <button onClick={() => void useModels.getState().loadRegistry(true)} title="Refresh the models.dev registry" aria-label="Refresh registry" className="ml-auto flex min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-faint transition-colors hover:bg-subtle hover:text-fg">
-          <RefreshCw size={11} className={cn('shrink-0', status === 'loading' && 'animate-spin-fast')} /><span className="truncate">{syncedAt ? `synced ${ago(syncedAt)}` : 'models.dev'}</span>
+        <button onClick={() => void useModels.getState().loadRegistry(true)} title="Refresh the model catalog" aria-label="Refresh Catalog" className="ml-auto flex min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-faint transition-colors hover:bg-subtle hover:text-fg">
+          <RefreshCw size={11} className={cn('shrink-0', status === 'loading' && 'animate-spin-fast')} /><span className="truncate">{syncedAt ? `synced ${ago(syncedAt)}` : 'Refresh Catalog'}</span>
         </button>
       </div>
     </div>

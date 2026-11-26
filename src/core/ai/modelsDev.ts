@@ -38,9 +38,11 @@ export interface Registry {
   generatedAt: string
   source: string
   providers: RegProvider[]
+  /** Which secondary catalog sources were merged in (OpenRouter public API, LiteLLM model specs). */
+  enriched?: { openrouter: boolean; litellm: boolean }
 }
 
-/** models.dev omits `api` for first-party SDK providers; these are their public, CORS-friendly endpoints. */
+/** The upstream directory omits `api` for first-party SDK providers; these are their public, CORS-friendly endpoints. */
 export const KNOWN_API: Record<string, string> = {
   openai: 'https://api.openai.com/v1',
   anthropic: 'https://api.anthropic.com/v1',
@@ -129,7 +131,7 @@ export function normalizeModelsDev(raw: unknown, opts: { source?: string; now?: 
   }
   for (const l of LOCALS) if (!providers.some((p) => p.id === l.id)) providers.push(l)
   providers.sort((a, b) => a.name.localeCompare(b.name))
-  return { version: 1, generatedAt: (opts.now ?? new Date()).toISOString(), source: opts.source ?? 'models.dev', providers }
+  return { version: 1, generatedAt: (opts.now ?? new Date()).toISOString(), source: opts.source ?? 'directory', providers }
 }
 
 /** True when `x` already has the normalized registry shape (edge function / bundled snapshot). */

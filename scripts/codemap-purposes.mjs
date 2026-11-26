@@ -1,7 +1,7 @@
 // Hand-written purposes used by scripts/gen-codemap.mjs. Add an entry whenever a new file is added.
 export const DIR_PURPOSES = {
   'src': 'Application entry points.',
-  'src/core/ai': 'AI engine: provider registry, streaming adapters, artifact parser, patch engine, orchestrator, key vault, models.dev pipeline.',
+  'src/core/ai': 'AI engine: provider registry, streaming adapters, artifact parser, patch engine, orchestrator, key vault, unified Model Catalog pipeline (directory + OpenRouter + LiteLLM).',
   'src/core/auth': 'Optional local-first authentication (Google GIS, GitHub OAuth) and cloud sync (Drive AppData, Gist).',
   'src/core/deploy': 'Publishing: GitHub/GitLab/Netlify/Vercel/Cloudflare deployers and Supabase explorer.',
   'src/core/runtime': 'In-browser build runtime: esbuild-wasm engine, VFS resolver plugin, preview HTML, inspector bridge.',
@@ -27,6 +27,9 @@ export const DIR_PURPOSES = {
   'functions/api/auth': 'Cloudflare Pages Functions for OAuth.',
 }
 export const PURPOSES = {
+  'src/core/ai/catalogEnricher.ts': 'Import-free 4-source catalog pipeline: normalizeOpenRouter / normalizeLiteLLM, fill-only enrichRegistry (adds same-day OpenRouter launches, never overrides directory data), case-insensitive dedupe, and fetchEnrichment where each source times out / fails independently.',
+  'functions/api/catalog.ts': 'Edge GET /api/catalog: Provider Directory + OpenRouter + LiteLLM merged server-side (CORS, 1h edge cache); /api/models-dev remains a thin alias.',
+  'functions/api/models-dev.ts': 'Backward-compatible alias that re-exports the /api/catalog handler for older clients.',
   'src/ui/primitives/Popover.tsx': 'Floating-UI anchored `Dropdown` (autoUpdate + offset/flip/shift/size, portal, strategy: fixed) with a `mobileSheet` bottom-sheet mode below 640px. Permanent fix for the v1.0 scroll-detach bug (position was computed once on open).',
   'src/ui/chat/ModelPicker.tsx': 'Model picker body: sticky search, provider filter pills, grouped model list.',
   'src/ui/chat/ModelPill.tsx': 'Composer pill that opens the ModelPicker (popover ≥640px, bottom sheet <640px).',

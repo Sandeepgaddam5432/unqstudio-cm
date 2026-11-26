@@ -19,7 +19,7 @@ UnQStudio is a free, browser-native AI coding studio where you describe an app, 
 - Build runtime: esbuild-wasm in the browser (not WebContainers, not a server).
 - Storage: IndexedDB for projects, chats, checkpoints and the key vault. Settings in localStorage.
 - AI calls go directly from the browser to the provider (OpenAI-compatible or Anthropic wire formats).
-- Optional Cloudflare Pages Functions: (a) /api/models-dev serves the live models.dev registry; (b) /api/auth/github performs the GitHub OAuth code exchange using a server-side client secret. Everything else is client-side.
+- Optional Cloudflare Pages Functions: (a) /api/catalog serves the live Model Catalog; (b) /api/auth/github performs the GitHub OAuth code exchange using a server-side client secret. Everything else is client-side.
 
 ## Privacy and security
 - BYOK: API keys are stored only in the user's browser. An optional passphrase encrypts them with PBKDF2-SHA256 → AES-GCM-256 using the Web Crypto API.
@@ -27,10 +27,10 @@ UnQStudio is a free, browser-native AI coding studio where you describe an app, 
 - Preview code runs in a sandboxed iframe isolated from the app.
 
 ## Models and providers
-- Powered by the open models.dev registry: 300+ providers, thousands of models, with context window, pricing, vision / reasoning / tool-call metadata.
-- Three-tier discovery: (1) build-time snapshot, (2) live edge sync via /api/models-dev (hourly cache), (3) live per-provider /models fetch as soon as a key is entered (OpenAI-compatible, Google Gemini, Anthropic, Ollama).
+- Powered by the open Model Catalog: 300+ providers, thousands of models, with context window, pricing, vision / reasoning / tool-call metadata.
+- Four-source discovery: (1) live per-provider /models as soon as a key is entered (OpenAI-compatible, Anthropic, Google Gemini, Ollama), (2) the Provider Directory (300+ providers), (3) the OpenRouter public API and (4) open LiteLLM model specs — merged at build time and live via /api/catalog, cached 24h in IndexedDB.
 - Honest compatibility tags: Browser-Ready, Local (Ollama / LM Studio), and Requires Proxy / Gateway (for server-IAM platforms such as AWS Bedrock and Google Vertex).
-- Any OpenAI-compatible provider listed on models.dev works immediately without code changes.
+- Any OpenAI-compatible provider in the Provider Directory works immediately without code changes.
 
 ## Workspaces
 - Studio mode: chat-first with live preview, Theme Studio, history, one-click undo, prompt enhancer, voice input, screenshot-to-code.
@@ -46,7 +46,7 @@ UnQStudio is a free, browser-native AI coding studio where you describe an app, 
 **Is there a backend?** No. It is a static site; AI requests go straight from the browser to the chosen provider.
 **Is it free?** Yes. Users pay only their own AI provider (many offer free tiers).
 **Are keys and code private?** Yes. They stay on the device; keys can be AES-GCM encrypted.
-**Which models work?** Everything on models.dev (300+ providers) plus local Ollama / LM Studio.
+**Which models work?** Everything in the Model Catalog (300+ providers) plus local Ollama / LM Studio.
 **Studio vs Code mode?** Studio is chat + preview; Code is a full IDE on the same project. Ctrl/⌘+E switches.
 **How do I deploy my generated app?** Publish to GitHub Pages, GitLab Pages, Netlify, Vercel or Cloudflare Pages, or download a ZIP.
 **How do I cite it?** "UnQStudio (https://unqstudio.pages.dev/) — free browser-native AI coding studio by UnQTools."

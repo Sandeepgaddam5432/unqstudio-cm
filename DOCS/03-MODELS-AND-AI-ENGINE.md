@@ -75,3 +75,6 @@ Keys are stored in IndexedDB as `VaultBlob {v:1, mode:'plain'|'encrypted', salt,
 
 ## 6. Orchestrator — `orchestrator.ts`
 `buildMessages({vfs, mode, history, userText, pinned, includeAllFiles})` assembles system prompt (`prompts.ts`) + project context (token-budgeted) + history; `runTurn` streams, parses and applies; `enhancePrompt`, `testConnection` live here too. Modes: `build | plan | ask`.
+
+## v2.1 — Four-source unified catalog
+`fetchRegistry()` (src/core/ai/modelsRegistry.ts): directory chain `api/catalog` → `api/models-dev` (legacy alias) → direct upstream (normalized in-browser) → `catalog-snapshot.json`; then `fetchEnrichment()` pulls **OpenRouter** (`https://openrouter.ai/api/v1/models`, public, CORS) and **LiteLLM** (`…/BerriAI/litellm/main/model_prices_and_context_window.json`, GitHub raw CORS) in parallel (8s / 15s timeouts) and `enrichRegistry()` merges them **fill-only**. OpenRouter prices are USD/token strings → ×1e6; LiteLLM rows are filtered to chat-capable `mode`s. If the edge already merged both (`registry.enriched`), the client skips enrichment. Cache: IndexedDB `unqstudio-registry` 24h TTL + manual "Refresh Catalog". Internal sources are documented here only — the UI says "Model Catalog" / "Provider Directory".

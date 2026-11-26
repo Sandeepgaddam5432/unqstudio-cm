@@ -38,7 +38,7 @@ function VaultCard() {
 
 type Filter = 'configured' | 'ready' | 'local' | 'proxy' | 'all'
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'configured', label: 'Configured ⭐' }, { id: 'ready', label: 'Browser-Ready 🟢' }, { id: 'local', label: 'Local 💻' }, { id: 'proxy', label: 'Requires Proxy 🔌' }, { id: 'all', label: 'All (models.dev)' },
+  { id: 'configured', label: 'Configured ⭐' }, { id: 'ready', label: 'Browser-Ready 🟢' }, { id: 'local', label: 'Local 💻' }, { id: 'proxy', label: 'Requires Proxy 🔌' }, { id: 'all', label: 'All Providers' },
 ]
 const compatBadge = (c?: string) => c === 'local' ? <Badge>local 💻</Badge> : c === 'requires-proxy' ? <Badge tone="warn">proxy 🔌</Badge> : <Badge tone="success" className="hidden sm:inline-flex">browser 🟢</Badge>
 
@@ -55,7 +55,7 @@ export function ProvidersTab() {
     <div className="p-5">
       <VaultCard />
       <RegistryCard />
-      <Section title="LLM providers" description="Direct-from-browser BYOK. Enter a key and the live model list is fetched automatically. Providers discovered from models.dev work instantly through the universal OpenAI-compatible adapter.">
+      <Section title="LLM providers" description="Direct-from-browser BYOK. Enter a key and the live model list is fetched automatically. Providers from the Provider Directory work instantly through the universal OpenAI-compatible adapter.">
         <div className="mb-3 space-y-2">
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${all.length} providers…`} aria-label="Search providers" className="h-8 text-xs" />
           <div className="scrollbar-none flex gap-1 overflow-x-auto" role="tablist" aria-label="Provider compatibility filter">

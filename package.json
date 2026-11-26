@@ -14,8 +14,9 @@
     "test:watch": "vitest",
     "docs:map": "node scripts/gen-codemap.mjs",
     "verify:docs": "node scripts/verify-docs.mjs",
-    "sync:models": "node scripts/sync-models-dev.mjs",
-    "prebuild": "node scripts/sync-models-dev.mjs"
+    "sync:models": "node scripts/sync-catalog.mjs",
+    "prebuild": "node scripts/sync-catalog.mjs",
+    "sync:catalog": "node scripts/sync-catalog.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

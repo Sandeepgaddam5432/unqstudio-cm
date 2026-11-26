@@ -19,7 +19,7 @@ const RAW = {
   broken: null,
 }
 
-describe('models.dev normalizer', () => {
+describe('provider directory normalizer', () => {
   const reg = normalizeModelsDev(RAW, { now: new Date('2026-01-01T00:00:00Z') })
   it('normalizes providers/models, drops deprecated, adds logo + capability flags', () => {
     const o = reg.providers.find((p) => p.id === 'openai')!
@@ -123,10 +123,10 @@ describe('registry cache (IndexedDB) + tiered fetch', () => {
   }) as unknown as typeof fetch
   const big = { ...small, providers: Array.from({ length: 12 }, (_, i) => ({ ...small.providers[0], id: `p${i}`, name: `P${i}` })) }
 
-  it('tier order: edge → models.dev → bundled', async () => {
+  it('tier order: edge → directory → bundled', async () => {
     expect((await fetchRegistry(routes({ 'api/models-dev': big }))).source).toBe('edge')
-    expect((await fetchRegistry(routes({ 'api/models-dev': null, 'models.dev/api.json': bigRaw }))).source).toBe('models.dev')
-    expect((await fetchRegistry(routes({ 'api/models-dev': null, 'models.dev/api.json': null, 'models-registry.json': big }))).source).toBe('bundled')
+    expect((await fetchRegistry(routes({ 'api/models-dev': null, 'models.dev/api.json': bigRaw }))).source).toBe('directory')
+    expect((await fetchRegistry(routes({ 'api/models-dev': null, 'models.dev/api.json': null, 'catalog-snapshot.json': big }))).source).toBe('bundled')
   })
   it('caches with 24h TTL, forces refresh, serves stale on total failure', async () => {
     const t0 = 1_000_000
@@ -174,7 +174,7 @@ describe('edge function /api/models-dev', () => {
 describe('bundled snapshot', () => {
   it('has >30 providers and hundreds of models with honest tags', async () => {
     const { readFileSync } = await import('node:fs')
-    const reg = JSON.parse(readFileSync('public/models-registry.json', 'utf8'))
+    const reg = JSON.parse(readFileSync('public/catalog-snapshot.json', 'utf8'))
     expect(isRegistry(reg)).toBe(true)
     expect(reg.providers.length).toBeGreaterThan(30)
     expect(countModels(reg)).toBeGreaterThan(300)

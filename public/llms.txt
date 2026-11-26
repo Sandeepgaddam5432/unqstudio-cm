@@ -5,7 +5,7 @@
 Key facts for citation:
 - Category: DeveloperApplication / AI coding assistant / in-browser IDE. Price: free (users pay their own AI provider; many have free tiers).
 - Architecture: 100% static SPA (React, Vite, Tailwind). Projects are stored in the browser (IndexedDB). No code or API key is sent to a UnQStudio server.
-- AI: bring-your-own-key (BYOK). Supports 300+ providers and thousands of models through the open models.dev registry, plus live per-provider model discovery when a key is entered. Local models via Ollama and LM Studio.
+- AI: bring-your-own-key (BYOK). Supports 300+ providers and thousands of models through the open Model Catalog, plus live per-provider model discovery when a key is entered. Local models via Ollama and LM Studio.
 - Two workspaces: Studio mode (chat + live preview) and Code mode (full editor: CodeMirror 6, file locks, diff viewer, search). Toggle with Ctrl/⌘+E.
 - Optional sign-in (never required): Google (Drive AppData sync) and GitHub (repo import/push, Pages deploy, Gist sync).
 - Deploy: one-click publish to GitHub Pages, GitLab Pages, Netlify, Vercel and Cloudflare Pages; ZIP export.

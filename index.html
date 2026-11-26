@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>UnQStudio — Free Browser-Native AI Coding Studio (BYOK, No Backend)</title>
     <meta name="description" content="UnQStudio is a free AI coding studio that runs entirely in your browser. Describe an app, bring your own key for 300+ AI models, and watch it build live. No backend, no sign-up." />
-    <meta name="keywords" content="AI coding studio, AI app builder, browser IDE, esbuild-wasm, BYOK, models.dev, vibe coding, React, Cloudflare Pages" />
+    <meta name="keywords" content="AI coding studio, AI app builder, browser IDE, esbuild-wasm, BYOK, vibe coding, React, Cloudflare Pages" />
     <meta name="author" content="UnQTools" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <link rel="canonical" href="https://unqstudio.pages.dev/" />
@@ -58,7 +58,7 @@
   "featureList": [
     "Prompt-to-app generation with live preview",
     "100% client-side: esbuild-wasm build runtime, no backend",
-    "Bring your own key for 300+ AI providers via models.dev",
+    "Bring your own key for 300+ AI providers via the unified Model Catalog",
     "Live per-provider model discovery",
     "Studio mode and Code mode (CodeMirror 6 editor)",
     "Checkpoints, undo and file locks",
@@ -114,7 +114,7 @@
       "name": "Does UnQStudio have a backend?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. It is a static site hosted on Cloudflare Pages. Projects live in your browser (IndexedDB), builds run with esbuild-wasm, and AI requests go directly from your browser to the provider you pick. Optional edge functions only power the models.dev registry and GitHub sign-in."
+        "text": "No. It is a static site hosted on Cloudflare Pages. Projects live in your browser (IndexedDB), builds run with esbuild-wasm, and AI requests go directly from your browser to the provider you pick. Optional edge functions only power the Model Catalog and GitHub sign-in."
       }
     },
     {
@@ -138,7 +138,7 @@
       "name": "Which AI models and providers are supported?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Every provider in the open models.dev registry (300+ providers, thousands of models). When you enter a key, UnQStudio fetches that provider's live model list automatically. Browser-ready, local (Ollama, LM Studio) and gateway-only providers are clearly tagged."
+        "text": "Every provider in the open Model Catalog (300+ providers, thousands of models). When you enter a key, UnQStudio fetches that provider's live model list automatically. Browser-ready, local (Ollama, LM Studio) and gateway-only providers are clearly tagged."
       }
     },
     {

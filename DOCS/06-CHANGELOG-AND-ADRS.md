@@ -71,3 +71,12 @@ GitHub's web flow requires a client secret, so the code exchange must run server
 
 ### ADR-011 Sync payload excludes the vault
 Uploading even an encrypted vault to third-party storage creates an offline brute-force target. Sync carries projects/chats/settings only; API keys are re-entered per device.
+
+## v2.1 — Universal AI Studio (in progress)
+
+### V2.1-M1 — Zero-leak branding + 4-source unified Model Catalog
+- User-facing UI, `index.html` FAQ/JSON-LD and `public/llms*.txt` no longer name the upstream directory: labels are **All Providers**, **Model Catalog**, **Provider Directory**, **Catalog synced**, **Refresh Catalog**. A Vitest suite scans every `src/ui` file and the SEO assets for the forbidden brand.
+- Catalog = P1 live per-provider `/models` → P2 Provider Directory → P3 OpenRouter public API → P4 LiteLLM model specs (`src/core/ai/catalogEnricher.ts`). Enrichment is **fill-only**; each source fails independently; bundled `public/catalog-snapshot.json` is the floor.
+- `scripts/sync-models-dev.mjs` → `scripts/sync-catalog.mjs` (`sync:models` kept as alias); `public/models-registry.json` → `public/catalog-snapshot.json`; edge `/api/catalog` (+ `/api/models-dev` alias).
+
+**ADR-V21-1 — Four-source catalog, fill-only merge.** Context: a single registry lags same-day launches and misses pricing/limits. Decision: directory = identity/endpoints (wins), OpenRouter = new models + capabilities, LiteLLM = pricing/limits. Never override higher-priority fields; skip any failed source. Consequence: catalog is always ≥ snapshot, ~9k models, no hard dependency on any one upstream.

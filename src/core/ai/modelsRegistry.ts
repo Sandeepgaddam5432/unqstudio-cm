@@ -1,7 +1,8 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import { isRegistry, normalizeModelsDev, type Registry } from './modelsDev'
+import { enrichRegistry, fetchEnrichment } from './catalogEnricher'
 
-export type RegistrySource = 'edge' | 'models.dev' | 'bundled' | 'cache'
+export type RegistrySource = 'edge' | 'directory' | 'bundled' | 'cache'
 export interface CachedRegistry { fetchedAt: number; source: RegistrySource; data: Registry }
 export interface LoadedRegistry extends CachedRegistry { stale?: boolean }
 
@@ -45,13 +46,33 @@ async function getJson(url: string, fetchImpl: typeof fetch): Promise<unknown> {
   return res.json()
 }
 
-/** Tier 2 chain: edge function → direct models.dev (normalized client-side) → bundled snapshot. */
-export async function fetchRegistry(fetchImpl: typeof fetch = fetch): Promise<{ data: Registry; source: RegistrySource }> {
-  try { const j = await getJson('api/models-dev', fetchImpl); if (isRegistry(j) && j.providers.length > 10) return { data: j, source: 'edge' } } catch { /* next tier */ }
-  try { const j = await getJson('https://models.dev/api.json', fetchImpl); const r = normalizeModelsDev(j, { source: 'models.dev (direct)' }); if (r.providers.length > 10) return { data: r, source: 'models.dev' } } catch { /* next tier */ }
-  const j = await getJson('models-registry.json', fetchImpl)
-  if (!isRegistry(j)) throw new Error('bundled models-registry.json is invalid')
-  return { data: j, source: 'bundled' }
+export const DIRECTORY_URL = 'https://models.dev/api.json' // upstream Provider Directory (internal; never shown in the UI)
+
+/**
+ * Unified 4-source catalog. P2 Provider Directory chain: edge `api/catalog` → legacy `api/models-dev` alias → direct upstream
+ * (normalized client-side) → bundled snapshot. P3 OpenRouter + P4 LiteLLM then enrich the result in parallel; each fails
+ * independently and is skipped, so any single outage still yields a complete catalog. (P1 live /models is per-key: modelFetcher.ts.)
+ */
+export async function fetchRegistry(fetchImpl: typeof fetch = fetch, opts: { signal?: AbortSignal; timeoutMs?: number } = {}): Promise<{ data: Registry; source: RegistrySource }> {
+  let dir: { data: Registry; source: RegistrySource } | null = null
+  for (const path of ['api/catalog', 'api/models-dev']) {
+    try { const j = await getJson(path, fetchImpl); if (isRegistry(j) && j.providers.length > 10) { dir = { data: j, source: 'edge' }; break } } catch { /* next tier */ }
+  }
+  if (!dir) {
+    try { const j = await getJson(DIRECTORY_URL, fetchImpl); const r = normalizeModelsDev(j, { source: 'Provider Directory (live)' }); if (r.providers.length > 10) dir = { data: r, source: 'directory' } } catch { /* next tier */ }
+  }
+  if (!dir) {
+    const j = await getJson('catalog-snapshot.json', fetchImpl)
+    if (!isRegistry(j)) throw new Error('bundled catalog-snapshot.json is invalid')
+    dir = { data: j, source: 'bundled' }
+  }
+  const have = dir.data.enriched
+  if (have?.openrouter && have.litellm) return dir // edge already merged all sources
+  try {
+    const extra = await fetchEnrichment(fetchImpl, { signal: opts.signal, timeoutMs: opts.timeoutMs, skip: have })
+    if (extra.openrouter || extra.litellm) return { ...dir, data: enrichRegistry(dir.data, extra) }
+  } catch { /* enrichment is best-effort */ }
+  return dir
 }
 
 /** Cached load (24h TTL). `force` bypasses the TTL ("Refresh Registry"). A stale cache is returned if every network tier fails. */
