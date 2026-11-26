@@ -1,3 +1,4 @@
+import { ProviderIcon } from '@/ui/icons/ProviderIcon'
 import { useMemo, useState } from 'react'
 import { ArrowLeft, ExternalLink, Gift, ShieldCheck } from 'lucide-react'
 import { Badge, Button, Input, Modal, Switch } from '@/ui/primitives'
@@ -37,7 +38,7 @@ export function OnboardingWizard() {
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {list.map((p) => (
             <button key={p.id} onClick={() => setPicked(p)} className="flex flex-col gap-1 rounded-xl border border-line p-3 text-left transition hover:border-line-strong hover:bg-subtle">
-              <span className="flex items-center justify-between"><span className="text-sm font-medium">{p.name}</span>{p.freeTier && <Badge tone="success"><Gift size={9} />free</Badge>}</span>
+              <span className="flex items-center justify-between"><span className="flex min-w-0 items-center gap-2 text-sm font-medium"><ProviderIcon id={p.id} name={p.name} logo={p.logo} size={18} />{p.name}</span>{p.freeTier && <Badge tone="success"><Gift size={9} />free</Badge>}</span>
               <span className="text-xs text-muted">{p.freeTier ?? p.blurb}</span>
             </button>
           ))}

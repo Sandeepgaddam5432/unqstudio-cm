@@ -1,3 +1,4 @@
+import { ProviderIcon } from '@/ui/icons/ProviderIcon'
 import { useState } from 'react'
 import { ChevronRight, Lock, ShieldCheck, Unlock } from 'lucide-react'
 import { Badge, Button, Input, Section, Switch } from '@/ui/primitives'
@@ -72,7 +73,7 @@ export function ProvidersTab() {
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <button onClick={() => setOpen(open === p.id ? null : p.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-expanded={open === p.id}>
                     <ChevronRight size={14} className={cn('shrink-0 text-faint transition-transform', open === p.id && 'rotate-90')} />
-                    {p.logo && <img src={p.logo} alt="" loading="lazy" width={14} height={14} className="h-3.5 w-3.5 shrink-0 dark:invert" onError={(e) => { e.currentTarget.style.display = 'none' }} />}
+                    <ProviderIcon id={p.id} name={p.name} logo={p.logo} size={16} />
                     <span className="truncate text-[13px] font-medium">{p.name}</span>
                     {has && !p.noKey && <Badge tone="success">key</Badge>}
                     {compatBadge(p.compat)}

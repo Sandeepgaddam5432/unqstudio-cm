@@ -80,3 +80,8 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 - `scripts/sync-models-dev.mjs` → `scripts/sync-catalog.mjs` (`sync:models` kept as alias); `public/models-registry.json` → `public/catalog-snapshot.json`; edge `/api/catalog` (+ `/api/models-dev` alias).
 
 **ADR-V21-1 — Four-source catalog, fill-only merge.** Context: a single registry lags same-day launches and misses pricing/limits. Decision: directory = identity/endpoints (wins), OpenRouter = new models + capabilities, LiteLLM = pricing/limits. Never override higher-priority fields; skip any failed source. Consequence: catalog is always ≥ snapshot, ~9k models, no hard dependency on any one upstream.
+
+### V2.1-M2 — Guaranteed icons for every provider and model
+- `src/ui/icons/*`: `ProviderIcon`, `ModelIcon`, `detectModelFamily` (38 pattern tests), 35 bundled glyphs, monogram fallback. Replaced the raw `<img src={logo}>` in `ProvidersTab`.
+
+**ADR-V21-2 — Three-layer icons, preload-then-render.** Context: remote logos 404 / are blocked, leaving broken-image glyphs. Decision: bundle the top brands; for the rest preload the remote candidate and only mount it after it decodes; otherwise a deterministic monogram. Consequence: zero broken images by construction (verified in E2E: every `img` has `naturalWidth > 0`); +~42 KB (≈11 KB gzip) source for glyphs.

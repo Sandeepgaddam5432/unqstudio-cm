@@ -1,3 +1,4 @@
+import { ModelIcon } from '@/ui/icons/ModelIcon'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eraser, MessageSquarePlus, Sparkles } from 'lucide-react'
 import { ChatSettings } from './ChatSettings'
@@ -70,7 +71,7 @@ export function ChatPanel() {
   return (
     <div className="@container grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden bg-bg" data-chat-root>
       <div className="flex h-11 min-w-0 items-center justify-between gap-2 border-b border-line bg-panel px-3" data-chat-header>
-        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted"><Sparkles size={13} className="shrink-0 text-accent" /><span className="truncate">Assistant</span></div>
+        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted"><ModelIcon modelId={cfg.model} providerId={cfg.provider?.id ?? ''} providerName={cfg.provider?.name} providerLogo={cfg.provider?.logo} size={14} /><span className="truncate">Assistant</span></div>
         <div className="flex shrink-0 items-center gap-1">
           {meter && prefs.showBadges && (
             <Tooltip label="Session tokens in/out · est. cost. Next request sends ≈ context tokens.">
