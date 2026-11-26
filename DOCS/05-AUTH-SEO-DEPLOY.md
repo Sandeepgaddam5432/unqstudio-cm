@@ -63,3 +63,8 @@ Payload = `BackupFile` v1 (`src/core/vfs/backup.ts`) built by `buildSyncSnapshot
 ## v2.1 — `VITE_SITE_URL` (dynamic canonical origin)
 `scripts/gen-seo-assets.mjs` runs in `prebuild` (and `npm run gen:seo`). It reads `VITE_SITE_URL` (process env → `.env.production` → `.env`), trims trailing slashes, validates http(s) and **defaults to `https://unqstudio-cm.pages.dev`**. The CURRENT origin is detected from `<link rel="canonical">` and replaced everywhere it occurs: `index.html` (canonical, `og:url`, `og:image`, `twitter:image`, all JSON-LD URLs), `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt`, `public/llms-full.txt`, `public/manifest.webmanifest`. It is idempotent and can switch domains repeatedly. To move to a custom domain: Cloudflare Pages → Settings → Environment Variables → `VITE_SITE_URL=https://customdomain.com` → redeploy; no code change.
 Session storage: OAuth tokens exist **only** in `sessionStorage` keys `unq.session.<provider>` (never IndexedDB/localStorage, never in backups); provider API keys are in the IndexedDB vault (`unqstudio` → `kv`), optionally AES-GCM-256 encrypted.
+
+## v3.0 PWA, Publish sheet, QR, SEO editor
+- PWA: manifest `id`, `display_override`, shortcuts; `apple-mobile-web-app-*` meta; `viewport-fit=cover`; theme-color synced with the theme (`syncThemeColorMeta`).
+- Publish sheet tabs: Publish (live URL + QR + Netlify/Vercel/Cloudflare, GitHub Pages, ZIP), Share & SEO, Download, Git, Supabase.
+- SEO editor writes title, description, Open Graph/Twitter tags and favicon into the generated project's `/index.html` (not into UnQStudio's own head).

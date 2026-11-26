@@ -59,6 +59,9 @@ export interface ContextOptions { pinned?: string[]; mentioned?: string[]; inclu
 export interface ContextFile { path: string; chars: number; lines: number; included: boolean; truncated: boolean; locked: boolean; /** Content replaced by a symbol-map line. */ mapped?: boolean }
 
 /** Files whose FULL text is always sent (when present): the app entry points. */
+/** Max characters of Project Knowledge injected per turn. */
+export const KNOWLEDGE_MAX = 8_000
+
 export const ENTRY_FILES = ['/index.html', '/src/main.tsx', '/src/main.ts', '/src/main.jsx', '/src/App.tsx', '/src/App.jsx', '/src/index.tsx']
 
 const SKIP_CONTENT = /(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|\.keep|\.gitignore)$/
@@ -104,7 +107,9 @@ export function buildProjectContext(vfs: VirtualFileSystem, opts: ContextOptions
   const map = mapEntries.length ? buildRepoMap(mapEntries) : null
   const locks = vfs.getLocks()
   const text =
-    `## Project: ${vfs.meta.name}\n### File tree\n${tree || '(empty project)'}\n` +
+    `## Project: ${vfs.meta.name}\n` +
+    (vfs.meta.knowledge?.trim() ? `### Project Knowledge (the author's standing instructions — follow them on every turn)\n${vfs.meta.knowledge.trim().slice(0, KNOWLEDGE_MAX)}\n\n` : '') +
+    `### File tree\n${tree || '(empty project)'}\n` +
     (locks.length ? `\n### LOCKED paths (do not modify)\n${locks.join('\n')}\n` : '') +
     (map ? `\n### Project symbol map (files whose full text is omitted; @mention a file or ask to see it before editing it)\n${map.text}\n` : '') +
     `\n### File contents${body || '\n(none)'}`

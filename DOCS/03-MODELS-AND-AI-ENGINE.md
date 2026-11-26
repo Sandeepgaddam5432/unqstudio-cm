@@ -95,3 +95,6 @@ Per-provider `headers` are merged LAST into both chat and `/models` requests (cu
 
 ## v3.0 chat intelligence
 `core/ai/followUpSuggestions.ts` (rule-based chips), `core/ai/versions.ts` (version numbering) and `core/ai/buildSteps.ts` (activity steps) are pure modules with tests in `chat-v3.test.ts`.
+
+## v3.0 Project Knowledge
+`ProjectMeta.knowledge` (markdown, ≤ `KNOWLEDGE_MAX` = 8,000 chars) is emitted as `### Project Knowledge` directly under `## Project:` in `buildProjectContext()`, so every turn (chat, heal, inline edit via the shared context builder) sees the author's standing instructions.

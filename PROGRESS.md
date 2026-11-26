@@ -13,5 +13,6 @@
 | V3.0-M2 Lovable Home, sidebar drawer, live thumbnails | ✅ done |
 | V3.0-M3 Version cards, build activity, follow-ups, picker keyboard nav | ✅ done |
 | V3.0-M4 Preview toolbar, route bar, visual inspector (desktop popover / mobile sheet) | ✅ done |
+| V3.0-M5 Project Settings hub, Knowledge, Publish sheet + QR + SEO | ✅ done |
 
 Gates: verify:docs · tsc · lint · 353 unit tests · build · 68 E2E checks. Unit tests need Node ≥ 22.

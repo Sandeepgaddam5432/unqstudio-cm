@@ -7,7 +7,8 @@ import { navigateHome } from '@/store/app'
 import { TopBar } from './TopBar'
 import { ProjectSwitcher } from './ProjectSwitcher'
 import { useVisualViewport } from '@/ui/hooks/useVisualViewport'
-import { PublishModal } from '@/ui/publish/PublishModal'
+import { PublishSheet } from '@/ui/publish/PublishSheet'
+import { ProjectSettings } from '@/ui/project/ProjectSettings'
 import { WorkspaceBody } from './Body'
 import { useChatController } from '@/ui/chat/useChatController'
 
@@ -40,7 +41,8 @@ export default function Workspace({ projectId }: { projectId: string }) {
     <div className="flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-bg" style={{ paddingBottom: 'var(--kb-inset, 0px)' }} data-workspace-root>
       <TopBar />
       <div className="min-h-0 min-w-0 flex-1"><WorkspaceBody /></div>
-      <PublishModal />
+      <PublishSheet />
+      <ProjectSettings />
       <ProjectSwitcher />
     </div>
   )

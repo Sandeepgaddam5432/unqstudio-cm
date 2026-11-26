@@ -14,7 +14,7 @@ import { toast } from '@/store/toast'
 
 type Target = 'netlify' | 'vercel' | 'cloudflare'
 
-export function DeployTab({ goto }: { goto: (t: 'git') => void }) {
+export function DeployTab({ goto, onUrl }: { goto: (t: 'git') => void; onUrl?: (href: string) => void }) {
   const vfs = useWorkspace((s) => s.vfs)
   const nl = useConnected('netlify')
   const vc = useConnected('vercel')
@@ -58,6 +58,7 @@ export function DeployTab({ goto }: { goto: (t: 'git') => void }) {
         url = (await deployCloudflare({ token: c.token, accountId: c.accountId, project: name, files, onLog: addLog })).url
       }
       setResult({ href: url, label: `Live: ${url}` })
+      onUrl?.(url)
       logEvent('deploy', `${t} deployed ${url}`, { durationMs: Math.round(performance.now() - t0) })
       toast.success('Deployed', url)
     } catch (e) {

@@ -1,6 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { ArrowLeft, ArrowRight, Camera, ExternalLink, Maximize2, Minimize2, Monitor, MoreHorizontal, MousePointer2, RotateCw, Smartphone, Tablet, Terminal, ZoomIn } from 'lucide-react'
-import { Button, Dropdown, Input, Spinner } from '@/ui/primitives'
+import { Dropdown, Input, Spinner } from '@/ui/primitives'
 import { DEVICE_SIZES, usePreview, type Device } from '@/store/preview'
 import { navigateCommand } from '@/core/runtime/routeBridge'
 import { useIsMobile } from '@/lib/useMedia'

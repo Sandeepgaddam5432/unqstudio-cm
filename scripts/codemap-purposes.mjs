@@ -1,5 +1,6 @@
 // Hand-written purposes used by scripts/gen-codemap.mjs. Add an entry whenever a new file is added.
 export const DIR_PURPOSES = {
+  'src/ui/project': 'Project Settings hub (overview, Project Knowledge, version history, integrations).',
   'src/core/preview': 'Preview-derived artefacts (auto-captured project thumbnails).',
   'src/ui/layout': 'App-level layout: collapsible left navigation sidebar / mobile drawer.',
   'src/ui/hooks': 'Browser-environment React hooks (visual viewport / on-screen keyboard).',
@@ -31,6 +32,15 @@ export const DIR_PURPOSES = {
   'functions/api/auth': 'Cloudflare Pages Functions for OAuth.',
 }
 export const PURPOSES = {
+  'src/lib/qrcode.ts': 'Zero-dependency QR encoder (byte mode, versions 1-10, ECC L/M, Reed-Solomon, 8 scored masks, format/version info) rendering crisp inline SVG; verified by an independent decoder in tests.',
+  'src/lib/qrcode.test.ts': 'Decodes generated QR codes with jsQR (incl. version >= 7, UTF-8, ECC L/M), checks sizes, capacity errors and SVG safety.',
+  'src/core/deploy/seo.ts': 'Reads and updates title, description, Open Graph/Twitter tags and favicon (emoji to inline SVG) in a generated project\'s index.html.',
+  'src/core/deploy/seo.test.ts': 'Tests for the SEO meta updater: in-place update, idempotency, escaping, emoji favicon round-trip, hostile favicon rejection.',
+  'src/core/ai/knowledge.test.ts': 'Tests Project Knowledge injection into buildProjectContext (placement, cap, whitespace), starter snippets and version-history row numbering.',
+  'src/core/ai/prompts.ts': 'System prompts and buildProjectContext: file tree, locked paths, Project Knowledge, symbol map and file contents within a character budget.',
+  'src/ui/project/ProjectSettings.tsx': 'Project Settings hub: Overview (name, description, thumbnail, remix, ZIP, delete), Project Knowledge editor with snippets, Version History (bookmarks, compare, fork, restore) and Integrations (GitHub, Supabase).',
+  'src/ui/publish/PublishSheet.tsx': 'Publish & Share: desktop popover / draggable phone sheet with live URL + inline SVG QR, deploy targets, Share & SEO editor writing index.html, Download, Git and Supabase tabs.',
+  'src/ui/publish/DeployTab.tsx': 'Deploy tab: builds a production bundle and deploys to Netlify, Vercel or Cloudflare Pages, reporting the live URL to the Publish sheet.',
   'src/core/runtime/routeBridge.ts': 'Host-side route helpers for the preview route bar: input normalisation (no external URLs), navigate command and validation of untrusted iframe route messages.',
   'src/ui/preview/PreviewToolbar.tsx': 'Mini browser chrome for the preview: back/forward/reload, editable route bar, Desktop/Tablet/Mobile pills, Visual edit toggle, console error badge, new tab, fullscreen and overflow menu.',
   'src/ui/preview/VisualInspector.tsx': 'Visual click-to-edit shell: Floating-UI popover anchored to the selected element on desktop, modeless draggable BottomSheet on phones.',
@@ -124,7 +134,6 @@ Object.assign(PURPOSES, {
   'src/core/ai/orchestrator.ts': 'One AI turn end-to-end: build messages (system + project context + history), stream, parse artifacts, apply ops with checkpoints, approval tray, usage; plus testConnection.',
   'src/core/ai/parser.ts': 'Streaming artifact parser: turns the model token stream into events (text, <think>, file start/delta/end, patch) and cleans fenced file content.',
   'src/core/ai/patch.ts': 'Search/replace patch engine: parses SEARCH/REPLACE blocks and applies them with exact → whitespace-tolerant matching and detailed failures.',
-  'src/core/ai/prompts.ts': 'System prompts (Build / Plan / Ask), the file-tag protocol, project-context builder (full text for pinned/entry files + symbol map), @mention resolution, prompt enhancer.',
   'src/core/ai/providers.ts': 'Built-in provider registry (20 BYOK providers), the ProviderKind union (openai | anthropic | gemini | ollama), ProviderDef shape and model lookup hook.',
   'src/core/ai/stream.ts': 'Wire adapters: SSE + NDJSON readers, request builders and chunk parsers for OpenAI, Anthropic, Gemini-native and Ollama-native, error explanations, completeOnce, listModels.',
   'src/core/ai/tokens.ts': 'Token + cost estimation (chars/4 heuristic, image cost) used by the context meter and cost badges.',
@@ -212,7 +221,6 @@ Object.assign(PURPOSES, {
   'src/ui/primitives/Toast.tsx': 'Toaster that renders the toast queue.',
   'src/ui/primitives/Tooltip.tsx': 'Hover/focus tooltip.',
   'src/ui/primitives/index.ts': 'Barrel export of all UI primitives.',
-  'src/ui/publish/DeployTab.tsx': 'Publish → Deploy: Netlify, Vercel, Cloudflare Pages one-click deploys with live log.',
   'src/ui/publish/DownloadTab.tsx': 'Publish → Download: ZIP export of the project.',
   'src/ui/publish/GitTab.tsx': 'Publish → Git: GitHub/GitLab import, push and Pages workflow.',
   'src/ui/publish/PublishModal.tsx': 'Publish hub modal that hosts the Git, Deploy, Download and Supabase tabs.',

@@ -53,3 +53,6 @@ AI turns call `checkpoint('…','auto')` before applying ops (`checkpointBefore`
 
 ## v3.0 project metadata
 `ProjectMeta` now carries `thumbnail?` (image data URL ≤ 40k chars, `core/preview/thumbnail.ts`), `starred?`, `knowledge?` (Project Knowledge markdown) and `bookmarks?` (starred checkpoint ids). Thumbnails are written with `persistThumbnail` and never change `updatedAt`. Bridge messages added: host→iframe `thumb:capture`, iframe→host `thumb`.
+
+## v3.0 knowledge, bookmarks, live URL
+`knowledge` and `bookmarks` live on the project record; the last live URL is stored under kv key `liveUrl:<projectId>`. Version History numbers `ai` + `manual` checkpoints (oldest = v1).

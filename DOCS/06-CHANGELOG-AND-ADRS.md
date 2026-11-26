@@ -149,3 +149,11 @@ Chips must be instant, free and work offline on phones; a rule table over the pr
 
 ### ADR-015 Route navigation by hash fallback
 The preview is an opaque-origin `srcdoc` iframe where `history.pushState` to a path throws; the bridge therefore uses `pushState` only on http(s) documents (pop-out, tests) and `location.hash` inside srcdoc. Apps using hash routing (the templates) navigate; BrowserRouter apps are best-effort.
+
+### V3.0-M5 — Project Settings hub, Project Knowledge, Publish sheet with QR
+- `ProjectSettings` (Top-bar settings button, Project Pill sheet, Home card menu): Overview, **Project Knowledge** (`ProjectMeta.knowledge`, ≤ 8,000 chars, injected by `buildProjectContext` on every turn), Version History (bookmarks, compare, fork, restore with safety checkpoint), Integrations.
+- `PublishSheet` replaces `PublishModal`: live URL (persisted in kv `liveUrl:<projectId>`), `src/lib/qrcode.ts` inline SVG QR, deploy targets, Share & SEO editor that rewrites `/index.html` through `core/deploy/seo.ts` (checkpointed).
+- `jsqr` added (test-only use) to verify QR output with an independent decoder.
+
+### ADR-016 Own QR encoder instead of a dependency
+A QR encoder is ~200 lines, keeps the main chunk free of a library, and the correctness risk is covered by decoding real output with jsQR in CI. Limit: versions 1–10 (≤ 154 bytes at ECC M), enough for deploy URLs; longer input throws `RangeError` and the UI hides the QR.

@@ -23,6 +23,8 @@ interface AppState {
   switcherOpen: boolean
   projectSettingsOpen: boolean
   projectSettingsTab: string
+  publishTab: string | null
+  openPublish: (tab?: string) => void
   pendingPrompt: PendingPrompt | null
   requestedTab: { tab: 'chat' | 'preview'; n: number } | null
   requestTab: (t: 'chat' | 'preview') => void
@@ -67,6 +69,8 @@ export const useApp = create<AppState>()(
       switcherOpen: false,
       projectSettingsOpen: false,
       projectSettingsTab: 'overview',
+      publishTab: null,
+      openPublish: (tab) => set({ publishOpen: true, publishTab: tab ?? null }),
       pendingPrompt: null,
       requestedTab: null,
       requestTab: (tab) => set((s) => ({ requestedTab: { tab, n: (s.requestedTab?.n ?? 0) + 1 } })),
