@@ -14,6 +14,14 @@ export interface ProjectMeta {
   historyPtr: number
   forkOf?: { projectId: string; checkpointId: string }
   sourceRepo?: string
+  /** v3.0: compact auto-captured preview thumbnail (image data URL, capped by core/preview/thumbnail.ts). */
+  thumbnail?: string
+  /** v3.0: starred in the sidebar / Home. */
+  starred?: boolean
+  /** v3.0: Project Knowledge — per-project markdown instructions injected into every AI turn. */
+  knowledge?: string
+  /** v3.0: bookmarked (starred) version checkpoint ids shown in Version History. */
+  bookmarks?: string[]
 }
 
 export interface FileRecord {

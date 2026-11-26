@@ -132,3 +132,5 @@ button, a, [role="button"], input, textarea, select { -webkit-tap-highlight-colo
 .dark[data-accent="warm"] { --c-accent: #ff8a4c; --c-accent-fg: #1a0f08; --c-bg: #0d0a09; --c-panel: #151110; --c-subtle: #1d1714; --c-raised: #221a16; --c-line: rgba(255,230,210,.09); }
 @keyframes unq-shimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
 .shimmer { background-image: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--c-accent) 22%, transparent) 50%, transparent 100%); background-size: 200% 100%; animation: unq-shimmer 1.8s linear infinite; }
+@keyframes unq-slide-left { from { transform: translateX(-100%) } to { transform: none } }
+.animate-slide-left { animation: unq-slide-left .26s var(--ease-spring) both }

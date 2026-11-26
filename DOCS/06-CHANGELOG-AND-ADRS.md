@@ -125,3 +125,12 @@ Uploading even an encrypted vault to third-party storage creates an offline brut
 
 ### ADR-012 One BottomSheet primitive instead of per-feature drawers
 Modal/Drawer/Dropdown switch to the same sheet on phones so drag, scroll-lock and safe-area handling live in one tested place. Cost: Modal consumers get sheet chrome on <768px (title bar replaces the dialog header).
+
+### V3.0-M2 — Lovable Home Launchpad, collapsible sidebar, live thumbnails
+- `AppSidebar`: desktop rail (collapsed state persisted in `unq.app.v1`) and phone slide-over drawer with edge-swipe open / swipe-left or tap-outside close.
+- Home: 'What should we build today?' hero with ambient mesh, floating composer (Build/Plan/Ask toggle, model pill, attach, mic, enhance), 1-tap starter chips, thumbnail project grid (star, Open/Rename/Remix/Project settings/Export ZIP/Delete) and Templates & Showcase (8 category pills, Preview, Remix).
+- `ProjectMeta` gained `thumbnail`, `starred`, `knowledge`, `bookmarks` (IndexedDB schema unchanged: object store records are schemaless).
+- Preview captures a thumbnail 1.5s after each successful build (≥15s apart) via the bridge `thumb:capture` layout snapshot, persisted by `persistThumbnail`.
+
+### ADR-013 Thumbnails from a layout snapshot, not a pixel screenshot
+The preview iframe is an opaque-origin sandbox, so canvas capture of its DOM is unreliable (tainting, `foreignObject` quirks, headless). The bridge instead walks computed styles (≤140 boxes) and the host renders an SVG (then WebP when the browser can). This works in every context, is escaped/sanitised, and is capped at 40k chars.

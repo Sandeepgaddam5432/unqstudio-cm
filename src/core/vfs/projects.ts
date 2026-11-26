@@ -41,6 +41,13 @@ export async function createProject(adapter: IStorageAdapter, input: CreateProje
   return vfs.meta
 }
 
+/** Snapshot (path → {c,e}) of a stored project without opening a workspace (used by Home's Export ZIP). */
+export async function projectSnapshot(adapter: IStorageAdapter, id: string): Promise<Snapshot> {
+  const out: Snapshot = {}
+  for (const f of await adapter.listFiles(id)) out[f.path] = { c: f.content, e: f.encoding }
+  return out
+}
+
 export async function updateProject(adapter: IStorageAdapter, id: string, patch: Partial<ProjectMeta>) {
   const cur = await adapter.getProject(id)
   if (!cur) throw new Error('Project not found')

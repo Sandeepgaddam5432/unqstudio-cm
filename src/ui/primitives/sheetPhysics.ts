@@ -27,3 +27,11 @@ export function shouldDismiss(dy: number, velocity: number, height: number): boo
   if (dy <= 0) return false
   return velocity >= DISMISS_VELOCITY || dy >= Math.max(40, height * DISMISS_RATIO)
 }
+
+export type SwipeIntent = 'open' | 'close' | 'none'
+
+/** Edge-swipe drawer rule: a mostly-horizontal drag past the threshold opens (rightwards) or closes (leftwards) the drawer. */
+export function swipeIntent(dx: number, dy: number, threshold = 56): SwipeIntent {
+  if (Math.abs(dx) < threshold || Math.abs(dy) > Math.abs(dx) * 0.8) return 'none'
+  return dx > 0 ? 'open' : 'close'
+}

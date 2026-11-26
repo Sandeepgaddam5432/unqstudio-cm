@@ -151,12 +151,35 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     } catch (err) { send({ type: 'screenshot', id: id, error: String(err) }); }
   }
+  function thumb(id) {
+    try {
+      var W = Math.max(document.documentElement.clientWidth, 320), H = Math.min(Math.max(window.innerHeight, 200), 900);
+      var out = [], all = document.body.querySelectorAll('*');
+      var bodyBg = getComputedStyle(document.body).backgroundColor, rootBg = getComputedStyle(document.documentElement).backgroundColor;
+      for (var i = 0; i < all.length && out.length < 140; i++) {
+        var el = all[i];
+        if (el.hasAttribute('data-unq-inspector') || el.closest('[data-unq-inspector]')) continue;
+        var r = el.getBoundingClientRect();
+        if (r.width < 6 || r.height < 6 || r.top > H || r.bottom < 0) continue;
+        var cs = getComputedStyle(el);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') continue;
+        var bg = cs.backgroundColor, hasBg = !!bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent';
+        var own = '';
+        for (var j = 0; j < el.childNodes.length; j++) if (el.childNodes[j].nodeType === 3) own += el.childNodes[j].textContent;
+        own = own.trim().slice(0, 48);
+        if (!hasBg && !own) continue;
+        out.push({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), bg: hasBg ? bg : '', color: cs.color, fs: parseFloat(cs.fontSize) || 14, fw: cs.fontWeight, r: parseFloat(cs.borderTopLeftRadius) || 0, t: own });
+      }
+      send({ type: 'thumb', id: id, snap: { w: W, h: H, bg: bodyBg !== 'rgba(0, 0, 0, 0)' ? bodyBg : rootBg, boxes: out } });
+    } catch (err) { send({ type: 'thumb', id: id, error: String(err) }); }
+  }
   window.addEventListener('message', function (e) {
     var m = e.data;
     if (!m || m.__unq !== true) return;
     if (m.type === 'inspect:enable') setInspect(m.on);
     else if (m.type === 'theme') document.documentElement.classList.toggle('dark', !!m.dark);
     else if (m.type === 'screenshot') shot(m.id);
+    else if (m.type === 'thumb:capture') thumb(m.id);
     else if (m.type === 'theme-css') {
       var st = document.getElementById('__unq_live_theme');
       if (!st) { st = document.createElement('style'); st.id = '__unq_live_theme'; document.head.appendChild(st); }

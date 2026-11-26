@@ -10,9 +10,13 @@ import { downloadBlob, slugify } from '@/lib/util'
 import { toast } from '@/store/toast'
 import { cn } from '@/lib/cn'
 import { postToPreview, setPreviewFrame } from './bridge'
+import { getAdapter } from '@/core/vfs/idbAdapter'
+import { useProjects } from '@/store/projects'
+import { persistThumbnail, rasterizeThumbnail, snapshotToThumbnail, type ThumbSnapshot } from '@/core/preview/thumbnail'
 import { InspectorPanel } from './Inspector'
 import type { SerializedError } from '@/core/runtime/types'
 
+let lastThumbAt = 0
 const pending = new Map<string, (r: { dataUrl?: string; error?: string }) => void>()
 
 const deviceIcon = { desktop: <Monitor size={14} />, tablet: <Tablet size={14} />, mobile: <Smartphone size={14} />, custom: <Maximize2 size={14} /> }
@@ -102,6 +106,18 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
   }, [])
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const scheduleThumb = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => { if (!usePreview.getState().buildErrors.length && Date.now() - lastThumbAt > 15_000) postToPreview(frame.current, { type: 'thumb:capture', id: 'thumb' }) }, 1500)
+    }
+    const saveThumb = async (d: { snap?: ThumbSnapshot; error?: string }) => {
+      const v = useWorkspace.getState().vfs
+      if (!v || !d.snap) return
+      lastThumbAt = Date.now()
+      const url = await rasterizeThumbnail(snapshotToThumbnail(d.snap, v.meta.name))
+      if (await persistThumbnail(getAdapter(), v.meta.id, url)) { v.meta.thumbnail = url; if (useProjects.getState().loaded) void useProjects.getState().refresh() }
+    }
     const onMsg = (e: MessageEvent) => {
       const d = e.data
       if (!d || d.__unq !== true || e.source !== frame.current?.contentWindow) return
@@ -110,13 +126,14 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
         case 'console': S.addLog(d.level, (d.args as string[]).join(' '), d.ts); if (d.level === 'error') S.addRuntimeError({ source: 'console', message: (d.args as string[]).join(' ').slice(0, 600) }); break
         case 'error': S.addLog('error', d.message + (d.stack ? '\n' + d.stack : '')); S.addRuntimeError(serializeRuntimeError(d)); break
         case 'resource-error': S.addLog('warn', `Failed to load resource: ${d.url}`); break
-        case 'ready': postToPreview(frame.current, { type: 'theme', dark: S.appearance === 'dark' }); if (S.inspectMode) postToPreview(frame.current, { type: 'inspect:enable', on: true }); break
+        case 'ready': postToPreview(frame.current, { type: 'theme', dark: S.appearance === 'dark' }); if (S.inspectMode) postToPreview(frame.current, { type: 'inspect:enable', on: true }); scheduleThumb(); break
+        case 'thumb': void saveThumb(d); break
         case 'inspect:select': S.set({ selected: d.info }); break
         case 'screenshot': pending.get(d.id)?.(d); pending.delete(d.id); break
       }
     }
     window.addEventListener('message', onMsg)
-    return () => window.removeEventListener('message', onMsg)
+    return () => { clearTimeout(timer); window.removeEventListener('message', onMsg) }
   }, [])
 
   useEffect(() => { postToPreview(frame.current, { type: 'theme', dark: p.appearance === 'dark' }) }, [p.appearance])

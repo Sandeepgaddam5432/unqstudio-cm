@@ -11,6 +11,8 @@ import '@/ui/commandsExtra'
 import { logEvent } from '@/store/events'
 import { useModels } from '@/store/models'
 import { useAuth } from '@/store/auth'
+import { AppSidebar } from '@/ui/layout/AppSidebar'
+import { useProjects } from '@/store/projects'
 import { AuthModal } from '@/ui/auth/AuthModal'
 
 const Home = lazy(() => import('@/ui/home/Home'))
@@ -38,6 +40,7 @@ export default function App() {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
+  useEffect(() => { void useProjects.getState().refresh() }, [route.projectId])
   useEffect(() => { void useModels.getState().loadRegistry(); void useAuth.getState().init() }, [])
   useEffect(() => { void useVault.getState().init(); logEvent('system', 'UnQStudio started') }, [])
   useEffect(() => { applyThemeClass(theme === 'system' ? systemTheme() : theme, false) }, [])
@@ -56,11 +59,14 @@ export default function App() {
   }, [])
 
   return (
-    <div className="h-full">
+    <div className="flex h-full min-w-0">
+      <AppSidebar />
+      <div className="h-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto" data-app-main>
       <Suspense fallback={<Splash />}>
         {route.projectId ? <Workspace key={route.projectId} projectId={route.projectId} /> : <Home />}
         {settingsOpen && <SettingsDrawer />}
       </Suspense>
+      </div>
       <CommandPalette />
       <OnboardingWizard />
       <CustomProviderModal />

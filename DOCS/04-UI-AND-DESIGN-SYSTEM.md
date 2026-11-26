@@ -84,3 +84,7 @@ Dark mode is class-based (`@custom-variant dark (&:where(.dark, .dark *))`); fon
 - **Top bar (phone)**: menu · Project Pill (opens `ProjectSwitcher`) · Publish pill. Undo/redo/theme/palette moved into the Project sheet.
 - **Floating view switcher**: `Chat | Preview | Code` with sliding indicator, two-pane sliding strip and a live dot on Preview (amber building / red errors). Hidden while the keyboard is open.
 - **Tokens**: `--sat/--sab` safe-area vars, `.bg-mesh`, `.composer-float`, `.surface-1/2`, `.press` spring tap feedback, `[data-accent=warm]` Lovable Warm preset (Settings → Appearance), haptics toggle.
+
+## v3.0 Home & sidebar
+- `AppSidebar` wraps every route (`App.tsx`): rail on desktop (w-14 / w-64), drawer on phones (`useApp.sidebarOpen`). Sections: New Project, Search, Starred, Recent, Templates & Showcase, account, theme, Global Settings.
+- Home hero uses `.bg-mesh` + `.composer-float`; project cards show captured thumbnails; Showcase uses `TemplateArt` SVGs.

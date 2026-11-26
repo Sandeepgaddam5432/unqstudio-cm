@@ -50,3 +50,6 @@ AI turns call `checkpoint('…','auto')` before applying ops (`checkpointBefore`
 | **Cloudflare Pages** (`hosts.ts`) | `GET https://api.cloudflare.com/client/v4/user/tokens/verify`; direct upload under `accounts/{id}/pages/projects/{name}` (file manifest + multipart upload); Git-connect fallback when direct upload is unavailable. |
 | **Supabase** (`supabase.ts`) | `GET {projectUrl}/rest/v1/` (OpenAPI document with the anon/service key) → `parseTables`/`tsType` → typed client + SQL snippets; rows via `/rest/v1/<table>`. |
 `verify.ts` runs the cheapest authenticated call per service (the `/user`-style endpoints above). Errors become `DeployError` with the HTTP status and a hint. Tokens come from the vault (`store/connections.ts`, secret name `conn:<service>:<field>`), never from source.
+
+## v3.0 project metadata
+`ProjectMeta` now carries `thumbnail?` (image data URL ≤ 40k chars, `core/preview/thumbnail.ts`), `starred?`, `knowledge?` (Project Knowledge markdown) and `bookmarks?` (starred checkpoint ids). Thumbnails are written with `persistThumbnail` and never change `updatedAt`. Bridge messages added: host→iframe `thumb:capture`, iframe→host `thumb`.
