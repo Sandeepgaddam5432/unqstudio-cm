@@ -65,8 +65,8 @@ describe('sidebar filtering', () => {
 
 describe('templates showcase', () => {
   const items = showcaseItems(BUILTIN_TEMPLATES)
-  it('exposes the 8 category pills and hides the blank starter', () => {
-    expect([...SHOWCASE_CATEGORIES]).toEqual(['All', 'SaaS', 'Dashboard', 'E-Commerce', 'Portfolio', 'AI App', 'Productivity', 'Blog'])
+  it('exposes the 9 category pills and hides the blank starter', () => {
+    expect([...SHOWCASE_CATEGORIES]).toEqual(['All', 'SaaS', 'Dashboard', 'E-Commerce', 'Portfolio', 'AI App', 'Productivity', 'Blog', 'Full-stack'])
     expect(items.some((i) => i.template.id === 'blank')).toBe(false)
     expect(items.length).toBe(BUILTIN_TEMPLATES.length - 1)
   })

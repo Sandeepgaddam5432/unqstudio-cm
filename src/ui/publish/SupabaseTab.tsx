@@ -6,6 +6,8 @@ import { useWorkspace } from '@/store/workspace'
 import { getConn } from '@/store/connections'
 import { browseTable, clientSnippet, fetchOpenApi, generateTypes, parseTables, type Table } from '@/core/deploy/supabase'
 import { toast } from '@/store/toast'
+import { SupabaseFullstack } from './SupabaseFullstack'
+import { rememberTables } from '@/services/supabase/context'
 import { cn } from '@/lib/cn'
 
 export function SupabaseTab() {
@@ -21,7 +23,7 @@ export function SupabaseTab() {
 
   const load = async () => {
     setBusy(true)
-    try { setTables(parseTables(await fetchOpenApi(c.url, c.key))) } catch (e) { toast.error('Could not read schema', e instanceof Error ? e.message : String(e)) } finally { setBusy(false) }
+    try { const t = parseTables(await fetchOpenApi(c.url, c.key)); setTables(t); rememberTables(t.map((x) => x.name)) } catch (e) { toast.error('Could not read schema', e instanceof Error ? e.message : String(e)) } finally { setBusy(false) }
   }
   const browse = async (t: string) => {
     setOpen(open === t ? null : t)
@@ -65,6 +67,7 @@ export function SupabaseTab() {
           ))}
         </div>
       </Section>
+      <SupabaseFullstack tables={tables} />
     </div>
   )
 }

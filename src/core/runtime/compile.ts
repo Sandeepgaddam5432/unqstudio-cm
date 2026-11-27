@@ -33,7 +33,7 @@ export async function compileProject(esb: typeof Esbuild, input: BuildInput, fet
       legalComments: 'none',
       define: {
         'process.env.NODE_ENV': prod ? '"production"' : '"development"',
-        'import.meta.env': JSON.stringify({ MODE: prod ? 'production' : 'development', DEV: !prod, PROD: prod, BASE_URL: '/', SSR: false }),
+        'import.meta.env': JSON.stringify({ ...(input.env ?? {}), MODE: prod ? 'production' : 'development', DEV: !prod, PROD: prod, BASE_URL: '/', SSR: false }),
         global: 'globalThis',
       },
       plugins: createPlugins({ files: input.files, binary: input.binary ?? {}, fetcher, remote, state }),

@@ -1,3 +1,4 @@
+import { FULLSTACK_RULES, fullstackBlock } from './fullstack'
 import { userContextBlock } from './userContext'
 import { buildRepoMap, isMappable } from './repoMap'
 import { isBinaryPath, isUnder, normalizePath, type VirtualFileSystem } from '@/core/vfs/vfs'
@@ -37,7 +38,7 @@ export const STACK = `## Project stack
 - React 19 + TypeScript + Tailwind CSS v4 (utility classes; the stylesheet \`/src/index.css\` imports tailwindcss) compiled in the browser by esbuild; entry is \`/src/main.tsx\`, HTML shell is \`/index.html\`.
 - Theme tokens are CSS variables (--accent, --bg, --surface, --fg, --muted, --line, --radius) exposed as Tailwind colors: bg-bg, bg-surface, text-fg, text-muted, border-line, bg-accent, text-accent-fg, rounded-theme. Prefer them so the Theme Studio keeps working. Dark mode uses the \`dark\` class.
 - Any npm package can be imported directly (resolved from esm.sh in the preview), e.g. lucide-react, framer-motion, recharts, clsx, date-fns, zustand. Also add it to /package.json dependencies.
-- The alias "@/" maps to "/src/". No server runtime: use client-side state, localStorage-like state and public APIs only.
+- The alias "@/" maps to "/src/". No server runtime of your own: use client-side state and public APIs — or, for real full-stack apps (database, auth, realtime), Supabase from the browser (see the Full-stack section).
 - Build responsive, accessible, polished UIs: real copy, sensible spacing, hover/focus states, no lorem ipsum, no broken images (use inline SVG, gradients, or emoji instead of remote placeholder images unless known to exist).`
 
 const BUILD_INTRO = `You are UnQStudio, an expert senior front-end engineer pair-programming inside a browser-based IDE. Implement the user's request by editing the project files. Make the app work on the first try: double-check imports, exports, types and JSX before you answer.`
@@ -49,6 +50,7 @@ export function systemInstructions(mode: AIMode, customPrompts: string[] = []): 
   const parts = [intro]
   if (mode === 'build') parts.push(PROTOCOL)
   parts.push(STACK)
+  if (mode === 'build') { parts.push(FULLSTACK_RULES); const fb = fullstackBlock(); if (fb) parts.push(fb) }
   if (customPrompts.length) parts.push('## User rules (always follow)\n' + customPrompts.map((p, i) => `${i + 1}. ${p.trim()}`).join('\n'))
   return parts.join('\n\n')
 }

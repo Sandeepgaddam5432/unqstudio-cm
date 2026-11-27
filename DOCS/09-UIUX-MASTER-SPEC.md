@@ -88,3 +88,7 @@ All v3.2 fixes, by milestone (read before touching UI):
 ### V3.2-M4
 - **Chat prose invariant:** no `<|tool_call`, `<patch_file`, `<<<<<<< SEARCH`, `=======`, `>>>>>>> REPLACE` may reach the DOM text of an assistant message; they become `[data-tool-card=Create|Rewrite|Patch|Delete|Tool]` (collapsed by default, `[data-tool-diff]` when expanded).
 - **Composer (`[data-composer]`):** row 1 textarea; row 2 `[data-composer-toolbar]` = `[data-composer-plus]` + `[data-mic]` | `[data-mode-trigger]` + model pill | `[data-composer-send]`. `/` opens `[data-slash-menu]`; picks render `[data-skill-pill]`; recording shows `[data-recording]`.
+
+### V3.2-M5
+- **Connectors Hub:** `[data-connector-card=<id>]` with `[data-brand-tile]` containing `svg[data-brand-colour]` (full artwork or official hex; `ink` only for black-by-design marks). `[data-connector-connect]` toggles `[data-connector-form]`; `[data-add-custom]` opens `[data-custom-form]`.
+- **Database panel:** `[data-supabase-fullstack]` with `[data-scaffold-fullstack]` and the SQL generator. Full-stack apps are first-class: DB + Auth + Realtime + UI.

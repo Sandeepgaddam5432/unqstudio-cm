@@ -3,6 +3,7 @@ import type { VirtualFileSystem } from '@/core/vfs/vfs'
 import { getRuntime } from '@/core/runtime'
 import { usePreview } from '@/store/preview'
 import { logEvent } from '@/store/events'
+import { parseDotEnv } from '@/services/supabase/scaffold'
 
 /** Debounced hot-rebuild: recompiles whenever the VFS content changes (latest build wins). */
 export function useLiveBuild(vfs: VirtualFileSystem | null) {
@@ -30,7 +31,7 @@ export function useLiveBuild(vfs: VirtualFileSystem | null) {
         if (P().status === 'idle' || P().status === 'error') usePreview.setState({ status: 'initializing', progress: { message: 'Loading compiler', pct: null } })
         await engine.init((p) => usePreview.setState({ progress: { message: p.message, pct: p.total ? Math.round(((p.loaded ?? 0) / p.total) * 100) : null } }))
         usePreview.setState({ status: 'building', progress: null })
-        const res = await engine.build({ files: vfs!.textFiles(), binary: vfs!.binaryFiles() })
+        const res = await engine.build({ files: vfs!.textFiles(), binary: vfs!.binaryFiles(), env: parseDotEnv(vfs!.read('/.env')) })
         if (disposed) return
         P().addLog('build', res.ok ? `Built in ${res.durationMs}ms${res.remote.length ? ` · ${res.remote.length} remote modules` : ''}${res.warnings.length ? ` · ${res.warnings.length} warnings` : ''}` : `Build failed: ${res.errors[0]?.message}`)
         logEvent('compile', res.ok ? `compiled (${res.remote.length} remote modules)` : `compile error: ${res.errors[0]?.message}`, { durationMs: res.durationMs })

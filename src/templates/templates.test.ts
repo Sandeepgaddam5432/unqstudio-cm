@@ -24,7 +24,7 @@ function stubFetcher(files: Record<string, string>) {
   }
   return async (url: string) => {
     const u = new URL(url)
-    const spec = u.pathname.slice(1).replace(/@[^/]+/, '')
+    const spec = u.pathname.slice(1).replace(/^(@[^/@]+\/[^/@]+|[^/@]+)@[^/]*/, '$1') // keeps @scope/pkg, drops @version
     const exp = [...(names.get(spec) ?? [])].map((n) => `export const ${n} = (p) => p;`).join('\n')
     if (spec.startsWith('react/jsx-runtime')) return 'export const jsx = () => null; export const jsxs = jsx; export const Fragment = null;'
     if (spec === 'react-dom/client') return 'export const createRoot = () => ({ render() {} });'
@@ -36,9 +36,9 @@ let esbReady: Promise<void> | null = null
 const initEsbuild = () => (esbReady ??= esbuild.initialize({}))
 
 describe('built-in templates', () => {
-  it('ships 8 uniquely identified templates with runnable scaffolding', () => {
-    expect(BUILTIN_TEMPLATES).toHaveLength(8)
-    expect(new Set(BUILTIN_TEMPLATES.map((t) => t.id)).size).toBe(8)
+  it('ships 9 uniquely identified templates with runnable scaffolding', () => {
+    expect(BUILTIN_TEMPLATES).toHaveLength(9)
+    expect(new Set(BUILTIN_TEMPLATES.map((t) => t.id)).size).toBe(9)
     for (const t of BUILTIN_TEMPLATES) {
       for (const p of ['/package.json', '/index.html', '/src/main.tsx', '/src/App.tsx', '/src/index.css', '/vite.config.ts']) expect(t.files[p], `${t.id} ${p}`).toBeTruthy()
       expect(t.files['/src/index.css']).toContain('unq-theme:start')

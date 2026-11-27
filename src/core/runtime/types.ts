@@ -19,6 +19,8 @@ export interface BuildInput {
   entry?: string
   /** Minify and omit the dev bridge (used by deploy connectors). */
   production?: boolean
+  /** Public `VITE_*` values exposed as `import.meta.env` (from the project's /.env). */
+  env?: Record<string, string>
 }
 
 export interface BuildResult {

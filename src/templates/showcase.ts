@@ -1,6 +1,6 @@
 import type { Template } from './index'
 
-export const SHOWCASE_CATEGORIES = ['All', 'SaaS', 'Dashboard', 'E-Commerce', 'Portfolio', 'AI App', 'Productivity', 'Blog'] as const
+export const SHOWCASE_CATEGORIES = ['All', 'SaaS', 'Dashboard', 'E-Commerce', 'Portfolio', 'AI App', 'Productivity', 'Blog', 'Full-stack'] as const
 export type ShowcaseCategory = (typeof SHOWCASE_CATEGORIES)[number]
 export type ArtKind = 'landing' | 'dashboard' | 'store' | 'portfolio' | 'chat' | 'kanban' | 'blog'
 
@@ -12,6 +12,7 @@ const CATEGORY: Record<string, { category: ShowcaseCategory; art: ArtKind; hue: 
   aichat: { category: 'AI App', art: 'chat', hue: 260 },
   kanban: { category: 'Productivity', art: 'kanban', hue: 40 },
   blog: { category: 'Blog', art: 'blog', hue: 340 },
+  fullstack: { category: 'Full-stack', art: 'kanban', hue: 160 },
 }
 
 export interface ShowcaseItem { template: Template; category: ShowcaseCategory; art: ArtKind; hue: number }

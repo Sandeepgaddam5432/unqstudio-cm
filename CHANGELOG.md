@@ -1,6 +1,7 @@
 # Changelog
 
 ## v3.2.0 (in progress)
+- **V3.2-M5** Full-colour Connectors Hub (14 brands), custom connectors, Supabase full-stack engine.
 - **V3.2-M4** Zero tool-call/diff leaks, tool cards, 2-row composer, / skills picker, working mic.
 - **V3.2-M3** Mobile swipe shell with synced pill; real iframe template previews.
 - **V3.2-M2** Calm grouped model picker, official full-colour brand icons, full-sheet swipe-to-dismiss.
