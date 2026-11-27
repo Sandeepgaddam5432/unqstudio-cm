@@ -15,6 +15,7 @@ import { useProjects } from '@/store/projects'
 import { initTheme } from '@/store/theme'
 import { AuthModal } from '@/ui/auth/AuthModal'
 import { MobileBottomNav } from '@/ui/layout/MobileBottomNav'
+import { MobileShell } from '@/ui/layout/MobileShell'
 import { WorkspaceSheet } from '@/ui/layout/WorkspaceSwitcher'
 import { AccountMenu } from '@/ui/settings/AccountMenu'
 import { AccountSettings } from '@/ui/settings/AccountSettings'
@@ -23,6 +24,7 @@ import { WorkspaceSettings } from '@/ui/settings/WorkspaceSettings'
 import { usePrefs } from '@/store/prefs'
 import { ViewSkeleton } from '@/ui/primitives/Skeleton'
 import { useIsMobile } from '@/lib/useMedia'
+import { cn } from '@/lib/cn'
 
 const Home = lazy(() => import('@/ui/home/Home'))
 const ProjectsView = lazy(() => import('@/ui/home/ProjectsView'))
@@ -82,9 +84,9 @@ export default function App() {
   return (
     <div className="flex h-full min-w-0">
       <AppSidebar />
-      <div className="h-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto" data-app-main>
+      <div className={cn('h-full min-w-0 flex-1 overflow-x-hidden', mobile && !route.projectId ? 'overflow-y-hidden' : 'overflow-y-auto')} data-app-main>
       <Suspense fallback={<ViewSkeleton kind={route.projectId ? 'workspace' : route.view} />}>
-        {route.projectId ? <Workspace key={route.projectId} projectId={route.projectId} /> : skel ? <ViewSkeleton kind={route.view} /> : route.view === 'projects' ? <ProjectsView /> : route.view === 'chats' ? <ChatsView /> : <Home />}
+        {route.projectId ? <Workspace key={route.projectId} projectId={route.projectId} /> : mobile ? <MobileShell view={route.view} panes={{ home: <Home />, projects: <ProjectsView />, chats: <ChatsView /> }} /> : skel ? <ViewSkeleton kind={route.view} /> : route.view === 'projects' ? <ProjectsView /> : route.view === 'chats' ? <ChatsView /> : <Home />}
         {settingsOpen && <SettingsDrawer />}
       </Suspense>
       </div>

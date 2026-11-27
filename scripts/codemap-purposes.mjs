@@ -68,7 +68,6 @@ export const PURPOSES = {
   'src/lib/projectFilters.ts': 'Pure project search plus starred and recent splits that drive the sidebar and the Home grid.',
   'src/templates/showcase.ts': 'Template Showcase model: category pills, template-to-category/artwork mapping and category filtering.',
   'src/ui/layout/AppSidebar.tsx': 'Collapsible left navigation: persisted desktop rail and swipe-dismissable mobile drawer with New Project, search, Starred, Recent, Templates, account, theme and settings.',
-  'src/ui/home/TemplateArt.tsx': 'Themed miniature SVG artwork for each showcase template kind (landing, dashboard, store, portfolio, chat, kanban, blog).',
   'src/ui/home/home-v3.test.tsx': 'Tests for thumbnail capping/persistence, sidebar starred/recent filtering, edge-swipe intent and template category filtering.',
   'src/ui/home/Home.tsx': 'Lovable-style launchpad: ambient hero with floating composer, starter chips, thumbnail project grid with star/menu actions, and Templates & Showcase with category filter, Preview and Remix.',
   'src/ui/primitives/sheetPhysics.ts': 'Pure drag physics for BottomSheet and drawers: rubber-band, trailing velocity, dismiss rule and edge-swipe intent.',
@@ -268,4 +267,8 @@ Object.assign(PURPOSES, {
   "src/ui/primitives/ColorStudio.tsx": "Color Studio (swatches, SV pad, hue slider, hex/OKLCH input, contrast preview) + ColorField trigger. Replaces <input type=color>.",
   "src/ui/chat/modelGroups.ts": "Pure purpose grouping for the Recommended picker view (Recommended/Reasoning/Coding/Vision/Fast-Free/Custom & Local) + single capability tag.",
   "src/ui/primitives/sheetSwipe.test.ts": "Unit tests for full-sheet swipe engage rule and rubber-band translate.",
+  "src/ui/layout/MobileShell.tsx": "Mobile (<768px) scroll-snap swipe shell for Home \u21c4 Projects \u21c4 Chats; drives --nav-progress for the pill indicator and commits the route on settle.",
+  "src/ui/layout/shell.test.ts": "Unit tests for swipe-shell pane settling.",
+  "src/ui/home/TemplateCard.tsx": "Showcase card + TemplatePreviewFrame: lazy sandboxed srcDoc iframe scaled with CSS transform (real miniature preview).",
+  "src/ui/home/templatePreview.ts": "Serial, cached esbuild compile of a template into standalone production HTML for thumbnails.",
 })

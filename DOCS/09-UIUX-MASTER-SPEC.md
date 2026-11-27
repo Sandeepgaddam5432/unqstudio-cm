@@ -80,3 +80,7 @@ All v3.2 fixes, by milestone (read before touching UI):
 - **Model picker:** default tab *Recommended* = sections Recommended · Reasoning · Coding · Vision · Fast / Free · Custom & Local (max 6 each, a model appears once). Row = brand icon + name + one subtle pill (`Free` > `Reasoning` > `Coding` > `Vision` > `Fast`) or ✓ when active. Other tabs unchanged.
 - **Brand icons:** `data-brand-colour` = `full` | hex | `ink`. Never apply `grayscale`, `invert` or forced `currentColor` to coloured brands.
 - **Sheet physics:** `sheetPhysics.ts` (`findScrollParent`, `insideHorizontalScroller`, `shouldEngageSheetDrag`, `sheetTranslate`). Mark any drag-sensitive widget with `data-no-sheet-drag`.
+
+### V3.2-M3
+- **Swipe shell (<768px):** `[data-mobile-shell]` > `[data-shell-pane=home|projects|chats]`. Pill indicator `[data-nav-indicator]` = `translateX(var(--nav-progress) * 92px)`. Route commits on settle.
+- **Template previews:** `[data-template-thumb=idle|loading|ready|error]` wraps `iframe[data-template-iframe]` (sandbox allow-scripts, pointer-events none in cards). No wireframe art anywhere.

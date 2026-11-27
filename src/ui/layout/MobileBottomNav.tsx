@@ -13,12 +13,13 @@ const TABS: { id: AppView; label: string; icon: typeof HomeIcon }[] = [
 export function MobileBottomNav({ view }: { view: AppView }) {
   return (
     <nav aria-label="Main" data-mobile-bottom-nav className="pointer-events-none fixed inset-x-0 z-40 flex justify-center" style={{ bottom: 'calc(var(--sab, 0px) + 12px)' }}>
-      <div className="pointer-events-auto flex items-center gap-1 glass-pill p-1">
+      <div className="glass-pill pointer-events-auto relative flex items-center gap-1 p-1">
+        <span aria-hidden="true" data-nav-indicator className="absolute left-1 top-1 h-11 w-[88px] rounded-full bg-fg-primary" style={{ transform: `translateX(calc(var(--nav-progress, ${TABS.findIndex((t) => t.id === view)}) * 92px))`, transition: 'transform 0ms' }} />
         {TABS.map(({ id, label, icon: Icon }) => {
           const on = view === id
           return (
             <button key={id} data-nav-tab={id} aria-current={on ? 'page' : undefined} onClick={() => { haptic('select'); navigateToView(id) }}
-              className={cn('press flex h-11 min-w-[88px] items-center justify-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors duration-150', on ? 'bg-fg-primary text-base' : 'text-fg-tertiary hover:text-fg-primary')}>
+              className={cn('press relative z-10 flex h-11 w-[88px] items-center justify-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors duration-150', on ? 'text-base' : 'text-fg-tertiary hover:text-fg-primary')}>
               <Icon size={16} />{label}
             </button>
           )

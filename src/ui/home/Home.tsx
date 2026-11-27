@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BookText, Database, Eye, GitBranch, Menu, Search, Upload, Wand2 } from 'lucide-react'
+import { BookText, Database, GitBranch, Menu, Search, Upload, Wand2 } from 'lucide-react'
 import { Badge, Button, ConfirmModal, Input, Logo, Modal, Spinner, type MenuItem } from '@/ui/primitives'
 import { getConn, isConnected } from '@/store/connections'
 import { importGitHubRepo, parseRepoUrl } from '@/core/deploy/github'
@@ -9,7 +9,7 @@ import { AccountAvatarButton, WorkspaceSwitcherPill } from '@/ui/layout/Workspac
 import { useIsMobile } from '@/lib/useMedia'
 import { AuroraBackdrop } from './AuroraBackdrop'
 import { AboutFaq } from './AboutFaq'
-import { TemplateArt } from './TemplateArt'
+import { TemplateCard, TemplatePreviewFrame } from './TemplateCard'
 import { SHOWCASE_CATEGORIES, filterShowcase, showcaseItems, type ShowcaseCategory, type ShowcaseItem } from '@/templates/showcase'
 import { useSettings } from '@/store/settings'
 import { matchesProject } from '@/lib/projectFilters'
@@ -252,18 +252,7 @@ export default function Home() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {showcase.map((it) => (
-              <div key={it.template.id} data-showcase-card={it.category} className="surface-1 flex flex-col overflow-hidden rounded-3xl border border-line">
-                <TemplateArt kind={it.art} hue={it.hue} className="aspect-[16/10] w-full border-b border-line" />
-                <div className="flex flex-1 flex-col gap-3 p-3.5">
-                  <div className="min-w-0"><div className="flex items-center justify-between gap-2"><h3 className="truncate text-sm font-semibold">{it.template.name}</h3><Badge>{it.category}</Badge></div><p className="mt-1 line-clamp-2 text-xs text-muted">{it.template.description}</p></div>
-                  <div className="mt-auto flex gap-2">
-                    <Button size="sm" className="min-h-[40px] flex-1" onClick={() => setPreviewing(it)}><Eye size={13} />Preview</Button>
-                    <Button size="sm" variant="accent" className="min-h-[40px] flex-1" onClick={() => void remix(it)} disabled={busy}>Remix</Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {showcase.map((it) => <TemplateCard key={it.template.id} item={it} busy={busy} onPreview={() => setPreviewing(it)} onRemix={() => void remix(it)} />)}
             {showcase.length === 0 && <p className="col-span-full rounded-2xl border border-dashed border-line-strong py-10 text-center text-sm text-muted">No templates in this category yet.</p>}
           </div>
         </section>
@@ -274,7 +263,7 @@ export default function Home() {
         footer={<><Button variant="ghost" onClick={() => setPreviewing(null)}>Close</Button><Button variant="accent" onClick={() => previewing && void remix(previewing)} disabled={busy}>Remix this template</Button></>}>
         {previewing && (
           <div className="space-y-3" data-template-preview>
-            <TemplateArt kind={previewing.art} hue={previewing.hue} className="aspect-[16/10] w-full overflow-hidden rounded-2xl border border-line" />
+            <TemplatePreviewFrame template={previewing.template} interactive className="w-full overflow-hidden rounded-2xl border border-line" />
             <p className="text-xs text-muted">{Object.keys(previewing.template.files).length} files · {previewing.category} · fully editable after remixing</p>
             <div className="flex flex-wrap gap-1.5">{Object.keys(previewing.template.files).slice(0, 14).map((f) => <span key={f} className="rounded-md bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-muted">{f}</span>)}</div>
           </div>
