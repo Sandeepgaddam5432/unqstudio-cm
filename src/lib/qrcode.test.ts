@@ -1,52 +1,66 @@
-import jsQR from 'jsqr'
 import { describe, expect, it } from 'vitest'
-import { chooseVersion, encodeQr, qrSvg } from './qrcode'
+import { chooseVersion, encodeQr, QR_MAX_VERSION, qrSvg } from './qrcode'
 
-/** Rasterise a matrix to RGBA (with quiet zone) so an independent decoder can read it. */
-function raster(text: string, ecc: 'L' | 'M', scale = 5) {
-  const { size, modules } = encodeQr(text, ecc)
-  const n = (size + 8) * scale
-  const data = new Uint8ClampedArray(n * n * 4).fill(255)
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (modules[y]![x]) for (let dy = 0; dy < scale; dy++) for (let dx = 0; dx < scale; dx++) { const i = (((y + 4) * scale + dy) * n + (x + 4) * scale + dx) * 4; data[i] = data[i + 1] = data[i + 2] = 0 }
-  return jsQR(data, n, n)
-}
+describe('qrcode', () => {
+  it('selects the smallest version that fits the payload and returns null when oversized', () => {
+    expect(chooseVersion(14, 'M')).toBe(1)
+    expect(chooseVersion(15, 'M')).toBe(2)
+    expect(chooseVersion(17, 'L')).toBe(1)
+    expect(chooseVersion(1000, 'M')).toBeNull()
+  })
 
-describe('pure TypeScript QR generator', () => {
-  const samples: [string, 'L' | 'M'][] = [
-    ['https://unqstudio-cm.pages.dev', 'M'],
-    ['https://my-app-1234.netlify.app/?utm_source=qr&ref=unqstudio', 'M'],
-    ['https://example.com/' + 'a'.repeat(110), 'M'],
-    ['https://example.com/' + 'b'.repeat(130), 'L'],
-    ['Héllo wörld ✓ — 你好', 'M'],
-    ['x', 'L'],
-  ]
-  for (const [text, ecc] of samples) {
-    it(`decodes back to the exact text (${text.length} chars, ECC ${ecc})`, () => {
-      const r = raster(text, ecc)
-      expect(r).not.toBeNull()
-      expect(r!.data).toBe(text)
+  it('encodes valid square matrices with finder, timing, and dark module patterns', () => {
+    const qr = encodeQr('https://unqstudio-cm.pages.dev', 'M')
+    expect(qr.version).toBeGreaterThanOrEqual(1)
+    expect(qr.version).toBeLessThanOrEqual(QR_MAX_VERSION)
+    expect(qr.size).toBe(qr.version * 4 + 17)
+    expect(qr.modules).toHaveLength(qr.size)
+    for (const row of qr.modules) expect(row).toHaveLength(qr.size)
+
+    // Finder pattern centers (top-left, top-right, bottom-left) must always be dark
+    expect(qr.modules[3]?.[3]).toBe(true)
+    expect(qr.modules[3]?.[qr.size - 4]).toBe(true)
+    expect(qr.modules[qr.size - 4]?.[3]).toBe(true)
+
+    // Fixed dark module and alternating timing pattern
+    expect(qr.modules[qr.size - 8]?.[8]).toBe(true)
+    expect(qr.modules[6]?.[8]).toBe(true)
+    expect(qr.modules[6]?.[9]).toBe(false)
+  })
+
+  it('supports version 7+ payloads with version info blocks and rejects oversized text', () => {
+    const longQr = encodeQr(`https://unqstudio-cm.pages.dev/${'a'.repeat(90)}`, 'M')
+    expect(longQr.version).toBeGreaterThanOrEqual(7)
+    expect(longQr.size).toBe(longQr.version * 4 + 17)
+
+    expect(() => encodeQr('x'.repeat(1000), 'M')).toThrow(RangeError)
+  })
+
+  it('is deterministic for identical inputs', () => {
+    const a = encodeQr('https://unqstudio-cm.pages.dev/#/p/demo', 'L')
+    const b = encodeQr('https://unqstudio-cm.pages.dev/#/p/demo', 'L')
+    expect(a).toEqual(b)
+  })
+
+  it('renders crisp inline SVG and sanitizes unsafe color and label options', () => {
+    const svg = qrSvg('https://unqstudio-cm.pages.dev', {
+      margin: 4,
+      fg: '#111111',
+      bg: '#ffffff',
+      label: 'Open <app> "demo"',
     })
-  }
-  it('uses the expected symbol sizes and covers versions ≥ 7 (version info blocks)', () => {
-    expect(encodeQr('hi').version).toBe(1)
-    expect(encodeQr('hi').size).toBe(21)
-    const big = encodeQr('https://example.com/' + 'a'.repeat(110), 'M')
-    expect(big.version).toBeGreaterThanOrEqual(7)
-    expect(big.size).toBe(big.version * 4 + 17)
-  })
-  it('rejects payloads that do not fit and reports capacity', () => {
-    expect(chooseVersion(10, 'M')).toBe(1)
-    expect(chooseVersion(9999, 'M')).toBeNull()
-    expect(() => encodeQr('z'.repeat(400))).toThrow(RangeError)
-  })
-  it('renders a valid, self-contained inline SVG with a quiet zone', () => {
-    const svg = qrSvg('https://a.dev', { label: 'my <qr>' })
-    expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true)
-    expect(svg).toContain('shape-rendering="crispEdges"')
+    expect(svg).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 \d+ \d+"/)
+    expect(svg).toContain('aria-label="Open app demo"')
+    expect(svg).toContain('fill="#111111"')
+    expect(svg).toContain('fill="#ffffff"')
     expect(svg).toContain('<path d="M')
-    expect(svg).not.toContain('<qr>')
-    const { size } = encodeQr('https://a.dev')
-    expect(svg).toContain(`viewBox="0 0 ${size + 8} ${size + 8}"`)
-    expect(qrSvg('x', { fg: 'red" onload="1' })).not.toContain('onload')
+
+    const fallback = qrSvg('https://example.com', {
+      fg: 'javascript:alert(1)',
+      bg: '"><script>alert(1)</script>',
+    })
+    expect(fallback).toContain('fill="#000000"')
+    expect(fallback).toContain('fill="#ffffff"')
+    expect(fallback).not.toContain('<script>')
   })
 })

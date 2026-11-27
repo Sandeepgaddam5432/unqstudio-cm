@@ -6,7 +6,7 @@ UnQStudio is a **static, browser-native AI coding studio** (React 19 + Vite + Ta
 1. `AGENTS.md` (this file)
 2. `DOCS/01-SYSTEM-ARCHITECTURE.md` — layers, ports/interfaces, data flows
 3. `DOCS/02-CODEBASE-MAP.md` — every file and exported symbol (generated)
-4. Then the topical doc: `03` AI/models, `04` UI/design system, `05` auth/SEO/deploy, `06` ADRs/changelog, `07` VFS/runtime/deploy contracts, `08` honest improvements & roadmap.
+4. Then the topical doc: `03` AI/models, `04` UI/design system, `05` auth/SEO/deploy, `06` ADRs/changelog, `07` VFS/runtime/deploy contracts, `08` honest improvements & roadmap, `09` **UI/UX master spec (v3.1: OKLCH depth, mobile nav, swipe workspace, Timeline/Changes, Settings suite — mandatory before any UI work)**.
 
 ## IMMUTABLE DOC-SYNC LAW
 Whenever you **add, rename, delete a file**, or **change its exports, store state, persisted keys or an HTTP API**, you MUST — *before committing*:
