@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, AtSign, BookText, FileCode2, ImagePlus, Mic, MicOff, Square, Undo2, Wand2, X, Check } from 'lucide-react'
-import { Button, Dropdown, Segmented, Spinner, Textarea, Tooltip } from '@/ui/primitives'
+import { ArrowUp, AtSign, BookText, Check, ChevronDown, FileCode2, ImagePlus, Mic, MicOff, Plus, Square, Undo2, Wand2, X } from 'lucide-react'
+import { Button, Dropdown, Segmented, Spinner, Textarea, Tooltip, type MenuItem } from '@/ui/primitives'
 import { ModelPill } from './ModelPill'
 import { useSpeech } from './useSpeech'
 import { useSettings, type AIMode } from '@/store/settings'
@@ -13,6 +13,13 @@ import { downscaleImage, ACCEPTED_IMAGE } from '@/lib/image'
 import { fileToDataUrl } from '@/lib/util'
 import { toast } from '@/store/toast'
 import { cn } from '@/lib/cn'
+
+const MODE_LABEL: Record<AIMode, string> = { build: 'Build', ask: 'Chat', plan: 'Plan' }
+const HERO_MODES: { id: AIMode; label: string; desc: string; free?: boolean }[] = [
+  { id: 'build', label: 'Build', desc: 'Make changes directly' },
+  { id: 'ask', label: 'Chat', desc: 'Ask anything, explore ideas', free: true },
+  { id: 'plan', label: 'Plan', desc: 'Detailed spec for complex builds' },
+]
 
 export interface ComposerProps {
   value: string
@@ -31,9 +38,11 @@ export interface ComposerProps {
   submitIcon?: React.ReactNode
   allowEmptySubmit?: boolean
   submitLabel?: string
+  /** Extra rows for the hero `+` menu (Import project, Add context, Databases…). */
+  plusItems?: MenuItem[]
 }
 
-export function Composer({ value, onChange, images, onImages, onSubmit, busy, onStop, mode, onMode, placeholder, mentionPaths, variant = 'chat', autoFocus, submitIcon, allowEmptySubmit, submitLabel }: ComposerProps) {
+export function Composer({ value, onChange, images, onImages, onSubmit, busy, onStop, mode, onMode, placeholder, mentionPaths, variant = 'chat', autoFocus, submitIcon, allowEmptySubmit, submitLabel, plusItems }: ComposerProps) {
   const area = useRef<HTMLTextAreaElement>(null)
   const file = useRef<HTMLInputElement>(null)
   const [enhancing, setEnhancing] = useState(false)
@@ -111,7 +120,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
   const hero = variant === 'hero'
   return (
     <div
-      className={cn('relative min-w-0 rounded-2xl border bg-panel transition-colors duration-150', hero ? 'p-3 shadow-pop' : 'p-2', drag ? 'border-accent' : 'border-line focus-within:border-line-strong')}
+      className={cn('relative min-w-0 transition-colors duration-150', hero ? 'composer-gradient rounded-[28px] p-3 backdrop-blur-xl' : 'rounded-2xl border bg-panel p-2', !hero && (drag ? 'border-accent' : 'border-line focus-within:border-line-strong'), hero && drag && 'ring-2 ring-accent')}
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length) void addFiles(e.dataTransfer.files) }}
@@ -146,12 +155,17 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
         onPaste={(e) => { const fs = Array.from(e.clipboardData.files).filter((f) => ACCEPTED_IMAGE.test(f.type)); if (fs.length) { e.preventDefault(); void addFiles(fs) } }}
         placeholder={placeholder}
         aria-label="Message"
-        className={cn('border-0 bg-transparent px-2 hover:border-0 focus:border-0', hero ? 'min-h-[56px] text-[15px]' : 'min-h-[38px] text-[13.5px]')}
+        className={cn('border-0 bg-transparent px-2 hover:border-0 focus:border-0', hero ? 'min-h-[60px] text-[16px]' : 'min-h-[38px] text-[13.5px]')}
       />
       <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={(e) => { if (e.target.files) void addFiles(e.target.files); e.target.value = '' }} />
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5" data-composer-toolbar>
         <div className="flex min-w-0 flex-wrap items-center gap-0.5">
-          <Tooltip label="Attach image (screenshot-to-code)" side="top"><Button variant="ghost" size="icon-sm" onClick={() => file.current?.click()} aria-label="Attach image"><ImagePlus size={15} /></Button></Tooltip>
+          {hero ? (
+            <Dropdown align="start" width={240} mobileSheet sheetTitle="Add to your prompt" trigger={<Button variant="ghost" size="icon" aria-label="Add" data-composer-plus className="rounded-full"><Plus size={18} /></Button>}
+              items={[{ label: 'Attach', hint: 'Image or screenshot', icon: <ImagePlus size={14} />, onSelect: () => file.current?.click() }, ...(plusItems ?? [])]} />
+          ) : (
+            <Tooltip label="Attach image (screenshot-to-code)" side="top"><Button variant="ghost" size="icon-sm" onClick={() => file.current?.click()} aria-label="Attach image"><ImagePlus size={15} /></Button></Tooltip>
+          )}
           {mentionPaths && (
             <Tooltip label="Mention a file (@)" side="top"><Button variant="ghost" size="icon-sm" aria-label="Mention file" onClick={() => {
               const el = area.current; const pos = el?.selectionStart ?? value.length; const before = value.slice(0, pos)
@@ -165,7 +179,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
               {speech.supported ? <Mic size={15} className={cn(speech.listening && 'animate-pulse-soft')} /> : <MicOff size={15} />}
             </Button>
           </Tooltip>
-          <Tooltip label="Enhance prompt ✨" side="top"><Button variant="ghost" size="icon-sm" disabled={!value.trim() || enhancing} onClick={enhance} aria-label="Enhance prompt">{enhancing ? <Spinner size={14} /> : <Wand2 size={15} />}</Button></Tooltip>
+          <Tooltip label="Enhance prompt ✨" side="top"><Button variant="ghost" size="icon-sm" className={cn(hero && 'max-sm:hidden')} disabled={!value.trim() || enhancing} onClick={enhance} aria-label="Enhance prompt">{enhancing ? <Spinner size={14} /> : <Wand2 size={15} />}</Button></Tooltip>
           {prev !== null && <Button variant="ghost" size="xs" onClick={() => { onChange(prev); setPrev(null) }}><Undo2 size={11} />Revert</Button>}
           {!hero && (
             <Dropdown
@@ -186,7 +200,20 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
               )}
             />
           )}
-          {mode && onMode && (
+          {mode && onMode && hero && (
+            <Dropdown align="start" width={288} mobileSheet sheetTitle="Mode" triggerClassName="ml-auto" trigger={<Button variant="ghost" size="sm" aria-label="Mode" data-mode-trigger className="gap-1 rounded-full">{MODE_LABEL[mode]}<ChevronDown size={13} /></Button>}
+              content={(close) => (
+                <div className="p-1" role="menu" data-mode-menu>
+                  {HERO_MODES.map((m) => (
+                    <button key={m.id} role="menuitemradio" aria-checked={mode === m.id} onClick={() => { onMode(m.id); close() }} className="flex min-h-[48px] w-full items-start gap-2 rounded-lg px-3 py-2 text-left hover:bg-depth">
+                      <span className="min-w-0 flex-1"><span className="flex items-center gap-1.5 text-[14px] font-medium">{m.label}{m.free && <span className="rounded-full bg-depth px-1.5 py-px text-[10px] font-medium text-fg-secondary">Free</span>}</span><span className="t-meta block text-fg-tertiary">{m.desc}</span></span>
+                      {mode === m.id && <Check size={14} className="mt-1 text-accent" />}
+                    </button>
+                  ))}
+                </div>
+              )} />
+          )}
+          {mode && onMode && !hero && (
             <Segmented<AIMode> size="sm" className="ml-1" value={mode} onChange={onMode} items={[{ id: 'build', label: 'Build' }, { id: 'plan', label: 'Plan' }, { id: 'ask', label: 'Ask' }]} />
           )}
         </div>
@@ -195,7 +222,9 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
           {busy ? (
             <Button variant="primary" size="icon" onClick={onStop} aria-label="Stop generating" className="rounded-full"><Square size={13} fill="currentColor" /></Button>
           ) : (
-            <Button variant="accent" size="icon" onClick={onSubmit} disabled={!value.trim() && !allowEmptySubmit} aria-label={submitLabel ?? 'Send'} className="rounded-full">{submitIcon ?? <ArrowUp size={17} />}</Button>
+            hero ? (
+              <button onClick={onSubmit} disabled={!value.trim() && !allowEmptySubmit} aria-label={submitLabel ?? 'Send'} data-hero-send className="press flex h-9 w-9 items-center justify-center rounded-full bg-fg-primary text-base disabled:opacity-40">{submitIcon ?? <ArrowUp size={17} />}</button>
+            ) : <Button variant="accent" size="icon" onClick={onSubmit} disabled={!value.trim() && !allowEmptySubmit} aria-label={submitLabel ?? 'Send'} className="rounded-full">{submitIcon ?? <ArrowUp size={17} />}</Button>
           )}
         </div>
       </div>

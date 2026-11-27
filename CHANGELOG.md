@@ -1,5 +1,7 @@
 # Changelog
 
+- **M2** Native mobile nav pill, optical-centre launchpad, Projects & Chats views, skeleton loaders.
+
 ## v3.1.0 (in progress)
 - **M1** OKLCH depth ladder, Geist typography, multi-ring shadows, SVG Aurora hero and Dashboard Background presets.
 

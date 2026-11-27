@@ -176,3 +176,8 @@ The streaming parser, approval tray, usage metering and checkpoints all live in 
 
 ### ADR-018 Alias legacy tokens onto the OKLCH ladder
 Rewriting 150+ components to new class names would risk regressions; aliasing `--c-bg/panel/subtle/raised/line/fg/muted/faint` gives the whole app the new depth instantly while new code uses `bg-primary`, `text-fg-tertiary`, `shadow-xs-surface`. Weight is applied via `font-variation-settings: "wght" 450` on body and reset to `normal` for bold/semibold/headings so Geist weights still work.
+
+### V3.1-M2 — Native mobile navigation, launchpad, Projects & Chats views, skeletons
+- Routes `#/`, `#/projects`, `#/chats`, `#/p/:id` (`parseRoute` now returns `view`); `MobileBottomNav` floating pill on <768px; header = Workspace Switcher pill + account avatar (`useApp.sheet` / `openSheet`).
+- Home launchpad on mobile: composer at optical centre `bottom: calc(55dvh - var(--composer-height) - 14px)` (measured by ResizeObserver), `+` menu (Attach · Import project · Add context · Databases), `Build ▾` mode popover (Build / Chat [Free] / Plan), inverse 36px send.
+- `ProjectsView`, `ChatsView` (filters All/Unread/Scheduled/Archived; `ProjectMeta.archived`), `Skeleton` loaders (280ms on view switch, plus Suspense/workspace loading), desktop sidebar gains Home/Projects/Chats links.

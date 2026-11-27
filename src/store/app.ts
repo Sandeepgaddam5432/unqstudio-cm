@@ -1,9 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { markSeen } from '@/lib/chatFilters'
 
 export type ThemePref = 'system' | 'dark' | 'light'
 export type WorkspaceMode = 'studio' | 'code'
 export type AccentPreset = 'signature' | 'warm'
+
+export type AppView = 'home' | 'projects' | 'chats'
+export type SheetId = 'workspace' | 'account' | 'accountSettings' | 'connectors' | 'workspaceSettings' | 'appearance'
 
 export interface PendingPrompt { text: string; images?: string[] }
 
@@ -25,6 +29,9 @@ interface AppState {
   projectSettingsTab: string
   publishTab: string | null
   openPublish: (tab?: string) => void
+  sheet: SheetId | null
+  openSheet: (s: SheetId) => void
+  closeSheet: () => void
   pendingPrompt: PendingPrompt | null
   requestedTab: { tab: 'chat' | 'preview'; n: number } | null
   requestTab: (t: 'chat' | 'preview') => void
@@ -70,6 +77,9 @@ export const useApp = create<AppState>()(
       projectSettingsOpen: false,
       projectSettingsTab: 'overview',
       publishTab: null,
+      sheet: null,
+      openSheet: (sheet) => set({ sheet }),
+      closeSheet: () => set({ sheet: null }),
       openPublish: (tab) => set({ publishOpen: true, publishTab: tab ?? null }),
       pendingPrompt: null,
       requestedTab: null,
@@ -119,9 +129,11 @@ export function applyAccent(a: AccentPreset) {
   else delete document.documentElement.dataset.accent
 }
 
-export function navigateToProject(id: string) { location.hash = `#/p/${id}` }
+export function navigateToProject(id: string) { markSeen(id); location.hash = `#/p/${id}` }
+export function navigateToView(v: AppView) { location.hash = v === 'home' ? '#/' : `#/${v}` }
 export function navigateHome() { location.hash = '#/' }
-export function parseRoute(hash: string): { projectId: string | null } {
+export function parseRoute(hash: string): { projectId: string | null; view: AppView } {
   const m = /^#\/p\/([^/?]+)/.exec(hash)
-  return { projectId: m ? decodeURIComponent(m[1]) : null }
+  const v = /^#\/(projects|chats)(?:[/?]|$)/.exec(hash)
+  return { projectId: m ? decodeURIComponent(m[1]) : null, view: v ? (v[1] as AppView) : 'home' }
 }

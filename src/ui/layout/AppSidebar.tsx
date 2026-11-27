@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { LayoutTemplate, Moon, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, Star, Sun } from 'lucide-react'
+import { FolderKanban, Home as HomeIcon, LayoutTemplate, MessageSquare, Moon, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, Star, Sun } from 'lucide-react'
 import { Logo } from '@/ui/primitives'
 import { AccountPill } from '@/ui/auth/AccountPill'
-import { navigateHome, navigateToProject, useApp } from '@/store/app'
+import { navigateHome, navigateToProject, navigateToView, useApp } from '@/store/app'
 import { useProjects } from '@/store/projects'
 import { useIsMobile } from '@/lib/useMedia'
 import { recentProjects, starredProjects } from '@/lib/projectFilters'
@@ -61,6 +61,11 @@ function Content({ collapsed, close }: { collapsed: boolean; close?: () => void 
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
           <input ref={search} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects" aria-label="Search projects in sidebar" className="h-10 w-full rounded-xl border border-line bg-subtle pl-8 pr-2 text-[13px] outline-none focus:border-accent/60" />
         </div>
+      </div>
+      <div className="space-y-0.5 px-3 pb-1" data-sidebar-views>
+        {([['home', 'Home', HomeIcon], ['projects', 'Projects', FolderKanban], ['chats', 'Chats', MessageSquare]] as const).map(([id, label, Icon]) => (
+          <button key={id} data-sidebar-view={id} onClick={done(() => navigateToView(id))} className="press flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-left text-[13px] text-muted hover:bg-subtle hover:text-fg"><Icon size={15} />{label}</button>
+        ))}
       </div>
       <nav aria-label="Projects" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2">
         {starred.length > 0 && <>{section('Starred')}<ul className="space-y-0.5" data-sidebar-starred>{starred.map((p) => <Row key={p.id} p={p} active={p.id === projectId} onPick={done(() => navigateToProject(p.id))} />)}</ul></>}

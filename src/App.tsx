@@ -1,8 +1,7 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { applyAccent, applyThemeClass, parseRoute, systemTheme, useApp } from '@/store/app'
 import { Toaster } from '@/ui/primitives'
 import CommandPalette from '@/ui/CommandPalette'
-import { Logo } from '@/ui/primitives'
 import { useVault } from '@/store/vault'
 import { OnboardingWizard } from '@/ui/ai/OnboardingWizard'
 import { CustomProviderModal } from '@/ui/ai/CustomProviderModal'
@@ -15,18 +14,31 @@ import { AppSidebar } from '@/ui/layout/AppSidebar'
 import { useProjects } from '@/store/projects'
 import { initTheme } from '@/store/theme'
 import { AuthModal } from '@/ui/auth/AuthModal'
+import { MobileBottomNav } from '@/ui/layout/MobileBottomNav'
+import { WorkspaceSheet } from '@/ui/layout/WorkspaceSwitcher'
+import { ViewSkeleton } from '@/ui/primitives/Skeleton'
+import { useIsMobile } from '@/lib/useMedia'
 
 const Home = lazy(() => import('@/ui/home/Home'))
+const ProjectsView = lazy(() => import('@/ui/home/ProjectsView'))
+const ChatsView = lazy(() => import('@/ui/home/ChatsView'))
 const Workspace = lazy(() => import('@/ui/workspace/Workspace'))
 const SettingsDrawer = lazy(() => import('@/ui/SettingsDrawer'))
-
-function Splash() {
-  return <div className="flex h-full items-center justify-center"><div className="animate-pulse-soft"><Logo size={28} /></div></div>
-}
 
 export default function App() {
   const { theme, resolvedTheme, setResolvedTheme, settingsOpen, toggleMode, setPaletteOpen } = useApp()
   const [route, setRoute] = useState(() => parseRoute(location.hash))
+  const mobile = useIsMobile()
+  const [skel, setSkel] = useState(false)
+  const first = useRef(true)
+  const routeKey = route.projectId ? `p:${route.projectId}` : route.view
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    if (route.projectId) return
+    setSkel(true)
+    const t = setTimeout(() => setSkel(false), 280)
+    return () => clearTimeout(t)
+  }, [routeKey])
 
   useEffect(() => {
     const h = () => setRoute(parseRoute(location.hash))
@@ -64,11 +76,13 @@ export default function App() {
     <div className="flex h-full min-w-0">
       <AppSidebar />
       <div className="h-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto" data-app-main>
-      <Suspense fallback={<Splash />}>
-        {route.projectId ? <Workspace key={route.projectId} projectId={route.projectId} /> : <Home />}
+      <Suspense fallback={<ViewSkeleton kind={route.projectId ? 'workspace' : route.view} />}>
+        {route.projectId ? <Workspace key={route.projectId} projectId={route.projectId} /> : skel ? <ViewSkeleton kind={route.view} /> : route.view === 'projects' ? <ProjectsView /> : route.view === 'chats' ? <ChatsView /> : <Home />}
         {settingsOpen && <SettingsDrawer />}
       </Suspense>
       </div>
+      {mobile && !route.projectId && <MobileBottomNav view={route.view} />}
+      <WorkspaceSheet />
       <CommandPalette />
       <OnboardingWizard />
       <CustomProviderModal />

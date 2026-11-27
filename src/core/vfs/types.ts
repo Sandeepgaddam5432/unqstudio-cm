@@ -18,6 +18,8 @@ export interface ProjectMeta {
   thumbnail?: string
   /** v3.0: starred in the sidebar / Home. */
   starred?: boolean
+  /** v3.1: archived from the Chats view (hidden from All, shown under Archived). */
+  archived?: boolean
   /** v3.0: Project Knowledge — per-project markdown instructions injected into every AI turn. */
   knowledge?: string
   /** v3.0: bookmarked (starred) version checkpoint ids shown in Version History. */

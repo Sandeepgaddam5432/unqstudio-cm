@@ -242,4 +242,13 @@ Object.assign(PURPOSES, {
   'src/store/theme.test.ts': 'Unit tests for the dashboard background theme store.',
   'src/ui/home/AuroraBackdrop.tsx': 'Crisp layered SVG Aurora hero scene with top mask fade, driven by the Dashboard Background preset.',
   'src/ui/settings/AppearancePanel.tsx': 'Appearance settings: System/Light/Dark, Dashboard Background swatches + custom gradient, accent, haptics.',
+  'src/ui/primitives/Skeleton.tsx': 'Crisp shimmer skeleton loaders (Home launchpad, Projects/Chats lists, Workspace) shown during view switches.',
+  'src/ui/layout/MobileBottomNav.tsx': 'Floating Home · Projects · Chats pill dock for phones (<768px), hidden inside workspaces and when the keyboard is open.',
+  'src/ui/layout/WorkspaceSwitcher.tsx': 'Header identity: Workspace Switcher pill, account avatar button, useIdentity and the Workspace sheet.',
+  'src/ui/home/ProjectsView.tsx': 'Projects view: mobile 88px rows with pin/menu, desktop 16:9 card grid, search + sort filter, floating New project.',
+  'src/ui/home/ChatsView.tsx': 'Chats view: rows with unread dot and file-count badge, search, All/Unread/Scheduled/Archived filter, archive and read state.',
+  'src/ui/home/ProjectCard.tsx': 'Project grid card with live thumbnail and hover-only star/actions on desktop.',
+  'src/lib/chatFilters.ts': 'Pure chat-list filtering plus persisted seen/unread markers (unq.chats.seen).',
+  'src/lib/chatFilters.test.ts': 'Unit tests for chat filters and unread markers.',
+  'src/store/app-routes.test.ts': 'Unit tests for hash routing (home / projects / chats / project).',
 })

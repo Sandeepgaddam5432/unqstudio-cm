@@ -17,5 +17,6 @@
 | V3.0-M6 Multi-step agent loop + symbol/dependency graph | ✅ done |
 | V3.0-M7 Doc sync, 106-check Chromium E2E, visual QA, release 3.0.0 | ✅ done |
 | V3.1-M1 OKLCH depth, Geist, shadows, SVG Aurora + backgrounds | ✅ done |
+| V3.1-M2 Mobile nav pill, launchpad, Projects/Chats views, skeletons | ✅ done |
 
 Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks. Unit tests need Node ≥ 22.

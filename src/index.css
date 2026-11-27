@@ -174,8 +174,7 @@ button, a, [role="button"], input, textarea, select { -webkit-tap-highlight-colo
 .dark .surface-1 { box-shadow: 0 1px 0 rgba(255,255,255,.03) inset; }
 .dark .surface-2 { box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 32px -14px rgba(0,0,0,.7); }
 .bg-mesh { background-image: radial-gradient(60% 50% at 18% 0%, color-mix(in srgb, var(--c-accent) 20%, transparent), transparent 70%), radial-gradient(50% 45% at 85% 8%, color-mix(in srgb, #7c5cff 16%, transparent), transparent 70%), radial-gradient(45% 40% at 50% 100%, color-mix(in srgb, #22c3a6 10%, transparent), transparent 70%); }
-.composer-float { border-radius: 1.75rem; box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 24px 60px -24px color-mix(in srgb, var(--c-accent) 35%, rgba(9,9,11,.5)), 0 2px 10px rgba(9,9,11,.08); }
-.dark .composer-float { box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 30px 70px -28px color-mix(in srgb, var(--c-accent) 40%, #000), 0 2px 10px rgba(0,0,0,.5); }
+.composer-float { border-radius: 1.75rem; box-shadow: var(--shadow-floating-md); }
 .press { transition: transform 200ms var(--ease-spring), background-color 200ms ease, color 200ms ease; }
 .press:active { transform: scale(.96); }
 .view-strip { transition: transform 280ms var(--ease-spring); will-change: transform; }
@@ -204,3 +203,6 @@ button, a, .press { transition-timing-function: var(--ease-hover); }
 .dark .skel::after { background-image: linear-gradient(90deg, transparent 0%, oklch(100% 0 0 / .07) 50%, transparent 100%); }
 .hide-scroll { scrollbar-width: none; }
 .hide-scroll::-webkit-scrollbar { display: none; }
+
+html[data-keyboard] [data-mobile-bottom-nav], html[data-keyboard] [data-new-project], html[data-keyboard] [data-new-chat] { display: none; }
+.composer-gradient { border: 1px solid transparent; background: linear-gradient(var(--bg-translucent), var(--bg-translucent)) padding-box, linear-gradient(135deg, var(--border-depth), color-mix(in oklch, var(--c-accent) 35%, var(--border-depth))) border-box; }

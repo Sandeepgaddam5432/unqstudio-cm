@@ -103,3 +103,6 @@ Screenshots in `DOCS/screenshots/`: `v30-home-desktop`, `v30-home-mobile`, `v30-
 
 ## v3.1 depth system (M1)
 See `DOCS/09-UIUX-MASTER-SPEC.md` §1–5. Tokens `--bg-depth…--bg-accent`, `--fg-*`, `--border-depth`; shadows `--shadow-surface-xs|md`, `--shadow-floating-md`, `--shadow-surface-xl`; Tailwind `bg-primary|secondary|base|depth`, `text-fg-tertiary`, `border-border-depth`, `shadow-xs-surface|md-surface|floating|xl-surface`; dashboard background store `store/theme.ts`.
+
+## v3.1 navigation (M2)
+Routes: `#/` Home, `#/projects`, `#/chats`, `#/p/:id`. Phones get `MobileBottomNav` (Home · Projects · Chats); desktop uses sidebar links. `useApp.sheet` (`workspace|account|accountSettings|connectors|workspaceSettings|appearance`) drives header sheets. Skeleton loaders: `ui/primitives/Skeleton.tsx`.

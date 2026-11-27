@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { WorkspaceSkeleton } from '@/ui/primitives/Skeleton'
 import { useWorkspace, useVfsVersion } from '@/store/workspace'
 import { useApp } from '@/store/app'
 import { Button, EmptyState } from '@/ui/primitives'
@@ -35,7 +35,7 @@ export default function Workspace({ projectId }: { projectId: string }) {
     )
   }
   if (loading || !vfs) {
-    return <div className="flex h-full items-center justify-center text-muted"><Loader2 className="animate-spin-fast" /></div>
+    return <WorkspaceSkeleton />
   }
   return (
     <div className="flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-bg" style={{ paddingBottom: 'var(--kb-inset, 0px)' }} data-workspace-root>
