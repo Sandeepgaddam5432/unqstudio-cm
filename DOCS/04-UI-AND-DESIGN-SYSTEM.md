@@ -106,3 +106,6 @@ See `DOCS/09-UIUX-MASTER-SPEC.md` §1–5. Tokens `--bg-depth…--bg-accent`, `-
 
 ## v3.1 navigation (M2)
 Routes: `#/` Home, `#/projects`, `#/chats`, `#/p/:id`. Phones get `MobileBottomNav` (Home · Projects · Chats); desktop uses sidebar links. `useApp.sheet` (`workspace|account|accountSettings|connectors|workspaceSettings|appearance`) drives header sheets. Skeleton loaders: `ui/primitives/Skeleton.tsx`.
+
+## v3.1 workspace (M3)
+Mobile: `[data-snap-strip]` (`scroll-snap-type: x mandatory`, panes `chat`/`preview`). Desktop: `SplitPane inset minPx=320 maxPx=768` with `[data-inset-frame]`.

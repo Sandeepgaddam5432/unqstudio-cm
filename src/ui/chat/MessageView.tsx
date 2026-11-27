@@ -13,7 +13,6 @@ import { useSettings } from '@/store/settings'
 import { haptic } from '@/lib/haptics'
 import { BuildActivityCard } from './BuildActivityCard'
 import { VersionCard } from './VersionCard'
-import { FollowUpChips } from './FollowUpChips'
 
 function ThinkBlock({ text, done }: { text: string; done?: boolean }) {
   const auto = useChatPrefs((p) => p.autoExpandThink)
@@ -80,7 +79,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
   if (m.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="min-w-0 max-w-[88%] rounded-2xl rounded-br-md bg-subtle px-3.5 py-2.5 text-[1em]">
+        <div className="min-w-0 max-w-[88%] rounded-[24px] rounded-br-[4px] bg-secondary px-4 py-3 text-[1em] shadow-xs-surface">
           {m.images && m.images.length > 0 && <div className="mb-2 flex flex-wrap gap-1.5">{m.images.map((s, i) => <img key={i} src={s} alt="Attachment" className="h-16 w-16 rounded-lg border border-line object-cover" />)}</div>}
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.text}</p>
           {m.mode !== 'build' && <Badge className="mt-1.5">{m.mode} mode</Badge>}
@@ -93,7 +92,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
   const opById = new Map(ops.map((o) => [o.id, o]))
   const showFooter = !m.streaming
   return (
-    <div className="group min-w-0">
+    <div className="group t-prose min-w-0 max-w-[788px]">
       <div className="mb-1 flex min-w-0 items-center gap-2 text-[11px] text-faint">
         <span className="flex h-4 w-4 items-center justify-center rounded bg-fg text-bg"><Hammer size={10} /></span>
         <span className="font-medium text-muted">UnQStudio</span>
@@ -131,7 +130,6 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
         </div>
       )}
       <VersionCard m={m} />
-      {isLast && !busy && showFooter && !m.error && <FollowUpChips m={m} />}
       {m.mode === 'plan' && isLast && showFooter && !m.error && m.text.trim() && (
         <div data-plan-card className="mt-2 rounded-2xl border border-accent/30 bg-accent/5 p-3">
           <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-accent"><ListChecks size={12} />Plan ready for approval</p>

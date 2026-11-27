@@ -251,4 +251,5 @@ Object.assign(PURPOSES, {
   'src/lib/chatFilters.ts': 'Pure chat-list filtering plus persisted seen/unread markers (unq.chats.seen).',
   'src/lib/chatFilters.test.ts': 'Unit tests for chat filters and unread markers.',
   'src/store/app-routes.test.ts': 'Unit tests for hash routing (home / projects / chats / project).',
+  'src/ui/workspace/MobilePreviewBar.tsx': 'Mobile Preview floating bottom bar: Chat back pill, Click to add visual-edit toggle, overflow menu, blue Publish.',
 })

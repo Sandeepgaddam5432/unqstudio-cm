@@ -1,5 +1,7 @@
 # Changelog
 
+- **M3** Swipe scroll-snap workspace, mobile preview bar, inset desktop canvas, bubble polish.
+
 - **M2** Native mobile nav pill, optical-centre launchpad, Projects & Chats views, skeleton loaders.
 
 ## v3.1.0 (in progress)

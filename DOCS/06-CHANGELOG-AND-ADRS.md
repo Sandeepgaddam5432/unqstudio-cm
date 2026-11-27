@@ -181,3 +181,9 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - Routes `#/`, `#/projects`, `#/chats`, `#/p/:id` (`parseRoute` now returns `view`); `MobileBottomNav` floating pill on <768px; header = Workspace Switcher pill + account avatar (`useApp.sheet` / `openSheet`).
 - Home launchpad on mobile: composer at optical centre `bottom: calc(55dvh - var(--composer-height) - 14px)` (measured by ResizeObserver), `+` menu (Attach · Import project · Add context · Databases), `Build ▾` mode popover (Build / Chat [Free] / Plan), inverse 36px send.
 - `ProjectsView`, `ChatsView` (filters All/Unread/Scheduled/Archived; `ProjectMeta.archived`), `Skeleton` loaders (280ms on view switch, plus Suspense/workspace loading), desktop sidebar gains Home/Projects/Chats links.
+
+### V3.1-M3 — Swipe workspace, inset desktop canvas, chat polish
+- `workspace/Body.tsx`: mobile workspace is a `100dvw` horizontal **scroll-snap strip** (Chat ⟷ Preview), no bottom tab bar; `useApp.mobilePane` mirrors scroll position; `requestTab` glides programmatically. Code mode keeps a floating `‹ Studio` pill and an `Open code` overflow item.
+- Mobile top bar: 44px Close (X), centred project pill, 44px `›/‹` arrow. `MobilePreviewBar`: `‹ Chat`, `Click to add`, `…` overflow (Refresh, Change page, History, Share, Social & search, Preview in new tab), blue Publish.
+- Desktop: `SplitPane` gains `minPx/maxPx/inset` (chat rail 30%, 320–768px, 8px hit seam); preview lives in an 8px `--bg-depth` gutter with 16px radius, hairline border and xl shadow; top bar segmented Preview | Code and 32px blue Publish.
+- Chat: user bubble `24px/4px` radius on `bg-secondary`; AI prose `16/22 max-w-788`; follow-up chips are a 32px horizontal scroller above the composer.

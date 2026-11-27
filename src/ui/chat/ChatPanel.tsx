@@ -6,6 +6,7 @@ import { CHAT_FONT_PX, useChatPrefs } from '@/store/chatPrefs'
 import { Button, Dropdown, Tooltip } from '@/ui/primitives'
 import { Composer } from './Composer'
 import { MessageView } from './MessageView'
+import { FollowUpChips } from './FollowUpChips'
 import { useChat } from '@/store/chat'
 import { useSettings, type AIMode } from '@/store/settings'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
@@ -123,6 +124,7 @@ export function ChatPanel() {
       </div>
 
       <div className="min-w-0 p-2 pt-1 sm:p-3 sm:pt-1" data-chat-composer>
+        {!busy && <FollowUpChips m={messages[messages.length - 1]} />}
         <Composer
           value={text}
           onChange={setText}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bookmark, ChevronDown, Code2, Command, Moon, PanelLeft, Redo2, Rocket, Settings, SlidersHorizontal, Sparkles, Sun, Undo2 } from 'lucide-react'
+import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Code2, Command, Eye, Moon, PanelLeft, Redo2, Rocket, Settings, SlidersHorizontal, Sun, Undo2, X } from 'lucide-react'
 import { Button, Logo, Segmented, Tooltip, Kbd } from '@/ui/primitives'
 import { navigateHome, useApp } from '@/store/app'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
@@ -10,16 +10,18 @@ import { haptic } from '@/lib/haptics'
 
 /** Zero-clutter phone header: sidebar/home trigger, tappable Project Pill, Publish pill. Everything else lives in the Project sheet. */
 function MobileTopBar() {
-  const { setPublishOpen, setSwitcherOpen, setSidebarOpen } = useApp()
+  const { setSwitcherOpen, requestTab } = useApp()
+  const pane = useApp((s) => s.mobilePane)
   const vfs = useWorkspace((s) => s.vfs)
   useVfsVersion(vfs)
+  const circle = 'press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/90 shadow-xs-surface hover:shadow-md-surface'
   return (
-    <header data-topbar data-topbar-mobile className="flex min-w-0 shrink-0 items-center gap-2 border-b border-line bg-panel/90 px-2 pb-1.5 backdrop-blur-xl" style={{ paddingTop: 'calc(var(--sat, 0px) + 6px)' }}>
-      <button onClick={() => { haptic('tap'); setSidebarOpen(true) }} aria-label="Open menu" className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-subtle"><PanelLeft size={19} /></button>
-      <button onClick={() => { haptic('tap'); setSwitcherOpen(true) }} data-project-pill aria-label="Project menu" className="press flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-subtle px-4 text-[14px] font-semibold">
-        <span className="truncate">{vfs?.meta.name ?? '…'}</span><ChevronDown size={15} className="shrink-0 text-muted" />
+    <header data-topbar data-topbar-mobile className="flex min-w-0 shrink-0 items-center gap-2 px-3 pb-1.5" style={{ paddingTop: 'calc(var(--sat, 0px) + 6px)' }}>
+      <button onClick={() => { haptic('tap'); navigateHome() }} data-close-workspace aria-label="Close project" className={circle}><X size={19} /></button>
+      <button onClick={() => { haptic('tap'); setSwitcherOpen(true) }} data-project-pill aria-label="Project menu" className="press flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-primary/90 px-4 text-[14px] font-medium shadow-xs-surface">
+        <span className="truncate">{vfs?.meta.name ?? '…'}</span><ChevronDown size={15} className="shrink-0 text-fg-tertiary" />
       </button>
-      <button onClick={() => { haptic('tap'); setPublishOpen(true) }} data-publish-pill aria-label="Publish" className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-semibold text-accent-fg"><Rocket size={14} />Publish</button>
+      <button onClick={() => { haptic('select'); requestTab(pane === 'chat' ? 'preview' : 'chat') }} data-pane-arrow aria-label={pane === 'chat' ? 'Show preview' : 'Show chat'} className={circle}>{pane === 'chat' ? <ChevronRight size={19} /> : <ChevronLeft size={19} />}</button>
     </header>
   )
 }
@@ -55,7 +57,7 @@ function DesktopTopBar() {
   void setSidebarOpen
 
   return (
-    <header data-topbar className="flex h-12 min-w-0 shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-3">
+    <header data-topbar className="flex h-12 min-w-0 shrink-0 items-center justify-between gap-2 bg-base px-3">
       <div className="flex min-w-0 flex-none items-center gap-1.5">
         <Tooltip label="Toggle sidebar"><button onClick={toggleSidebarCollapsed} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-subtle" aria-label="Toggle sidebar"><PanelLeft size={16} /></button></Tooltip>
         <Tooltip label="All projects"><button onClick={navigateHome} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-subtle" aria-label="Back to projects"><Logo size={20} /></button></Tooltip>
@@ -72,7 +74,7 @@ function DesktopTopBar() {
 
       <Tooltip label="Switch workspace" hint="⌘E">
         <span className="inline-flex">
-          <Segmented value={mode} onChange={setMode} items={[{ id: 'studio', label: <span>Studio</span>, icon: <Sparkles size={13} /> }, { id: 'code', label: <span>Code</span>, icon: <Code2 size={13} /> }]} />
+          <Segmented value={mode} onChange={setMode} items={[{ id: 'studio', label: <span>Preview</span>, icon: <Eye size={13} /> }, { id: 'code', label: <span>Code</span>, icon: <Code2 size={13} /> }]} />
         </span>
       </Tooltip>
 
@@ -84,7 +86,7 @@ function DesktopTopBar() {
         <Tooltip label="Toggle theme"><Button variant="ghost" size="icon-sm" onClick={toggleTheme} aria-label="Toggle theme">{resolvedTheme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}</Button></Tooltip>
         <AccountPill />
         <Tooltip label="Settings"><Button variant="ghost" size="icon-sm" onClick={() => openSettings()} aria-label="Settings"><Settings size={15} /></Button></Tooltip>
-        <Button variant="accent" size="sm" onClick={() => setPublishOpen(true)} className="ml-1"><Rocket size={13} /><span>Publish</span></Button>
+        <button onClick={() => setPublishOpen(true)} data-publish-btn className="press ml-1 flex h-8 items-center gap-1.5 rounded-lg bg-blue-solid px-3 text-[13px] font-medium"><Rocket size={13} /><span>Publish</span></button>
       </div>
     </header>
   )

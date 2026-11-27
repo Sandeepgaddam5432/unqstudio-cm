@@ -33,6 +33,8 @@ interface AppState {
   openSheet: (s: SheetId) => void
   closeSheet: () => void
   pendingPrompt: PendingPrompt | null
+  mobilePane: 'chat' | 'preview'
+  setMobilePane: (p: 'chat' | 'preview') => void
   requestedTab: { tab: 'chat' | 'preview'; n: number } | null
   requestTab: (t: 'chat' | 'preview') => void
   setTheme: (t: ThemePref) => void
@@ -82,6 +84,8 @@ export const useApp = create<AppState>()(
       closeSheet: () => set({ sheet: null }),
       openPublish: (tab) => set({ publishOpen: true, publishTab: tab ?? null }),
       pendingPrompt: null,
+      mobilePane: 'chat',
+      setMobilePane: (mobilePane) => set({ mobilePane }),
       requestedTab: null,
       requestTab: (tab) => set((s) => ({ requestedTab: { tab, n: (s.requestedTab?.n ?? 0) + 1 } })),
       setTheme: (theme) => set({ theme, resolvedTheme: theme === 'system' ? systemTheme() : theme }),
