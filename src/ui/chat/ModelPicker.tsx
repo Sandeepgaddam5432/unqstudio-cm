@@ -13,15 +13,14 @@ import type { ProviderDef } from '@/core/ai/providers'
 import { Spinner } from '@/ui/primitives'
 import { ModelIcon } from '@/ui/icons/ModelIcon'
 import { ProviderIcon } from '@/ui/icons/ProviderIcon'
-import { GROUP_LABELS, GROUP_ORDER, groupModels, primaryTag } from './modelGroups'
+import { GROUP_LABELS, GROUP_ORDER, canonicalModelKey, dedupeModels, groupModels, primaryTag } from './modelGroups'
 import { cn } from '@/lib/cn'
 import { ago } from '@/ui/settings/registryUi'
 import { NAV_KEYS, moveActive, scrollTopFor, selectableRows, type NavKey } from './pickerNav'
 
 export type PickerTab = 'smart' | 'configured' | 'favorites' | 'ready' | 'custom' | 'local' | 'all'
 const TABS: { id: PickerTab; label: string }[] = [
-  { id: 'smart', label: 'Recommended' }, { id: 'configured', label: 'Configured' }, { id: 'favorites', label: 'Favorites ⭐' }, { id: 'ready', label: 'Browser-Ready' },
-  { id: 'custom', label: 'Custom' }, { id: 'local', label: 'Local' }, { id: 'all', label: 'All Providers' },
+  { id: 'smart', label: 'Recommended' }, { id: 'configured', label: 'Configured' }, { id: 'favorites', label: 'Favorites ⭐' }, { id: 'custom', label: 'Custom' }, { id: 'all', label: 'All Providers' },
 ]
 const ROW_H = 40
 const OVERSCAN = 8
@@ -63,6 +62,7 @@ export function ModelPicker({ close }: { close: () => void }) {
   const rows = useMemo<Row[]>(() => {
     const query = dq.trim()
     const byId = new Map(providers.map((p) => [p.id, p]))
+    const modelsOf = (p: ProviderDef) => dedupeModels(modelsForProvider(p), p.id === s.activeProvider ? s.activeModel : undefined)
     const modelRow = (p: ProviderDef, m: EnrichedModel, sub?: boolean): Row => ({ t: 'model', key: `${sub ? 's:' : ''}${p.id}::${m.id}`, p, m, sub })
     const lookup = (k: string): Row | null => {
       const [pid, ...rest] = k.split('::'); const mid = rest.join('::'); const p = byId.get(pid!)
@@ -74,7 +74,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       if (tab === 'smart') return configuredList.length ? (isProviderEnabled(p) && isConfigured(p)) || !!p.custom || p.compat === 'local' : p.compat === 'browser-ready'
       if (tab === 'configured') return isProviderEnabled(p) && isConfigured(p)
       if (tab === 'ready') return p.compat === 'browser-ready'
-      if (tab === 'custom') return !!p.custom
+      if (tab === 'custom') return !!p.custom || p.compat === 'local'
       if (tab === 'local') return p.compat === 'local'
       return true
     })
@@ -93,7 +93,9 @@ export function ModelPicker({ close }: { close: () => void }) {
     }
     if (!query && tab === 'smart') {
       const entries: { p: ProviderDef; m: EnrichedModel }[] = []
-      for (const p of pool) { if (p.compat === 'requires-proxy') continue; for (const m of modelsForProvider(p)) entries.push({ p, m }) }
+      const seenCanon = new Set<string>()
+      const ordered = [...pool].sort((a, b) => Number(isConfigured(b)) - Number(isConfigured(a)) || Number(!!b.custom) - Number(!!a.custom))
+      for (const p of ordered) { if (p.compat === 'requires-proxy') continue; for (const m of modelsOf(p)) { const k = canonicalModelKey(m); if (seenCanon.has(k) && !(p.id === s.activeProvider && m.id === s.activeModel)) continue; seenCanon.add(k); entries.push({ p, m }) } }
       const recentFirst = [...entries].sort((a, b) => Number(recents.includes(modelKey(b.p.id, b.m.id))) - Number(recents.includes(modelKey(a.p.id, a.m.id))))
       const g = groupModels(recentFirst, favorites, (e) => modelKey(e.p.id, e.m.id))
       for (const id of GROUP_ORDER) {
@@ -108,7 +110,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       const hits: { p: ProviderDef; m: EnrichedModel; sc: number }[] = []
       for (const p of pool) {
         if (p.compat === 'requires-proxy') continue
-        for (const m of modelsForProvider(p)) if (matchesQuery(m, p.name, query)) hits.push({ p, m, sc: scoreModel(m, query) })
+        for (const m of modelsOf(p)) if (matchesQuery(m, p.name, query)) hits.push({ p, m, sc: scoreModel(m, query) })
       }
       hits.sort((a, b) => a.sc - b.sc)
       if (!hits.length) return [{ t: 'note', key: 'none', text: `No models match “${query}”.` }]
@@ -119,7 +121,7 @@ export function ModelPicker({ close }: { close: () => void }) {
     if (!pool.length) out.push({ t: 'note', key: 'empty', text: tab === 'configured' ? 'No configured providers yet. Add an API key in Providers Hub, or browse Browser-Ready.' : tab === 'custom' ? 'No custom providers yet — add one below.' : 'Nothing here.' })
     for (const p of pool) {
       const isOpen = open.has(p.id)
-      const ms = isOpen && p.compat !== 'requires-proxy' ? modelsForProvider(p) : []
+      const ms = isOpen && p.compat !== 'requires-proxy' ? modelsOf(p) : []
       out.push({ t: 'head', key: `h:${p.id}`, p, open: isOpen, total: ms.length })
       if (!isOpen) continue
       if (p.compat === 'requires-proxy') out.push({ t: 'note', key: `n:${p.id}`, text: 'Needs server-side credentials (IAM / signed requests) — route it through a gateway such as OpenRouter or your own proxy.' })
@@ -132,8 +134,10 @@ export function ModelPicker({ close }: { close: () => void }) {
 
   // ── windowing ──
   const scroller = useRef<HTMLDivElement>(null)
+  const head = useRef<HTMLDivElement>(null)
   const [top, setTop] = useState(0)
   const [vh, setVh] = useState(420)
+  const headH = () => head.current?.offsetHeight ?? 0
   useEffect(() => {
     const el = scroller.current
     if (!el) return
@@ -147,6 +151,7 @@ export function ModelPicker({ close }: { close: () => void }) {
   useEffect(() => { scroller.current?.scrollTo?.({ top: 0 }); setTop(0) }, [tab, dq])
   const first = Math.max(0, Math.floor(top / ROW_H) - OVERSCAN)
   const last = Math.min(rows.length, Math.ceil((top + vh) / ROW_H) + OVERSCAN)
+  const onScroll = (e: React.UIEvent<HTMLDivElement>) => setTop(Math.max(0, e.currentTarget.scrollTop - headH()))
 
   // ── keyboard navigation (ArrowUp/Down, Home/End, Enter, Escape) ──
   const [activeIdx, setActiveIdx] = useState(-1)
@@ -158,7 +163,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       const next = moveActive(selectableRows(rows), activeIdx, e.key as NavKey)
       setActiveIdx(next)
       const el = scroller.current
-      if (el && next >= 0) { const t = scrollTopFor(next, ROW_H, el.scrollTop, el.clientHeight || vh); if (t !== el.scrollTop) { el.scrollTop = t; setTop(t) } }
+      if (el && next >= 0) { const hh = headH(); const t = scrollTopFor(next, ROW_H, Math.max(0, el.scrollTop - hh), Math.max(ROW_H, (el.clientHeight || vh) - hh)) + hh; if (t !== el.scrollTop) { el.scrollTop = t; setTop(Math.max(0, t - hh)) } }
       return
     }
     if (e.key === 'Enter') {
@@ -218,19 +223,19 @@ export function ModelPicker({ close }: { close: () => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-model-picker>
-      <div className="sticky top-0 z-10 shrink-0 space-y-2 p-2 pb-1.5">
-        <label className="glass-field flex h-10 items-center gap-2 rounded-xl px-3 text-muted focus-within:ring-2 focus-within:ring-accent/20">
-          <Search size={14} className="shrink-0" />
-          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onNavKey} role="combobox" aria-expanded="true" aria-controls="mp-list" aria-autocomplete="list" aria-activedescendant={activeIdx >= 0 ? `mp-row-${activeIdx}` : undefined} placeholder="Search models, providers, vision, reasoning, free…" aria-label="Search models" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
-        </label>
-        <div className="scrollbar-none -mx-0.5 flex gap-1 overflow-x-auto px-0.5" role="tablist" aria-label="Provider filter">
-          {TABS.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={cn('h-6 shrink-0 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150', tab === t.id ? 'border-accent/40 bg-accent/10 text-accent' : 'border-line text-muted hover:text-fg')}>{t.label}</button>
-          ))}
+      <div ref={scroller} onScroll={onScroll} className="sheet-scroll min-h-0 flex-1 touch-pan-y overflow-y-auto overflow-x-hidden overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }} id="mp-list" data-picker-list role="presentation">
+        <div ref={head} data-picker-head className="sticky top-0 z-20 space-y-2 bg-secondary px-2 pb-2 pt-2 shadow-[0_1px_0_var(--c-line,transparent)] md:bg-panel">
+          <label className="glass-field flex h-10 items-center gap-2 rounded-xl px-3 text-muted focus-within:ring-2 focus-within:ring-accent/20">
+            <Search size={14} className="shrink-0" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onNavKey} role="combobox" aria-expanded="true" aria-controls="mp-rows" aria-autocomplete="list" aria-activedescendant={activeIdx >= 0 ? `mp-row-${activeIdx}` : undefined} placeholder="Search models, providers, vision, reasoning, free…" aria-label="Search models" enterKeyHint="search" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
+          </label>
+          <div className="scrollbar-none -mx-0.5 flex gap-1 overflow-x-auto px-0.5" role="tablist" aria-label="Provider filter" data-no-sheet-drag>
+            {TABS.map((t) => (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={cn('h-7 shrink-0 rounded-full border px-3 text-[11.5px] font-medium transition-colors duration-150', tab === t.id ? 'border-accent/40 bg-accent/10 text-accent' : 'border-line text-muted hover:text-fg')}>{t.label}</button>
+            ))}
+          </div>
         </div>
-      </div>
-      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="sheet-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-1 pb-1" id="mp-list" data-picker-list role="listbox" aria-label="Models">
-        <div className="relative" style={{ height: rows.length * ROW_H }}>
+        <div id="mp-rows" role="listbox" aria-label="Models" className="relative px-1 pb-1" style={{ height: rows.length * ROW_H + 4 }}>
           {rows.slice(first, last).map((r, i) => renderRow(r, first + i))}
         </div>
       </div>

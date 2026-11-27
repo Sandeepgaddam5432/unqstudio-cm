@@ -17,7 +17,7 @@ function MobileTopBar() {
   const circle = 'press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/90 shadow-xs-surface hover:shadow-md-surface'
   return (
     <header data-topbar data-topbar-mobile className="flex min-w-0 shrink-0 items-center gap-2 px-3 pb-1.5" style={{ paddingTop: 'calc(var(--sat, 0px) + 6px)' }}>
-      <button onClick={() => { haptic('tap'); navigateHome() }} data-close-workspace aria-label="Close project" className={circle}><X size={19} /></button>
+      <button onClick={() => { haptic('tap'); const root = document.querySelector('[data-workspace-root]'); if (root) { root.classList.remove('animate-ws-in'); root.classList.add('animate-ws-out'); window.setTimeout(navigateHome, 200) } else navigateHome() }} data-close-workspace aria-label="Close project" className={circle}><X size={19} /></button>
       <button onClick={() => { haptic('tap'); setSwitcherOpen(true) }} data-project-pill aria-label="Project menu" className="press flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-primary/90 px-4 text-[14px] font-medium shadow-xs-surface">
         <span className="truncate">{vfs?.meta.name ?? '…'}</span><ChevronDown size={15} className="shrink-0 text-fg-tertiary" />
       </button>

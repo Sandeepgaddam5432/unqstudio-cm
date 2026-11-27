@@ -9,12 +9,12 @@ const TABS: { id: AppView; label: string; icon: typeof HomeIcon }[] = [
   { id: 'chats', label: 'Chats', icon: MessageSquare },
 ]
 
-/** Floating 3-tab pill dock (<768px) shown only on Home / Projects / Chats — never inside a workspace. */
+/** Floating 3-tab pill dock (<768px) shown only on Home / Projects / Chats — never inside a workspace. The indicator follows the pager through `--nav-progress`. */
 export function MobileBottomNav({ view }: { view: AppView }) {
   return (
     <nav aria-label="Main" data-mobile-bottom-nav className="pointer-events-none fixed inset-x-0 z-40 flex justify-center" style={{ bottom: 'calc(var(--sab, 0px) + 12px)' }}>
       <div className="glass-pill pointer-events-auto relative flex items-center gap-1 p-1">
-        <span aria-hidden="true" data-nav-indicator className="absolute left-1 top-1 h-11 w-[88px] rounded-full bg-fg-primary" style={{ transform: `translateX(calc(var(--nav-progress, ${TABS.findIndex((t) => t.id === view)}) * 92px))`, transition: 'transform 0ms' }} />
+        <span aria-hidden="true" data-nav-indicator className="absolute left-1 top-1 h-11 w-[88px] rounded-full bg-fg-primary" style={{ transform: `translate3d(calc(var(--nav-progress, ${TABS.findIndex((t) => t.id === view)}) * 92px),0,0)` }} />
         {TABS.map(({ id, label, icon: Icon }) => {
           const on = view === id
           return (

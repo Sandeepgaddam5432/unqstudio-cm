@@ -43,3 +43,21 @@ export function groupModels<P extends { custom?: unknown; compat?: string; id: s
   for (const e of entries) if (isFast(e.m)) put('fast', e)
   return out
 }
+
+/** Canonical identity of a model for de-duplication: lowercase, provider prefix + date/`latest` suffix stripped (`claude-sonnet-4-5-20250929` ≡ `claude-sonnet-4-5`). */
+export function canonicalModelKey(m: { id: string; name?: string }): string {
+  const base = (m.id.split('/').pop() ?? m.id).toLowerCase().trim()
+  return base.replace(/[\s_]+/g, '-').replace(/-(\d{8}|\d{4}-\d{2}-\d{2}|latest|preview-\d{2}-\d{2})$/, '').replace(/:latest$/, '')
+}
+
+/** Drop duplicate rows (same canonical model): keeps the shortest id (the alias) and always keeps `keepId` (the currently selected model). */
+export function dedupeModels<T extends { id: string; name?: string }>(models: T[], keepId?: string): T[] {
+  const best = new Map<string, T>()
+  for (const m of models) {
+    const k = canonicalModelKey(m)
+    const cur = best.get(k)
+    if (!cur || (cur.id !== keepId && (m.id === keepId || m.id.length < cur.id.length))) best.set(k, m)
+  }
+  const keep = new Set(best.values())
+  return models.filter((m) => keep.has(m) || m.id === keepId).filter((m, i, a) => a.findIndex((x) => x.id === m.id) === i)
+}

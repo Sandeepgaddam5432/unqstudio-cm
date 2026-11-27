@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Copy, Eye, MoreHorizontal, Pencil, Pin, PinOff, Plus, Search, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { Button, ConfirmModal, Dropdown, Input, Modal } from '@/ui/primitives'
 import { useProjects } from '@/store/projects'
-import { navigateToProject, navigateToView } from '@/store/app'
+import { navigateToProject } from '@/store/app'
 import { useIsMobile } from '@/lib/useMedia'
 import { matchesProject } from '@/lib/projectFilters'
 import { timeAgo } from '@/lib/util'
@@ -10,6 +10,8 @@ import { toast } from '@/store/toast'
 import { cn } from '@/lib/cn'
 import { ProjectCard } from './ProjectCard'
 import { AccountAvatarButton } from '@/ui/layout/WorkspaceSwitcher'
+import { usePaneActive } from '@/ui/layout/MobileShell'
+import { NewProjectSheet } from './NewProjectSheet'
 import type { ProjectMeta } from '@/core/vfs/types'
 
 type Sort = 'recent' | 'name' | 'starred' | 'pinned'
@@ -62,7 +64,8 @@ export default function ProjectsView() {
   const [deleting, setDeleting] = useState<ProjectMeta | null>(null)
   useEffect(() => { void projects.refresh() }, [])
   const list = useMemo(() => applySort(projects.projects.filter((p) => matchesProject(p, q)), sort), [projects.projects, q, sort])
-  const newProject = () => { navigateToView('home'); setTimeout(() => document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.focus(), 200) }
+  const active = usePaneActive()
+  const [newOpen, setNewOpen] = useState(false)
 
   return (
     <div data-projects-view className="mx-auto min-h-full w-full max-w-6xl bg-base pb-40 md:px-8">
@@ -79,7 +82,7 @@ export default function ProjectsView() {
         {searching && (
           <div className="relative pb-2">
             <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-[calc(50%+4px)] text-fg-quaternary" />
-            <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects" aria-label="Search projects" className="h-10 pl-9 pr-9" />
+            <Input autoFocus={!mobile} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects" aria-label="Search projects" className="h-10 pl-9 pr-9" />
             {q && <button onClick={() => setQ('')} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-[calc(50%+4px)] p-1 text-fg-tertiary"><X size={14} /></button>}
           </div>
         )}
@@ -97,9 +100,14 @@ export default function ProjectsView() {
         </div>
       )}
 
-      <button onClick={newProject} data-new-project className="press fixed right-4 z-30 flex h-12 items-center gap-1.5 rounded-full bg-fg-primary px-5 text-[14px] font-medium text-base shadow-floating md:bottom-6 md:right-8" style={{ bottom: mobile ? 'calc(var(--sab, 0px) + 80px)' : undefined }}>
-        <Plus size={17} />New project
-      </button>
+      {(!mobile || active) && (
+        <div className="pointer-events-none fixed inset-x-0 z-30 flex justify-center md:inset-x-auto md:right-8 md:justify-end" style={{ bottom: mobile ? 'calc(var(--sab, 0px) + 84px)' : '1.5rem' }}>
+          <button onClick={() => setNewOpen(true)} data-new-project className="press pointer-events-auto flex h-12 items-center gap-1.5 rounded-full bg-fg-primary px-5 text-[14px] font-medium text-base shadow-floating">
+            <Plus size={17} />New project
+          </button>
+        </div>
+      )}
+      <NewProjectSheet open={newOpen} onClose={() => setNewOpen(false)} />
 
       <Modal open={!!renaming} onClose={() => setRenaming(null)} title="Rename project" size="sm"
         footer={<><Button variant="ghost" onClick={() => setRenaming(null)}>Cancel</Button><Button variant="primary" onClick={async () => { if (renaming && renameVal.trim()) { await projects.update(renaming.id, { name: renameVal.trim() }); setRenaming(null) } }}>Save</Button></>}>

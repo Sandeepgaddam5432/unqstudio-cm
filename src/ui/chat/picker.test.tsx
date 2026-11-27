@@ -55,7 +55,7 @@ describe('ModelPicker (virtualized)', () => {
 
   it('renders every filter pill and the Add Custom Provider footer', () => {
     render(<ModelPicker close={() => {}} />)
-    for (const n of ['Configured', 'Favorites ⭐', 'Browser-Ready', 'Custom', 'Local', 'All Providers']) expect(screen.getByRole('tab', { name: n })).toBeTruthy()
+    for (const n of ['Recommended', 'Configured', 'Favorites ⭐', 'Custom', 'All Providers']) expect(screen.getByRole('tab', { name: n })).toBeTruthy()
     expect(screen.getByTestId('picker-add-custom')).toBeTruthy(); expect(screen.getByRole('button', { name: 'Refresh Catalog' })).toBeTruthy()
   })
 
@@ -64,7 +64,7 @@ describe('ModelPicker (virtualized)', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'All Providers' }))
     const heads = container.querySelectorAll('[data-provider-group]').length
     expect(heads).toBeGreaterThan(5); expect(heads).toBeLessThan(60)
-    const h = Number((container.querySelector('[data-picker-list] > div') as HTMLElement).style.height.replace('px', ''))
+    const h = Number((container.querySelector('#mp-rows') as HTMLElement).style.height.replace('px', ''))
     expect(h).toBeGreaterThan(320 * 30)
   })
 

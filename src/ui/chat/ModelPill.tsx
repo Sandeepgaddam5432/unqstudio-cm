@@ -16,6 +16,7 @@ export function ModelPill({ align = 'start' }: { align?: 'start' | 'end' }) {
       width={440}
       align={align}
       mobileSheet
+      sheetFill
       sheetTitle="Select model"
       className="p-0"
       triggerClassName="max-w-[10.5rem] sm:max-w-[14rem]"

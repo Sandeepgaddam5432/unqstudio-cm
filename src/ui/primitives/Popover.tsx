@@ -29,6 +29,8 @@ interface DropdownProps {
   mobileSheet?: boolean
   /** Accessible title for the mobile sheet. */
   sheetTitle?: string
+  /** Mobile sheet: fixed-height flex column where the child owns scrolling (model picker). */
+  sheetFill?: boolean
 }
 
 /**
@@ -36,7 +38,7 @@ interface DropdownProps {
  * The position is recomputed by `autoUpdate` on every ancestor scroll / resize / layout shift, so the panel is
  * always glued to its trigger (v1.0 computed the rect once on open and drifted when any container scrolled).
  */
-export function Dropdown({ trigger, items, content, align = 'start', className, width = 220, triggerClassName, mobileSheet, sheetTitle }: DropdownProps) {
+export function Dropdown({ trigger, items, content, align = 'start', className, width = 220, triggerClassName, mobileSheet, sheetTitle, sheetFill }: DropdownProps) {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
   const phone = useMedia('(max-width: 639px)')
@@ -114,7 +116,7 @@ export function Dropdown({ trigger, items, content, align = 'start', className, 
           document.body,
         )}
       {open && sheet && (
-        <BottomSheet open onClose={close} title={sheetTitle ?? 'Options'} flush>
+        <BottomSheet open onClose={close} title={sheetTitle ?? 'Options'} flush fill={sheetFill}>
           <div onKeyDown={onMenuKey} className="flex min-h-0 flex-1 flex-col p-1 pb-3" data-dropdown-sheet>{body}</div>
         </BottomSheet>
       )}

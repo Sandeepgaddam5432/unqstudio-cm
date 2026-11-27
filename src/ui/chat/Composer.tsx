@@ -243,7 +243,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
                 </div>
               )} />
           )}
-          <div className="min-w-0 max-w-[150px]"><ModelPill align="end" /></div>
+          <div className="flex min-w-0 max-w-[150px]"><ModelPill align="end" /></div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {busy ? (

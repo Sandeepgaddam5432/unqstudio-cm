@@ -184,8 +184,16 @@ export const useChat = create<ChatState>((set, get) => {
       if (!vfs) return false
       const st = useSettings.getState()
       const cfg = activeConfig()
-      if (cfg.error === 'locked') { useVault.getState().setUnlockOpen(true); toast.info('Unlock your key vault to continue'); return false }
-      if (cfg.error === 'nokey' || cfg.error === 'noprovider' || !cfg.provider) { useApp.getState().setOnboardingOpen(true); return false }
+      if (cfg.error === 'locked' || cfg.error === 'nokey' || cfg.error === 'noprovider' || !cfg.provider) {
+        if (cfg.error === 'locked') { useVault.getState().setUnlockOpen(true); toast.info('Unlock your key vault to continue') } else useApp.getState().setOnboardingOpen(true)
+        if (auto) return false
+        // v3.3: never drop the user's message — keep it in the chat (persisted) with an actionable assistant error instead.
+        const m0 = mode ?? st.aiMode
+        const u: ChatMessage = { id: uid('m'), role: 'user', text: text.trim(), images, createdAt: Date.now(), mode: m0 }
+        const a: ChatMessage = { id: uid('m'), role: 'assistant', text: '', parts: [], ops: [], createdAt: Date.now(), mode: m0, error: cfg.error === 'locked' ? { message: 'Your key vault is locked.', hint: 'Unlock it, then tap Retry to run this message.' } : { message: 'No AI model is connected yet.', hint: 'Add an API key (the setup wizard just opened), then tap Retry to run this message.' } }
+        set((s2) => { const messages = [...s2.messages, u, a]; persist(s2.projectId, messages); return { messages } })
+        return true
+      }
       setFullstackContext(supabaseContext(vfs))
       if (!auto) { set({ autoFix: 0 }); setUserContext({ turnSkills: useComposerSkills.getState().take().map((k) => ({ name: k.name, content: k.content })) }) }
 

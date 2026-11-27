@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eraser, MessageSquarePlus, RefreshCw, Undo2 } from 'lucide-react'
 import { ChatSettings } from './ChatSettings'
 import { CHAT_FONT_PX, useChatPrefs } from '@/store/chatPrefs'
-import { Button, Dropdown, Tooltip } from '@/ui/primitives'
+import { Button, Dropdown, Spinner, Tooltip } from '@/ui/primitives'
 import { Composer } from './Composer'
 import { MessageView } from './MessageView'
 import { FollowUpChips } from './FollowUpChips'
@@ -18,6 +18,7 @@ import { buildHistory } from '@/store/chat'
 import { estimateCost, formatCost, formatTokens } from '@/core/ai/tokens'
 import { findModel } from '@/core/ai/providers'
 import { useChatBus } from '@/store/chatBus'
+import { useApp } from '@/store/app'
 import { cn } from '@/lib/cn'
 import { haptic } from '@/lib/haptics'
 
@@ -59,6 +60,7 @@ export function ChatPanel() {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
   const prefs = useChatPrefs()
+  const pendingPrompt = useApp((x) => x.pendingPrompt)
   const draft = useChatBus((s) => s.draft)
   useEffect(() => { if (draft !== null) { setText(draft); useChatBus.getState().setDraft(null) } }, [draft])
 
@@ -129,7 +131,12 @@ export function ChatPanel() {
       </div>
 
       <div ref={scroller} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }} style={{ fontSize: CHAT_FONT_PX[prefs.fontSize] }} data-chat-messages className={cn('min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain', prefs.density === 'compact' ? 'space-y-3 px-3 py-3' : 'space-y-5 px-3 py-4 sm:px-4')}>
-        {messages.length === 0 ? (
+        {messages.length === 0 && pendingPrompt ? (
+          <>
+            <MessageView m={{ id: 'pending-user', role: 'user', text: pendingPrompt.text, images: pendingPrompt.images, createdAt: 0, mode: 'build' }} isLast={false} />
+            <div className="flex items-center gap-2 py-1 text-xs text-muted" data-pending-reply><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-fg-primary/80" /><span className="font-medium text-fg-secondary">UnQStudio</span><Spinner size={12} />Starting…</div>
+          </>
+        ) : messages.length === 0 ? (
           <div className="mx-auto flex h-full max-w-sm flex-col items-center justify-center text-center">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl border border-line bg-panel"><MessageSquarePlus size={18} className="text-muted" /></div>
             <h3 className="text-sm font-semibold">What shall we build?</h3>

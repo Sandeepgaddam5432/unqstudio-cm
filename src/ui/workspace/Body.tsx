@@ -1,6 +1,7 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useCallback, useEffect } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { SplitPane } from '@/ui/primitives'
+import { SwipePager } from '@/ui/primitives/SwipePager'
 import { useApp } from '@/store/app'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
 import { Preview } from '@/ui/preview/Preview'
@@ -24,22 +25,11 @@ export function WorkspaceBody() {
   useLiveBuild(vfs)
   const mobile = useIsMobile()
   const setMode = useApp((s) => s.setMode)
-  const strip = useRef<HTMLDivElement>(null)
   const pane = useApp((s) => s.mobilePane)
   const setPane = useApp((s) => s.setMobilePane)
   const requested = useApp((s) => s.requestedTab)
-  const glide = (t: 'chat' | 'preview', behavior: ScrollBehavior = 'smooth') => {
-    const el = strip.current
-    if (el) el.scrollTo({ left: t === 'chat' ? 0 : el.clientWidth, behavior })
-  }
-  useEffect(() => { if (requested) { if (useApp.getState().mode === 'code') setMode('studio'); setPane(requested.tab); requestAnimationFrame(() => glide(requested.tab)) } }, [requested])
-  useEffect(() => { if (mobile && mode !== 'code') glide(useApp.getState().mobilePane, 'instant') }, [mobile, mode])
-  const onScroll = () => {
-    const el = strip.current
-    if (!el) return
-    const t = el.scrollLeft > el.clientWidth / 2 ? 'preview' : 'chat'
-    if (t !== useApp.getState().mobilePane) setPane(t)
-  }
+  useEffect(() => { if (requested) { if (useApp.getState().mode === 'code') setMode('studio'); setPane(requested.tab) } }, [requested])
+  const onIndex = useCallback((i: number) => setPane(i === 0 ? 'chat' : 'preview'), [setPane])
 
   if (mobile) {
     if (mode === 'code') {
@@ -51,10 +41,10 @@ export function WorkspaceBody() {
       )
     }
     return (
-      <div ref={strip} onScroll={onScroll} data-snap-strip data-active-pane={pane} className="scrollbar-none flex h-full w-full min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain" style={{ scrollSnapType: 'x mandatory' }}>
-        <section data-pane="chat" aria-label="Chat" className="h-full w-[100dvw] min-w-full shrink-0 snap-start snap-always overflow-hidden"><ChatPanel /></section>
-        <section data-pane="preview" aria-label="Preview" className="relative h-full w-[100dvw] min-w-full shrink-0 snap-start snap-always overflow-hidden"><Preview /><MobilePreviewBar /></section>
-      </div>
+      <SwipePager index={pane === 'chat' ? 0 : 1} onIndexChange={onIndex} paneAttr="data-pane" paneKeys={['chat', 'preview']} paneLabels={['Chat', 'Preview']} rootProps={{ 'data-snap-strip': '' }}>
+        <ChatPanel />
+        <div className="relative h-full w-full" data-preview-pane><Preview /><MobilePreviewBar /></div>
+      </SwipePager>
     )
   }
 

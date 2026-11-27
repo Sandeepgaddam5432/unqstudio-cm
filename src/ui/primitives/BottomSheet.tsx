@@ -19,6 +19,8 @@ export interface BottomSheetProps {
   className?: string
   /** Remove the content padding (for full-bleed layouts such as the Settings hub). */
   flush?: boolean
+  /** v3.3: fixed 85dvh flex-column sheet whose single child owns the scrolling (model picker). Header stays opaque; body is `overflow:hidden`. */
+  fill?: boolean
 }
 
 /**
@@ -26,7 +28,7 @@ export interface BottomSheetProps {
  * a fast or long downward release dismisses; a downward drag from ANYWHERE on the sheet dismisses it when the inner list is at scrollTop<=0 (v3.2), backdrop blur fades with the drag, body scroll is locked,
  * Escape dismisses and the bottom padding honours the safe-area inset.
  */
-export function BottomSheet({ open, onClose, title, description, children, footer, tall, modeless, label, className, flush }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, title, description, children, footer, tall, modeless, label, className, flush, fill }: BottomSheetProps) {
   const [dy, setDy] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -37,7 +39,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
   const dismiss = useCallback(() => {
     setClosing(true)
     setDy(panel.current?.offsetHeight ?? 600)
-    window.setTimeout(() => { setClosing(false); setDy(0); onClose() }, 180)
+    window.setTimeout(() => { setClosing(false); setDy(0); onClose() }, 250)
   }, [onClose])
 
   useEffect(() => {
@@ -49,39 +51,42 @@ export function BottomSheet({ open, onClose, title, description, children, foote
     return () => { window.removeEventListener('keydown', key, true); document.body.style.overflow = prev }
   }, [open, modeless, dismiss])
 
-  // Full-sheet touch drag: when the inner list is at scrollTop<=0, a downward drag from ANYWHERE on the sheet moves + dismisses it.
+  // Sheet swipe-to-dismiss (v3.3): ONLY the drag handle (pointer handlers below) OR a strictly-downward, vertically-dominant drag (>12px) that
+  // started while the inner scroller was at scrollTop<=0. A gesture that begins mid-list never turns into a dismiss, so scrolling works from anywhere.
   useEffect(() => {
     const el = panel.current
     if (!open || !el) return
-    let y0 = 0, x0 = 0, base = 0, engaged = false, rejected = false, scroller: HTMLElement | null = null, skip = false
+    let y0 = 0, x0 = 0, base = 0, engaged = false, allowed = false, scroller: HTMLElement | null = null
     let samp: DragSample[] = []
     const start = (e: TouchEvent) => {
       const t = e.touches[0]!
-      skip = !!(e.target as Element).closest?.('[data-sheet-handle],[data-no-sheet-drag],input,textarea,[role="slider"]')
-      engaged = false; rejected = false
-      scroller = findScrollParent(e.target as Element, el)
-      rejected = insideHorizontalScroller(e.target as Element, el)
+      const target = e.target as Element
+      scroller = findScrollParent(target, el)
+      const skip = !!target.closest?.('[data-sheet-handle],[data-no-sheet-drag],input,textarea,[role="slider"]') || insideHorizontalScroller(target, el)
+      allowed = !skip && (scroller ? scroller.scrollTop <= 0 : true)
+      engaged = false
       y0 = base = t.clientY; x0 = t.clientX; samp = [{ y: t.clientY, t: performance.now() }]
     }
     const move = (e: TouchEvent) => {
-      if (skip || rejected) return
+      if (!allowed) return
       const t = e.touches[0]!
       samp.push({ y: t.clientY, t: performance.now() })
-      const top = scroller ? scroller.scrollTop : 0
+      const dy = t.clientY - y0, dx = t.clientX - x0
       if (!engaged) {
-        if (top > 0) { base = t.clientY; return }            // still scrolling the list: re-baseline until it reaches the top
-        if (Math.abs(t.clientX - x0) > Math.abs(t.clientY - base) + 4 && !shouldEngageSheetDrag(0, t.clientY - base, t.clientX - x0)) return
-        if (!shouldEngageSheetDrag(top, t.clientY - base, t.clientX - x0)) { if (t.clientY - base < -6) base = t.clientY; return }
-        engaged = true; y0 = base; setDragging(true)
+        if (dy < -4 || (Math.abs(dx) > 6 && Math.abs(dx) >= Math.abs(dy))) { allowed = false; return } // scrolling up / horizontal → not ours
+        if (scroller && scroller.scrollTop > 0) { allowed = false; return }
+        if (!shouldEngageSheetDrag(0, dy, dx, 12)) return
+        engaged = true; base = t.clientY; setDragging(true)
       }
       if (e.cancelable) e.preventDefault()
-      setDy(sheetTranslate(t.clientY - y0))
+      setDy(sheetTranslate(t.clientY - base))
     }
     const end = (e: TouchEvent) => {
+      allowed = false
       if (!engaged) return
       engaged = false; setDragging(false)
       const last = e.changedTouches[0]!
-      const delta = last.clientY - y0
+      const delta = last.clientY - base
       const h = el.offsetHeight || 400
       if (shouldDismiss(delta, velocityOf(samp), h)) dismiss(); else setDy(0)
     }
@@ -121,10 +126,10 @@ export function BottomSheet({ open, onClose, title, description, children, foote
       <div
         ref={panel}
         data-sheet-panel
-        style={{ transform: `translateY(${dy}px)`, transition: dragging ? 'none' : 'transform 220ms cubic-bezier(.32,.72,0,1)', pointerEvents: 'auto' }}
-        className={cn('animate-sheet relative flex min-h-0 flex-col overflow-hidden glass-sheet rounded-t-3xl', modeless ? 'max-h-[46dvh]' : tall ? 'h-[92dvh]' : 'max-h-[88dvh]', className)}
+        style={{ transform: `translateY(${dy}px)`, transition: dragging ? 'none' : 'transform 300ms cubic-bezier(.22,1,.36,1)', pointerEvents: 'auto' }}
+        className={cn('animate-sheet relative flex min-h-0 flex-col overflow-hidden glass-sheet rounded-t-3xl', modeless ? 'max-h-[46dvh]' : fill ? 'h-[85dvh] max-h-[85dvh]' : tall ? 'h-[92dvh]' : 'max-h-[88dvh]', className)}
       >
-        <div onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-sheet-handle style={{ touchAction: 'none' }} className="shrink-0 cursor-grab select-none active:cursor-grabbing">
+        <div onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-sheet-handle style={{ touchAction: 'none' }} className="relative z-10 shrink-0 cursor-grab select-none bg-secondary active:cursor-grabbing">
           <div className="flex h-6 items-center justify-center"><span className="h-1.5 w-10 rounded-full bg-line-strong" /></div>
           {(title || description) && (
             <div className="flex items-start justify-between gap-3 px-5 pb-3">
@@ -136,7 +141,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
             </div>
           )}
         </div>
-        <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain sheet-scroll', flush ? '' : 'px-5 pb-4')}>{children}</div>
+        <div data-sheet-body className={cn('min-h-0 flex-1', fill ? 'flex flex-col overflow-hidden' : 'touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain sheet-scroll', flush || fill ? '' : 'px-5 pb-4')}>{children}</div>
         {footer && <div className="flex shrink-0 items-center justify-end gap-2 border-t border-line px-5 py-3">{footer}</div>}
         <div className="shrink-0" style={{ height: 'env(safe-area-inset-bottom)' }} />
       </div>

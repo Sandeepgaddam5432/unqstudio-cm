@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertCircle, ListChecks, Check, ChevronRight, FilePlus2, FileX2, GitFork, Hammer, Lock, Pencil, RefreshCw, Rewind, Sparkles, Wrench, X } from 'lucide-react'
+import { AlertCircle, ListChecks, Check, ChevronRight, FilePlus2, FileX2, GitFork, Lock, Pencil, RefreshCw, Rewind, Sparkles, Wrench, X } from 'lucide-react'
 import { Badge, Button, Spinner, Tooltip } from '@/ui/primitives'
 import { AssistantText } from './MessageBubble'
 import { useChat, type ChatMessage } from '@/store/chat'
@@ -20,12 +20,12 @@ function ThinkBlock({ text, done }: { text: string; done?: boolean }) {
   const open = manual ?? auto
   const setOpen = (v: boolean) => setManual(v)
   return (
-    <div className="my-1.5 rounded-xl border border-line bg-subtle/60">
-      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted" aria-expanded={open}>
-        <ChevronRight size={13} className={cn('transition-transform', open && 'rotate-90')} />
-        {done ? <><Sparkles size={12} />Reasoning</> : <><Spinner size={12} />Thinking…</>}
+    <div className="my-1.5" data-think-block>
+      <button onClick={() => setOpen(!open)} className="press flex min-h-[28px] items-center gap-1.5 text-left text-[12.5px] text-fg-tertiary hover:text-fg-secondary" aria-expanded={open}>
+        <ChevronRight size={13} className={cn('transition-transform duration-200', open && 'rotate-90')} />
+        {done ? <><Sparkles size={12} />Thought</> : <><Spinner size={12} />Thinking…</>}
       </button>
-      {open && <pre className="max-h-64 overflow-auto whitespace-pre-wrap border-t border-line px-3 py-2 font-mono text-[11px] leading-relaxed text-muted">{text || '…'}</pre>}
+      {open && <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap border-l-2 border-line pl-3 font-mono text-[11.5px] leading-relaxed text-fg-tertiary">{text || '…'}</pre>}
     </div>
   )
 }
@@ -103,9 +103,9 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
   return (
     <div className="group t-prose min-w-0 max-w-[788px]">
       <div className="mb-1 flex min-w-0 items-center gap-2 text-[11px] text-faint">
-        <span className="flex h-4 w-4 items-center justify-center rounded bg-fg text-bg"><Hammer size={10} /></span>
-        <span className="font-medium text-muted">UnQStudio</span>
-        {m.model && <span className="truncate">{m.model.split('/').pop()}</span>}
+        <span aria-hidden data-brand-mark className="h-1.5 w-1.5 shrink-0 rounded-full bg-fg-primary/80 ring-2 ring-fg-primary/10" />
+        <span className="font-medium tracking-tight text-fg-secondary">UnQStudio</span>
+        {m.model && <span className="truncate text-fg-quaternary">· {m.model.split('/').pop()}</span>}
         {m.mode !== 'build' && <Badge tone="accent">{m.mode}</Badge>}
       </div>
       {(m.streaming || ops.length > 0) && <BuildActivityCard m={m} agent={agentSteps} />}
@@ -143,7 +143,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
       {m.mode === 'plan' && isLast && showFooter && !m.error && m.text.trim() && (
         <div data-plan-card className="mt-2 rounded-2xl border border-accent/30 bg-accent/5 p-3">
           <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-accent"><ListChecks size={12} />Plan ready for approval</p>
-          <Button variant="accent" size="sm" className="min-h-[44px] w-full" disabled={busy} onClick={() => { useSettings.getState().set({ aiMode: 'build' }); haptic('send'); void send({ text: 'Implement the plan above exactly. Build every file now.', mode: 'build' }) }}><Hammer size={14} />Implement the plan</Button>
+          <Button variant="accent" size="sm" className="min-h-[44px] w-full" disabled={busy} onClick={() => { useSettings.getState().set({ aiMode: 'build' }); haptic('send'); void send({ text: 'Implement the plan above exactly. Build every file now.', mode: 'build' }) }}><Sparkles size={14} />Implement the plan</Button>
         </div>
       )}
     </div>

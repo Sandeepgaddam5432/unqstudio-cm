@@ -8,6 +8,7 @@ import { ProjectCard } from './ProjectCard'
 import { AccountAvatarButton, WorkspaceSwitcherPill } from '@/ui/layout/WorkspaceSwitcher'
 import { useIsMobile } from '@/lib/useMedia'
 import { AuroraBackdrop } from './AuroraBackdrop'
+import MobileHome from './MobileHome'
 import { AboutFaq } from './AboutFaq'
 import { TemplateCard, TemplatePreviewFrame } from './TemplateCard'
 import { SHOWCASE_CATEGORIES, filterShowcase, showcaseItems, type ShowcaseCategory, type ShowcaseItem } from '@/templates/showcase'
@@ -34,7 +35,7 @@ const STARTERS = [
   { label: 'AI chat UI', prompt: 'A polished AI chat interface with conversation list and markdown replies' },
 ]
 
-export default function Home() {
+function DesktopHome() {
   const projects = useProjects()
   const { setPendingPrompt, setSidebarOpen } = useApp()
   const aiMode = useSettings((x) => x.aiMode)
@@ -301,4 +302,10 @@ export default function Home() {
       />
     </div>
   )
+}
+
+/** Mobile (<768px) gets the single-viewport Lovable Home; desktop keeps the launchpad + showcase. */
+export default function Home() {
+  const mobile = useIsMobile()
+  return mobile ? <MobileHome /> : <DesktopHome />
 }

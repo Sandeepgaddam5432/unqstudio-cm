@@ -7,6 +7,7 @@ import { getAdapter } from '@/core/vfs/idbAdapter'
 import { CHAT_FILTERS, filterChats, isUnread, loadSeen, markSeen, markUnseen, type ChatFilter } from '@/lib/chatFilters'
 import { useIsMobile } from '@/lib/useMedia'
 import { AccountAvatarButton } from '@/ui/layout/WorkspaceSwitcher'
+import { usePaneActive } from '@/ui/layout/MobileShell'
 import { timeAgo } from '@/lib/util'
 import { cn } from '@/lib/cn'
 import type { ProjectMeta } from '@/core/vfs/types'
@@ -18,6 +19,7 @@ export default function ChatsView() {
   const [filter, setFilter] = useState<ChatFilter>('all')
   const [q, setQ] = useState('')
   const [searching, setSearching] = useState(false)
+  const active = usePaneActive()
   const [seen, setSeen] = useState(loadSeen)
   const [counts, setCounts] = useState<Record<string, number>>({})
   useEffect(() => { void projects.refresh() }, [])
@@ -54,7 +56,7 @@ export default function ChatsView() {
         {searching && (
           <div className="relative pb-2">
             <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-[calc(50%+4px)] text-fg-quaternary" />
-            <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search chats" aria-label="Search chats" className="h-10 pl-9 pr-9" />
+            <Input autoFocus={!mobile} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search chats" aria-label="Search chats" className="h-10 pl-9 pr-9" />
             {q && <button onClick={() => setQ('')} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-[calc(50%+4px)] p-1 text-fg-tertiary"><X size={14} /></button>}
           </div>
         )}
@@ -91,9 +93,13 @@ export default function ChatsView() {
         </ul>
       )}
 
-      <button onClick={() => { navigateToView('home'); setTimeout(() => document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.focus(), 200) }} data-new-chat className="press fixed right-4 z-30 flex h-12 items-center gap-1.5 rounded-full bg-fg-primary px-5 text-[14px] font-medium text-base shadow-floating md:bottom-6 md:right-8" style={{ bottom: mobile ? 'calc(var(--sab, 0px) + 80px)' : undefined }}>
-        <Plus size={17} />New chat
-      </button>
+      {(!mobile || active) && (
+        <div className="pointer-events-none fixed inset-x-0 z-30 flex justify-center md:inset-x-auto md:right-8 md:justify-end" style={{ bottom: mobile ? 'calc(var(--sab, 0px) + 84px)' : '1.5rem' }}>
+          <button onClick={() => { navigateToView('home'); setTimeout(() => document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.focus(), 350) }} data-new-chat className="press pointer-events-auto flex h-12 items-center gap-1.5 rounded-full bg-fg-primary px-5 text-[14px] font-medium text-base shadow-floating">
+            <Plus size={17} />New chat
+          </button>
+        </div>
+      )}
     </div>
   )
 }

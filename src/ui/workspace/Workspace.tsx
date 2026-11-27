@@ -22,6 +22,7 @@ export default function Workspace({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     setProjectId(projectId)
+    useApp.getState().setMobilePane('chat') // a project always opens on Chat — never on an empty Preview
     void open(projectId)
   }, [projectId])
 
@@ -39,7 +40,7 @@ export default function Workspace({ projectId }: { projectId: string }) {
     return <WorkspaceSkeleton />
   }
   return (
-    <div className="flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-bg" style={{ paddingBottom: 'var(--kb-inset, 0px)' }} data-workspace-root>
+    <div className="animate-ws-in flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-bg" style={{ paddingBottom: 'var(--kb-inset, 0px)' }} data-workspace-root>
       <TopBar />
       <div className="min-h-0 min-w-0 flex-1"><WorkspaceBody /></div>
       <PublishSheet />
