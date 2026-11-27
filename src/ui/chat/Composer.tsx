@@ -40,9 +40,11 @@ export interface ComposerProps {
   submitLabel?: string
   /** Extra rows for the hero `+` menu (Import project, Add context, Databases…). */
   plusItems?: MenuItem[]
+  /** Message queue: allow submitting while the agent is busy (the parent queues it). */
+  queueing?: boolean
 }
 
-export function Composer({ value, onChange, images, onImages, onSubmit, busy, onStop, mode, onMode, placeholder, mentionPaths, variant = 'chat', autoFocus, submitIcon, allowEmptySubmit, submitLabel, plusItems }: ComposerProps) {
+export function Composer({ value, onChange, images, onImages, onSubmit, busy, onStop, mode, onMode, placeholder, mentionPaths, variant = 'chat', autoFocus, submitIcon, allowEmptySubmit, submitLabel, plusItems, queueing }: ComposerProps) {
   const area = useRef<HTMLTextAreaElement>(null)
   const file = useRef<HTMLInputElement>(null)
   const [enhancing, setEnhancing] = useState(false)
@@ -113,7 +115,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
     }
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
-      if (!busy && (value.trim() || allowEmptySubmit)) onSubmit()
+      if ((!busy || queueing) && (value.trim() || allowEmptySubmit)) onSubmit()
     }
   }
 
@@ -220,7 +222,7 @@ export function Composer({ value, onChange, images, onImages, onSubmit, busy, on
         <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5">
           <ModelPill align="end" />
           {busy ? (
-            <Button variant="primary" size="icon" onClick={onStop} aria-label="Stop generating" className="rounded-full"><Square size={13} fill="currentColor" /></Button>
+            <>{queueing && value.trim() && <Button variant="accent" size="icon" onClick={onSubmit} aria-label="Queue message" data-queue-send className="rounded-full"><ArrowUp size={17} /></Button>}<Button variant="primary" size="icon" onClick={onStop} aria-label="Stop generating" className="rounded-full"><Square size={13} fill="currentColor" /></Button></>
           ) : (
             hero ? (
               <button onClick={onSubmit} disabled={!value.trim() && !allowEmptySubmit} aria-label={submitLabel ?? 'Send'} data-hero-send className="press flex h-9 w-9 items-center justify-center rounded-full bg-fg-primary text-base disabled:opacity-40">{submitIcon ?? <ArrowUp size={17} />}</button>

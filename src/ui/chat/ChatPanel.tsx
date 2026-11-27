@@ -7,6 +7,8 @@ import { Button, Dropdown, Tooltip } from '@/ui/primitives'
 import { Composer } from './Composer'
 import { MessageView } from './MessageView'
 import { FollowUpChips } from './FollowUpChips'
+import { gate, playChime, usePrefs } from '@/store/prefs'
+import { toast } from '@/store/toast'
 import { useChat } from '@/store/chat'
 import { useSettings, type AIMode } from '@/store/settings'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
@@ -80,9 +82,27 @@ export function ChatPanel() {
   const cfg = activeConfig()
   const nextCost = cfg.provider ? estimateCost({ inputTokens: nextCtx, outputTokens: 0 }, findModel(cfg.provider.id, cfg.model)) : null
 
+  const prefs31 = usePrefs()
+  const [queue, setQueue] = useState<{ text: string; images: string[] }[]>([])
+  const wasBusy = useRef(busy)
+  useEffect(() => {
+    if (wasBusy.current && !busy) {
+      const last = useChat.getState().messages.at(-1)
+      if (usePrefs.getState().completeSound && last && !last.error) playChime()
+      const next = queue[0]
+      if (next && usePrefs.getState().messageQueue) { setQueue((q) => q.slice(1)); void send({ text: next.text, images: next.images }) }
+    }
+    wasBusy.current = busy
+  }, [busy])
   const submit = async () => {
     const t = text.trim()
     if (!t) return
+    if (busy) {
+      if (!prefs31.messageQueue) return
+      setQueue((q) => [...q, { text: t, images }]); setText(''); setImages([]); haptic('tap'); toast.info('Queued', 'It will run when the agent finishes.')
+      return
+    }
+    if (!gate('projectEdits', 'Let the agent change project files')) return
     haptic('send')
     const ok = await send({ text: t, images })
     if (ok) { setText(''); setImages([]); stick.current = true }
@@ -124,13 +144,15 @@ export function ChatPanel() {
       </div>
 
       <div className="min-w-0 p-2 pt-1 sm:p-3 sm:pt-1" data-chat-composer>
-        {!busy && <FollowUpChips m={messages[messages.length - 1]} />}
+        {!busy && prefs31.suggestions && <FollowUpChips m={messages[messages.length - 1]} />}
+        {queue.length > 0 && <p data-queue-count className="t-meta px-2 pb-1 text-fg-tertiary">{queue.length} message{queue.length === 1 ? '' : 's'} queued · runs after this turn</p>}
         <Composer
           value={text}
           onChange={setText}
           images={images}
           onImages={setImages}
           onSubmit={submit}
+          queueing={prefs31.messageQueue}
           busy={busy}
           onStop={stop}
           mode={mode}

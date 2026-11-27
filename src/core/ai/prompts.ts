@@ -1,3 +1,4 @@
+import { userContextBlock } from './userContext'
 import { buildRepoMap, isMappable } from './repoMap'
 import { isBinaryPath, isUnder, normalizePath, type VirtualFileSystem } from '@/core/vfs/vfs'
 import type { AIMode } from '@/store/settings'
@@ -108,6 +109,7 @@ export function buildProjectContext(vfs: VirtualFileSystem, opts: ContextOptions
   const locks = vfs.getLocks()
   const text =
     `## Project: ${vfs.meta.name}\n` +
+    userContextBlock() +
     (vfs.meta.knowledge?.trim() ? `### Project Knowledge (the author's standing instructions — follow them on every turn)\n${vfs.meta.knowledge.trim().slice(0, KNOWLEDGE_MAX)}\n\n` : '') +
     `### File tree\n${tree || '(empty project)'}\n` +
     (locks.length ? `\n### LOCKED paths (do not modify)\n${locks.join('\n')}\n` : '') +

@@ -255,4 +255,12 @@ Object.assign(PURPOSES, {
   'src/core/ai/activity.ts': 'Derives the agent Timeline, per-file Changes and summary of one assistant turn from persisted message data, plus a tiny diff syntax tokenizer.',
   'src/core/ai/activity.test.ts': 'Unit tests for turn activity derivation and the line tokenizer.',
   'src/ui/chat/ActivityInspector.tsx': 'Full-height Timeline | + Changes inspector (mobile sheet / desktop drawer) with expandable steps and green/red line-numbered diffs.',
+  'src/core/ai/userContext.ts': 'Module-level holder + prompt block builder for global Instructions, Memory and enabled Skills (keeps core free of store imports).',
+  'src/core/skills.ts': 'Reusable agent skills stored in IndexedDB (unq-skills) and skill-file parsing (markdown / JSON / text).',
+  'src/store/prefs.ts': 'Account preferences (language, suggestions, tips, message queue, completion sound, agent permissions, instructions, memory) + permission gate + chime.',
+  'src/store/prefs.test.ts': 'Unit tests for preferences, permission gate, user-context injection and skill parsing.',
+  'src/ui/settings/AccountMenu.tsx': 'Account sheet/menu from the avatar: identity, Account settings, Connectors, Documentation, Appearance, session.',
+  'src/ui/settings/AccountSettings.tsx': 'Searchable grouped Account settings: Preferences, Personalization (Instructions/Skills/Memory), Permissions.',
+  'src/ui/settings/ConnectorsHub.tsx': 'Categorised searchable Connectors hub with Add custom (providers / HTTP MCP).',
+  'src/ui/settings/WorkspaceSettings.tsx': 'Searchable collapsible Workspace settings (Customization, Build & deploy, Security).',
 })

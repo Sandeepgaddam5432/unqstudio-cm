@@ -1,5 +1,7 @@
 # Changelog
 
+- **M5** Account menu, preferences (queue/sound), personalization, permissions, connectors hub, workspace settings.
+
 - **M4** Timeline | + Changes inspector, Used X tools row, Details/Preview version cards.
 
 - **M3** Swipe scroll-snap workspace, mobile preview bar, inset desktop canvas, bubble polish.

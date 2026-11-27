@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { markSeen } from '@/lib/chatFilters'
+import { gate } from '@/store/prefs'
 
 export type ThemePref = 'system' | 'dark' | 'light'
 export type WorkspaceMode = 'studio' | 'code'
@@ -89,7 +90,7 @@ export const useApp = create<AppState>()(
       sheet: null,
       openSheet: (sheet) => set({ sheet }),
       closeSheet: () => set({ sheet: null }),
-      openPublish: (tab) => set({ publishOpen: true, publishTab: tab ?? null }),
+      openPublish: (tab) => { if (gate('publishing', 'Open the Publish sheet')) set({ publishOpen: true, publishTab: tab ?? null }) },
       pendingPrompt: null,
       mobilePane: 'chat',
       setMobilePane: (mobilePane) => set({ mobilePane }),

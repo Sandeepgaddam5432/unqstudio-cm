@@ -192,3 +192,11 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - `core/ai/activity.ts` (pure, tested): Timeline (Thought for Xs, Read, Created/Edited/Deleted, Typecheck / Build, Questions answered), Changes (applied ops with before/after) and the `Worked for Xm Xs · N steps · N tokens` summary.
 - `ui/chat/ActivityInspector.tsx` opened via `useApp.openActivity(id, tab)` from the quiet `Used X tools ›` row and the Version card's **Details** button; Changes cards expand into a syntax-coloured, line-numbered green/red diff with View file + copy path.
 - Version card restyled (`bg-primary rounded-xl 1px --border-depth`) with Details · Preview · Restore.
+
+### V3.1-M5 — Account menu, preferences, connectors hub, workspace settings
+- `store/prefs.ts` (`unq.prefs`): language, chat suggestions, tips, **message queue** (ChatPanel queues sends while busy and auto-runs them, Composer `queueing`), **generation-complete sound** (Web Audio chime), global Instructions, Memory, and 3-state **agent permissions** (`gate()` enforced for *Project edits* and *Publishing*; *Build/Auto-heal* and *Connectors* are stored and surfaced for the agent/connector UI).
+- `core/ai/userContext.ts` injects Instructions + Memory + enabled Skills into every prompt (`prompts.ts`). Skills live in IndexedDB `unq-skills` (`core/skills.ts`).
+- `AccountMenu`, `AccountSettings`, `ConnectorsHub`, `WorkspaceSettings` are driven by `useApp.sheet` and mounted in `App.tsx`.
+
+### ADR-019 Personalization context lives in core/ as a plain module
+`prompts.ts` must not import stores; the prefs store pushes into `core/ai/userContext.ts` on every change (`subscribe`).

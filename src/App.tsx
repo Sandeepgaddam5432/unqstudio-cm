@@ -16,6 +16,11 @@ import { initTheme } from '@/store/theme'
 import { AuthModal } from '@/ui/auth/AuthModal'
 import { MobileBottomNav } from '@/ui/layout/MobileBottomNav'
 import { WorkspaceSheet } from '@/ui/layout/WorkspaceSwitcher'
+import { AccountMenu } from '@/ui/settings/AccountMenu'
+import { AccountSettings } from '@/ui/settings/AccountSettings'
+import { ConnectorsHub } from '@/ui/settings/ConnectorsHub'
+import { WorkspaceSettings } from '@/ui/settings/WorkspaceSettings'
+import { usePrefs } from '@/store/prefs'
 import { ViewSkeleton } from '@/ui/primitives/Skeleton'
 import { useIsMobile } from '@/lib/useMedia'
 
@@ -56,7 +61,9 @@ export default function App() {
   useEffect(() => { void useProjects.getState().refresh() }, [route.projectId])
   useEffect(() => { void useModels.getState().loadRegistry(); void useAuth.getState().init() }, [])
   useEffect(() => { void useVault.getState().init(); logEvent('system', 'UnQStudio started') }, [])
-  useEffect(() => { initTheme() }, [])
+  useEffect(() => { initTheme(); void usePrefs.getState().loadSkills() }, [])
+  const language = usePrefs((p) => p.language)
+  useEffect(() => { document.documentElement.lang = ({ English: 'en', 'Español': 'es', 'Français': 'fr', Deutsch: 'de', 'Português': 'pt', '日本語': 'ja', '中文': 'zh', 'हिन्दी': 'hi', 'తెలుగు': 'te' } as Record<string, string>)[language] ?? 'en' }, [language])
   useEffect(() => { applyThemeClass(theme === 'system' ? systemTheme() : theme, false) }, [])
   useEffect(() => { applyThemeClass(resolvedTheme) }, [resolvedTheme])
   const accent = useApp((s) => s.accent)
@@ -83,6 +90,10 @@ export default function App() {
       </div>
       {mobile && !route.projectId && <MobileBottomNav view={route.view} />}
       <WorkspaceSheet />
+      <AccountMenu />
+      <AccountSettings />
+      <ConnectorsHub />
+      <WorkspaceSettings />
       <CommandPalette />
       <OnboardingWizard />
       <CustomProviderModal />

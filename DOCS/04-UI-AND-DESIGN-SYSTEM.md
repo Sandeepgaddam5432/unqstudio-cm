@@ -112,3 +112,6 @@ Mobile: `[data-snap-strip]` (`scroll-snap-type: x mandatory`, panes `chat`/`prev
 
 ## v3.1 transparency (M4)
 `useApp.activity` = `{id, tab}` drives `ActivityInspector` (`[data-activity-inspector]`, segmented Timeline | + Changes, `[data-diff-line=add|del|ctx]`). Entry points: `[data-used-tools]`, `[data-version-details]`.
+
+## v3.1 settings (M5)
+Sheets: `account`, `accountSettings`, `connectors`, `workspaceSettings`, `appearance` via `useApp.sheet`. Persisted: `unq.prefs`, `unq.theme.*`, IndexedDB `unq-skills`.
