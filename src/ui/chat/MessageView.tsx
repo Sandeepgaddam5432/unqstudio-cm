@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AlertCircle, ListChecks, Check, ChevronRight, FilePlus2, FileX2, GitFork, Hammer, Lock, Pencil, RefreshCw, Rewind, Sparkles, Wrench, X } from 'lucide-react'
 import { Badge, Button, Spinner, Tooltip } from '@/ui/primitives'
-import { Markdown } from './Markdown'
+import { AssistantText } from './MessageBubble'
 import { useChat, type ChatMessage } from '@/store/chat'
 import { useWorkspace } from '@/store/workspace'
 import { useApp } from '@/store/app'
@@ -111,7 +111,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
       {(m.streaming || ops.length > 0) && <BuildActivityCard m={m} agent={agentSteps} />}
       {!m.streaming && ops.length > 0 && <UsedToolsRow m={m} />}
       {m.parts?.map((p, i) =>
-        p.kind === 'text' ? <Markdown key={i} text={p.text ?? ''} />
+        p.kind === 'text' ? <AssistantText key={i} text={p.text ?? ''} streaming={m.streaming && i === (m.parts?.length ?? 0) - 1} />
         : p.kind === 'think' ? <ThinkBlock key={i} text={p.text ?? ''} done={p.done} />
         : showActivity && opById.get(p.opId!) ? <OpCard key={i} op={opById.get(p.opId!)!} msgId={m.id} /> : null,
       )}

@@ -25,5 +25,6 @@
 | V3.2-M1 Glass theme, custom SelectSheet, Color Studio, haptics opt-in | ✅ done |
 | V3.2-M2 Model picker redesign, full-colour brand icons, full-sheet swipe-to-dismiss | ✅ done |
 | V3.2-M3 Mobile swipe shell (Home⇄Projects⇄Chats), real iframe template previews | ✅ done |
+| V3.2-M4 Leak-proof message parser, 2-row composer, / skills picker, voice input | ✅ done |
 
 Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks. Unit tests need Node ≥ 22.

@@ -158,7 +158,7 @@ export function ChatPanel() {
           mode={mode}
           onMode={(m: AIMode) => setSettings({ aiMode: m })}
           mentionPaths={vfs?.paths()}
-          placeholder={mode === 'build' ? 'Ask for a change…  (@ to mention files)' : mode === 'plan' ? 'Describe what to plan…' : 'Ask a question about the project…'}
+          placeholder={mode === 'build' ? 'Ask for a change... (@ files, / skills)' : mode === 'plan' ? 'Describe what to plan…' : 'Ask a question about the project…'}
         />
       </div>
     </div>

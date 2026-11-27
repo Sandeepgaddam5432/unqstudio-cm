@@ -84,3 +84,7 @@ All v3.2 fixes, by milestone (read before touching UI):
 ### V3.2-M3
 - **Swipe shell (<768px):** `[data-mobile-shell]` > `[data-shell-pane=home|projects|chats]`. Pill indicator `[data-nav-indicator]` = `translateX(var(--nav-progress) * 92px)`. Route commits on settle.
 - **Template previews:** `[data-template-thumb=idle|loading|ready|error]` wraps `iframe[data-template-iframe]` (sandbox allow-scripts, pointer-events none in cards). No wireframe art anywhere.
+
+### V3.2-M4
+- **Chat prose invariant:** no `<|tool_call`, `<patch_file`, `<<<<<<< SEARCH`, `=======`, `>>>>>>> REPLACE` may reach the DOM text of an assistant message; they become `[data-tool-card=Create|Rewrite|Patch|Delete|Tool]` (collapsed by default, `[data-tool-diff]` when expanded).
+- **Composer (`[data-composer]`):** row 1 textarea; row 2 `[data-composer-toolbar]` = `[data-composer-plus]` + `[data-mic]` | `[data-mode-trigger]` + model pill | `[data-composer-send]`. `/` opens `[data-slash-menu]`; picks render `[data-skill-pill]`; recording shows `[data-recording]`.

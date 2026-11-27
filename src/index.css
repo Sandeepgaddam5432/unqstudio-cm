@@ -241,3 +241,9 @@ input.color-hue { background: linear-gradient(to right, #f00, #ff0 17%, #0f0 33%
 input.color-hue::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 9999px; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.35); }
 input.color-hue::-moz-range-thumb { height: 14px; width: 14px; border-radius: 9999px; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
 .sheet-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+/* v3.2 syntax tokens (chat code blocks, tool cards) */
+:root { --tok-kw: oklch(48% .2 300); --tok-str: oklch(48% .13 160); --tok-num: oklch(52% .16 55); --tok-com: oklch(60% .01 275); --tok-tag: oklch(50% .17 255); --tok-fn: oklch(48% .16 245); }
+.dark { --tok-kw: oklch(78% .13 300); --tok-str: oklch(80% .12 160); --tok-num: oklch(80% .12 65); --tok-com: oklch(62% .01 275); --tok-tag: oklch(78% .11 250); --tok-fn: oklch(80% .1 235); }
+.tok-kw { color: var(--tok-kw); font-weight: 500 } .tok-str { color: var(--tok-str) } .tok-num { color: var(--tok-num) }
+.tok-com { color: var(--tok-com); font-style: italic } .tok-tag { color: var(--tok-tag) } .tok-fn { color: var(--tok-fn) }

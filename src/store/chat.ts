@@ -21,6 +21,8 @@ import { useChatBus } from './chatBus'
 import { useProjects } from './projects'
 import { logEvent } from './events'
 import { toast } from './toast'
+import { useComposerSkills } from '@/store/composerSkills'
+import { setUserContext } from '@/core/ai/userContext'
 
 export interface ChatPart { kind: 'text' | 'think' | 'op'; text?: string; opId?: string; done?: boolean }
 export interface ChatMessage {
@@ -182,7 +184,7 @@ export const useChat = create<ChatState>((set, get) => {
       const cfg = activeConfig()
       if (cfg.error === 'locked') { useVault.getState().setUnlockOpen(true); toast.info('Unlock your key vault to continue'); return false }
       if (cfg.error === 'nokey' || cfg.error === 'noprovider' || !cfg.provider) { useApp.getState().setOnboardingOpen(true); return false }
-      if (!auto) set({ autoFix: 0 })
+      if (!auto) { set({ autoFix: 0 }); setUserContext({ turnSkills: useComposerSkills.getState().take().map((k) => ({ name: k.name, content: k.content })) }) }
 
       const useMode = mode ?? st.aiMode
       const history = buildHistory(get().messages)
