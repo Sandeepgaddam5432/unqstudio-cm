@@ -169,3 +169,10 @@ The streaming parser, approval tray, usage metering and checkpoints all live in 
 - `scripts/e2e.mjs` grows to 106 checks: native mobile (390×844: PWA meta/manifest, zero overflow on Home/drawer/Chat/Preview/Code/Project sheet/Publish sheet, drawer open+close, BottomSheet drag-dismiss, clean top bar, floating switcher, Visual Inspector sheet) and Lovable desktop (Home, collapsing sidebar, template filter + Preview + Remix, live esbuild-wasm compile, picker keyboard nav, Project Knowledge persisted across reload, SEO editor, inline SVG QR, Version Card + follow-up chips + 1-tap Restore) plus the full v2.1 zero-regression suite.
 - Fresh audit screenshots in `DOCS/screenshots/v30-*.png`; audit fixes: Home screenshot scroll container, Publish tab strip scrolls instead of clipping, duplicate inspector header removed on the sheet.
 - Release 3.0.0.
+
+### V3.1-M1 — OKLCH depth system, Geist, multi-ring shadows, SVG Aurora
+- `src/index.css`: semantic OKLCH ladder (`--bg-depth/base/primary/secondary/muted/translucent`, `--fg-*`, `--border-depth`, `--bg-accent`), legacy `--c-*` tokens aliased onto it, 4 multi-ring shadows, calm motion curves, `.t-*` type scale, `.skel` shimmer. Geist / Geist Mono bundled (fallback Inter / JetBrains Mono).
+- `store/theme.ts` + `AuroraBackdrop` + `AppearancePanel`: Dashboard Background presets (Classic Aurora, Soft Horizon, Warm Peach, Minimal Monochrome, Custom) persisted in `unq.theme.*`.
+
+### ADR-018 Alias legacy tokens onto the OKLCH ladder
+Rewriting 150+ components to new class names would risk regressions; aliasing `--c-bg/panel/subtle/raised/line/fg/muted/faint` gives the whole app the new depth instantly while new code uses `bg-primary`, `text-fg-tertiary`, `shadow-xs-surface`. Weight is applied via `font-variation-settings: "wght" 450` on body and reset to `normal` for bold/semibold/headings so Geist weights still work.

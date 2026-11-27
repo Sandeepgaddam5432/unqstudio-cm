@@ -238,4 +238,8 @@ Object.assign(PURPOSES, {
   'src/ui/workspace/HistoryPanel.tsx': 'Checkpoint timeline: restore, fork, diff and delete.',
   'src/ui/workspace/RightPanel.tsx': 'Right-hand panel that switches between Preview, Inspector, Theme and History.',
   'src/ui/workspace/Workspace.tsx': 'Workspace shell: adaptive Studio/Code layout (chat + preview or full IDE) and mobile tabs.',
+  'src/store/theme.ts': 'Dashboard Background + mode persistence (unq.theme.mode/bg/custom): Aurora presets, custom gradient colours, <html data-dashboard-bg>.',
+  'src/store/theme.test.ts': 'Unit tests for the dashboard background theme store.',
+  'src/ui/home/AuroraBackdrop.tsx': 'Crisp layered SVG Aurora hero scene with top mask fade, driven by the Dashboard Background preset.',
+  'src/ui/settings/AppearancePanel.tsx': 'Appearance settings: System/Light/Dark, Dashboard Background swatches + custom gradient, accent, haptics.',
 })

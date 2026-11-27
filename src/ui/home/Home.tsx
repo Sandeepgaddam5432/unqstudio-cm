@@ -4,6 +4,7 @@ import { Badge, Button, ConfirmModal, Dropdown, Input, Logo, Modal, Spinner } fr
 import { getConn, isConnected } from '@/store/connections'
 import { importGitHubRepo, parseRepoUrl } from '@/core/deploy/github'
 import { Composer } from '@/ui/chat/Composer'
+import { AuroraBackdrop } from './AuroraBackdrop'
 import { AboutFaq } from './AboutFaq'
 import { TemplateArt } from './TemplateArt'
 import { SHOWCASE_CATEGORIES, filterShowcase, showcaseItems, type ShowcaseCategory, type ShowcaseItem } from '@/templates/showcase'
@@ -161,16 +162,17 @@ export default function Home() {
           <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" className="press flex h-11 w-11 items-center justify-center rounded-full hover:bg-subtle md:hidden"><Menu size={20} /></button>
           <Logo />
           <span className="text-[15px] font-semibold tracking-tight">UnQStudio</span>
-          <Badge tone="accent" className="hidden sm:inline-flex">v3.0</Badge>
+          <Badge tone="accent" className="hidden sm:inline-flex">v3.1</Badge>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 sm:px-8">
-        <section className="bg-mesh -mx-4 flex flex-col items-center rounded-b-[2.5rem] px-4 pb-12 pt-12 text-center sm:-mx-8 sm:px-8 sm:pt-20" data-hero>
-          <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+        <section className="relative isolate -mx-4 flex flex-col items-center overflow-hidden rounded-b-[2.5rem] px-4 pb-12 pt-12 text-center sm:-mx-8 sm:px-8 sm:pt-20" data-hero>
+          <AuroraBackdrop className="-z-10" />
+          <h1 className="t-headline max-w-3xl text-balance font-semibold">
             What should we <span className="bg-gradient-to-r from-accent to-fuchsia-500 bg-clip-text text-transparent">build</span> today?
           </h1>
-          <p className="mt-4 max-w-xl text-balance text-sm text-muted sm:text-base">
+          <p className="t-label mt-3 max-w-xl text-balance text-fg-tertiary">
             Describe an app and watch it appear. Bring your own model key — your code and keys never leave your device.
           </p>
 

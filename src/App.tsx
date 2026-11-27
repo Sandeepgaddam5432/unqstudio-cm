@@ -13,6 +13,7 @@ import { useModels } from '@/store/models'
 import { useAuth } from '@/store/auth'
 import { AppSidebar } from '@/ui/layout/AppSidebar'
 import { useProjects } from '@/store/projects'
+import { initTheme } from '@/store/theme'
 import { AuthModal } from '@/ui/auth/AuthModal'
 
 const Home = lazy(() => import('@/ui/home/Home'))
@@ -43,6 +44,7 @@ export default function App() {
   useEffect(() => { void useProjects.getState().refresh() }, [route.projectId])
   useEffect(() => { void useModels.getState().loadRegistry(); void useAuth.getState().init() }, [])
   useEffect(() => { void useVault.getState().init(); logEvent('system', 'UnQStudio started') }, [])
+  useEffect(() => { initTheme() }, [])
   useEffect(() => { applyThemeClass(theme === 'system' ? systemTheme() : theme, false) }, [])
   useEffect(() => { applyThemeClass(resolvedTheme) }, [resolvedTheme])
   const accent = useApp((s) => s.accent)

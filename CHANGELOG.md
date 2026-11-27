@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.1.0 (in progress)
+- **M1** OKLCH depth ladder, Geist typography, multi-ring shadows, SVG Aurora hero and Dashboard Background presets.
+
 ## v2.1.0 — Universal AI Studio
 - **M1** Zero-leak branding (Model Catalog / Provider Directory / All Providers) + 4-source unified catalog (live /models → Provider Directory → OpenRouter → LiteLLM, fill-only, fail-safe); `sync:catalog`, edge `/api/catalog` (+ `/api/models-dev` alias).
 - **M2** Zero-broken-icon system: 35 bundled glyphs → preloaded CDN glyph → deterministic monogram; model-family detection.

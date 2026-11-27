@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v3.0
+# PROGRESS — UnQStudio v3.1
 
 | Milestone | Status |
 |---|---|
@@ -16,5 +16,6 @@
 | V3.0-M5 Project Settings hub, Knowledge, Publish sheet + QR + SEO | ✅ done |
 | V3.0-M6 Multi-step agent loop + symbol/dependency graph | ✅ done |
 | V3.0-M7 Doc sync, 106-check Chromium E2E, visual QA, release 3.0.0 | ✅ done |
+| V3.1-M1 OKLCH depth, Geist, shadows, SVG Aurora + backgrounds | ✅ done |
 
 Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks. Unit tests need Node ≥ 22.

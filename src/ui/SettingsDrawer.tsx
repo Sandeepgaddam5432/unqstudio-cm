@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from 'react'
-import { haptic, hapticsEnabled, hapticsSupported, setHapticsEnabled } from '@/lib/haptics'
+import { type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+import { AppearancePanel } from '@/ui/settings/AppearancePanel'
 import { AccountTab } from '@/ui/settings/AccountTab'
 import { Drawer, Logo, Section, Segmented, Switch } from '@/ui/primitives'
-import { useApp, type AccentPreset, type ThemePref } from '@/store/app'
+import { useApp } from '@/store/app'
 import { useSettings } from '@/store/settings'
 import { ProvidersTab } from '@/ui/settings/ProvidersTab'
 import { ConnectionsTab } from '@/ui/settings/ConnectionsTab'
@@ -11,24 +11,6 @@ import { PromptsTab } from '@/ui/settings/PromptsTab'
 import { DataTab } from '@/ui/settings/DataTab'
 import { DebugTab } from '@/ui/settings/DebugTab'
 import { FeaturesTab } from '@/ui/settings/FeaturesTab'
-
-function Appearance() {
-  const { theme, setTheme, accent, setAccent } = useApp()
-  const [haptics, setHaptics] = useState(hapticsEnabled())
-  return (
-    <div className="p-5">
-      <Section title="Appearance" description="Obsidian Dark and Paper Light, with a system option.">
-        <Segmented<ThemePref> value={theme} onChange={setTheme} items={[{ id: 'system', label: 'System' }, { id: 'light', label: 'Paper Light' }, { id: 'dark', label: 'Obsidian Dark' }]} />
-      </Section>
-      <Section title="Accent" description="Signature keeps the Obsidian/Paper ember accent. Lovable Warm is a soft ambient orange.">
-        <Segmented<AccentPreset> value={accent} onChange={setAccent} items={[{ id: 'signature', label: 'Signature' }, { id: 'warm', label: 'Lovable Warm' }]} />
-      </Section>
-      <Section title="Haptics" description={hapticsSupported() ? 'Subtle vibration on tab switch, send, restore, build complete and errors.' : 'Vibration is not available on this device or browser.'}>
-        <label className="flex items-center gap-3 text-sm"><Switch checked={haptics} onChange={(v) => { setHaptics(v); setHapticsEnabled(v); if (v) haptic('success') }} />Tactile feedback</label>
-      </Section>
-    </div>
-  )
-}
 
 function ChatAndEditor() {
   const { mode, setMode } = useApp()
@@ -71,7 +53,7 @@ function ChatAndEditor() {
 interface NavItem { id: string; label: string; render: () => ReactNode }
 export const SETTINGS_GROUPS: { label: string; items: NavItem[] }[] = [
   { label: 'AI & Models', items: [{ id: 'providers', label: 'Providers Hub', render: () => <ProvidersTab /> }, { id: 'prompts', label: 'Prompt Rules', render: () => <PromptsTab /> }] },
-  { label: 'Workspace', items: [{ id: 'editor', label: 'Chat & Editor', render: () => <ChatAndEditor /> }, { id: 'appearance', label: 'Appearance', render: () => <Appearance /> }] },
+  { label: 'Workspace', items: [{ id: 'editor', label: 'Chat & Editor', render: () => <ChatAndEditor /> }, { id: 'appearance', label: 'Appearance', render: () => <AppearancePanel /> }] },
   { label: 'Account', items: [{ id: 'account', label: 'Sign In & Cloud Sync', render: () => <AccountTab /> }] },
   { label: 'Integrations', items: [{ id: 'connections', label: 'Connections', render: () => <ConnectionsTab /> }, { id: 'features', label: 'Plugins & MCP', render: () => <FeaturesTab /> }] },
   { label: 'System', items: [{ id: 'data', label: 'Data & Storage', render: () => <DataTab /> }, { id: 'debug', label: 'Debug & Logs', render: () => <DebugTab /> }] },
