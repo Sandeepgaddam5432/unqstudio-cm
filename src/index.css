@@ -240,4 +240,4 @@ html[data-keyboard] [data-mobile-bottom-nav], html[data-keyboard] [data-new-proj
 input.color-hue { background: linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); }
 input.color-hue::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 9999px; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.35); }
 input.color-hue::-moz-range-thumb { height: 14px; width: 14px; border-radius: 9999px; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
-.sheet-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+.sheet-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }

@@ -266,4 +266,6 @@ Object.assign(PURPOSES, {
   "src/lib/color.ts": "Pure colour maths (hex/HSV/OKLCH conversion, WCAG contrast) for the Color Studio.",
   "src/ui/primitives/SelectSheet.tsx": "Custom glassy select: Floating-UI popover (desktop) / bottom sheet (phone). Replaces every native <select>.",
   "src/ui/primitives/ColorStudio.tsx": "Color Studio (swatches, SV pad, hue slider, hex/OKLCH input, contrast preview) + ColorField trigger. Replaces <input type=color>.",
+  "src/ui/chat/modelGroups.ts": "Pure purpose grouping for the Recommended picker view (Recommended/Reasoning/Coding/Vision/Fast-Free/Custom & Local) + single capability tag.",
+  "src/ui/primitives/sheetSwipe.test.ts": "Unit tests for full-sheet swipe engage rule and rubber-band translate.",
 })

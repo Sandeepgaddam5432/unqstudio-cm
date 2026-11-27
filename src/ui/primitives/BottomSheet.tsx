@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { rubberBand, shouldDismiss, velocityOf, type DragSample } from './sheetPhysics'
+import { findScrollParent, insideHorizontalScroller, rubberBand, shouldDismiss, shouldEngageSheetDrag, sheetTranslate, velocityOf, type DragSample } from './sheetPhysics'
 
 export interface BottomSheetProps {
   open: boolean
@@ -23,7 +23,7 @@ export interface BottomSheetProps {
 
 /**
  * Touch-interactive bottom sheet (<768px): drag handle + header are draggable, upward drag is rubber-banded,
- * a fast or long downward release dismisses, backdrop blur fades with the drag, body scroll is locked,
+ * a fast or long downward release dismisses; a downward drag from ANYWHERE on the sheet dismisses it when the inner list is at scrollTop<=0 (v3.2), backdrop blur fades with the drag, body scroll is locked,
  * Escape dismisses and the bottom padding honours the safe-area inset.
  */
 export function BottomSheet({ open, onClose, title, description, children, footer, tall, modeless, label, className, flush }: BottomSheetProps) {
@@ -48,6 +48,49 @@ export function BottomSheet({ open, onClose, title, description, children, foote
     if (!modeless) document.body.style.overflow = 'hidden'
     return () => { window.removeEventListener('keydown', key, true); document.body.style.overflow = prev }
   }, [open, modeless, dismiss])
+
+  // Full-sheet touch drag: when the inner list is at scrollTop<=0, a downward drag from ANYWHERE on the sheet moves + dismisses it.
+  useEffect(() => {
+    const el = panel.current
+    if (!open || !el) return
+    let y0 = 0, x0 = 0, base = 0, engaged = false, rejected = false, scroller: HTMLElement | null = null, skip = false
+    let samp: DragSample[] = []
+    const start = (e: TouchEvent) => {
+      const t = e.touches[0]!
+      skip = !!(e.target as Element).closest?.('[data-sheet-handle],[data-no-sheet-drag],input,textarea,[role="slider"]')
+      engaged = false; rejected = false
+      scroller = findScrollParent(e.target as Element, el)
+      rejected = insideHorizontalScroller(e.target as Element, el)
+      y0 = base = t.clientY; x0 = t.clientX; samp = [{ y: t.clientY, t: performance.now() }]
+    }
+    const move = (e: TouchEvent) => {
+      if (skip || rejected) return
+      const t = e.touches[0]!
+      samp.push({ y: t.clientY, t: performance.now() })
+      const top = scroller ? scroller.scrollTop : 0
+      if (!engaged) {
+        if (top > 0) { base = t.clientY; return }            // still scrolling the list: re-baseline until it reaches the top
+        if (Math.abs(t.clientX - x0) > Math.abs(t.clientY - base) + 4 && !shouldEngageSheetDrag(0, t.clientY - base, t.clientX - x0)) return
+        if (!shouldEngageSheetDrag(top, t.clientY - base, t.clientX - x0)) { if (t.clientY - base < -6) base = t.clientY; return }
+        engaged = true; y0 = base; setDragging(true)
+      }
+      if (e.cancelable) e.preventDefault()
+      setDy(sheetTranslate(t.clientY - y0))
+    }
+    const end = (e: TouchEvent) => {
+      if (!engaged) return
+      engaged = false; setDragging(false)
+      const last = e.changedTouches[0]!
+      const delta = last.clientY - y0
+      const h = el.offsetHeight || 400
+      if (shouldDismiss(delta, velocityOf(samp), h)) dismiss(); else setDy(0)
+    }
+    el.addEventListener('touchstart', start, { passive: true })
+    el.addEventListener('touchmove', move, { passive: false })
+    el.addEventListener('touchend', end, { passive: true })
+    el.addEventListener('touchcancel', end, { passive: true })
+    return () => { el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); el.removeEventListener('touchend', end); el.removeEventListener('touchcancel', end) }
+  }, [open, dismiss])
 
   if (!open) return null
 
@@ -93,7 +136,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
             </div>
           )}
         </div>
-        <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain', flush ? '' : 'px-5 pb-4')}>{children}</div>
+        <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain sheet-scroll', flush ? '' : 'px-5 pb-4')}>{children}</div>
         {footer && <div className="flex shrink-0 items-center justify-end gap-2 border-t border-line px-5 py-3">{footer}</div>}
         <div className="shrink-0" style={{ height: 'env(safe-area-inset-bottom)' }} />
       </div>

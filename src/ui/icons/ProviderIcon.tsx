@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/cn'
-import { BRAND_SVGS, type BrandKey } from './brandSvgs'
+import { BRAND_COLOR_SVGS, BRAND_HEX, BRAND_SVGS, type BrandKey } from './brandSvgs'
 import { cdnIconUrl, isBrandKey, monogramHue, monogramText, providerBrandKey } from './modelFamily'
 
 /** Layer 3: deterministic geometric monogram badge. Always renders, never depends on the network. */
@@ -18,12 +18,19 @@ export function Monogram({ name, size = 16, accent, className }: { name: string;
   )
 }
 
+/**
+ * Official brand glyph. v3.2: renders the brand's OWN colours — full-colour artwork when bundled, otherwise the single-path mark painted in the
+ * official brand hex. Only brands whose official mark is black ("ink") follow the text colour so they stay visible on dark. Never greyscale/filtered.
+ */
 export function BrandGlyph({ brand, size = 16, className, accent }: { brand: BrandKey; size?: number; className?: string; accent?: string }) {
+  const colour = BRAND_COLOR_SVGS[brand]
+  const hex = BRAND_HEX[brand]
+  const fill = accent ?? (hex && hex !== 'ink' ? hex : 'currentColor')
   return (
     <svg
-      data-icon-layer="svg" data-brand={brand} width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" aria-hidden="true" focusable="false"
-      className={cn('shrink-0 text-fg', className)} style={{ width: size, height: size, color: accent }}
-      dangerouslySetInnerHTML={{ __html: BRAND_SVGS[brand] }}
+      data-icon-layer="svg" data-brand={brand} data-brand-colour={colour ? 'full' : hex && hex !== 'ink' ? hex : 'ink'} width={size} height={size} viewBox="0 0 24 24" fill={colour && !accent ? undefined : fill} fillRule="evenodd" aria-hidden="true" focusable="false"
+      className={cn('shrink-0 text-fg', className)} style={{ width: size, height: size }}
+      dangerouslySetInnerHTML={{ __html: colour && !accent ? colour : BRAND_SVGS[brand] ?? '' }}
     />
   )
 }
@@ -76,8 +83,8 @@ export interface ProviderIconProps {
  */
 export function ProviderIcon({ id, name, logo, brand, accent, size = 16, className }: ProviderIconProps) {
   const key = isBrandKey(brand) ? brand : providerBrandKey(id)
-  const remote = useWorkingImage(key ? [] : [cdnIconUrl(id), ...(logo ? [logo] : [])])
+  const remote = useWorkingImage(key ? [] : [cdnIconUrl(id, true), cdnIconUrl(id), ...(logo ? [logo] : [])])
   if (key) return <BrandGlyph brand={key} size={size} className={className} accent={accent} />
-  if (remote) return <img data-icon-layer="cdn" src={remote} alt="" width={size} height={size} loading="lazy" decoding="async" className={cn('shrink-0 dark:invert', className)} style={{ width: size, height: size }} />
+  if (remote) return <img data-icon-layer="cdn" src={remote} alt="" width={size} height={size} loading="lazy" decoding="async" className={cn('shrink-0', remote === cdnIconUrl(id) && 'dark:invert', className)} style={{ width: size, height: size }} />
   return <Monogram name={name || id} size={size} accent={accent} className={className} />
 }

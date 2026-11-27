@@ -214,3 +214,8 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - `ColorStudio`/`ColorField` replace every `<input type=color>` (Appearance, Theme Studio, Custom Provider, Inspector, Features).
 - Haptics are strictly opt-in and OFF by default (`unq.haptics === '1'`); sheet drag no longer vibrates.
 - ADR-020: native form controls are banned in UI code; use SelectSheet / ColorField.
+
+### V3.2-M2 — Calm model picker, official full-colour icons, full-sheet swipe physics
+- `ModelPicker` (still `src/ui/chat/ModelPicker.tsx`): new default **Recommended** tab grouped by purpose (`modelGroups.ts`); rows show only logo + name + ONE subtle capability pill (or the active check); context/cost/vision/tools badges removed; star only on hover/when favourited.
+- Icons: `scripts/gen-brand-svgs.mjs` now emits `BRAND_COLOR_SVGS` (official multi-colour artwork), `BRAND_HEX` (official hex for single-path marks) and 10 connector brands (GitLab, Cloudflare Pages, Netlify, Supabase, Firebase, Stripe, Neon, Upstash, Resend, Clerk) via devDependency `simple-icons`. `BrandGlyph` never forces greyscale; only black-by-design marks (`ink`: GitHub, Vercel, xAI, Ollama, Resend, Moonshot) follow the text colour. CDN fallback tries `-color.svg` first and only inverts the mono variant.
+- `BottomSheet`: native `touchstart/move/end` (non-passive) full-sheet swipe — when the inner scroller is at `scrollTop<=0` a downward drag from anywhere translates the sheet with rubber-band resistance and dismisses past threshold/velocity; horizontal scrollers, sliders, inputs and `[data-no-sheet-drag]` never start a drag; momentum scrolling + `overscroll-behavior: contain` on `.sheet-scroll`.

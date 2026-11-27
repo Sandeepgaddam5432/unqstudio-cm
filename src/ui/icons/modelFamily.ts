@@ -85,4 +85,4 @@ export function monogramText(name: string): string {
 }
 
 /** Layer-2 CDN candidate for long-tail providers (never trusted: the image is preloaded and discarded on failure). */
-export const cdnIconUrl = (providerId: string): string => `https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/${providerId.toLowerCase().replace(/[^a-z0-9]/g, '')}.svg`
+export const cdnIconUrl = (providerId: string, colour = false): string => `https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/${providerId.toLowerCase().replace(/[^a-z0-9]/g, '')}${colour ? '-color' : ''}.svg`

@@ -75,3 +75,8 @@ All v3.2 fixes, by milestone (read before touching UI):
 - **Accent** indigo `#5b5bd6` (dark `#8f8cff`); `data-accent=warm` is an opt-in amber ambience only.
 - **No native controls:** `SelectSheet` (popover ≥640px, BottomSheet <640px) and `ColorField`/`ColorStudio` (swatches, SV pad, hue, hex/OKLCH text, contrast chip). `Select` in `Field.tsx` is an `<option>`-compatible shim over SelectSheet.
 - **Haptics** default OFF, toggle in Appearance → Haptics (`unq.haptics`).
+
+### V3.2-M2
+- **Model picker:** default tab *Recommended* = sections Recommended · Reasoning · Coding · Vision · Fast / Free · Custom & Local (max 6 each, a model appears once). Row = brand icon + name + one subtle pill (`Free` > `Reasoning` > `Coding` > `Vision` > `Fast`) or ✓ when active. Other tabs unchanged.
+- **Brand icons:** `data-brand-colour` = `full` | hex | `ink`. Never apply `grayscale`, `invert` or forced `currentColor` to coloured brands.
+- **Sheet physics:** `sheetPhysics.ts` (`findScrollParent`, `insideHorizontalScroller`, `shouldEngageSheetDrag`, `sheetTranslate`). Mark any drag-sensitive widget with `data-no-sheet-drag`.

@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { Brain, Check, Eye, Plus, RefreshCw, Search, Star, Wrench } from 'lucide-react'
+import { Check, Plus, RefreshCw, Search, Star } from 'lucide-react'
 import { allProviders, configFor, fetchLiveFor, isConfigured, isProviderEnabled, modelsForProvider } from '@/store/aiConfig'
 import { useModels } from '@/store/models'
 import { useSettings } from '@/store/settings'
@@ -13,17 +13,17 @@ import type { ProviderDef } from '@/core/ai/providers'
 import { Spinner } from '@/ui/primitives'
 import { ModelIcon } from '@/ui/icons/ModelIcon'
 import { ProviderIcon } from '@/ui/icons/ProviderIcon'
-import { formatTokens } from '@/core/ai/tokens'
+import { GROUP_LABELS, GROUP_ORDER, groupModels, primaryTag } from './modelGroups'
 import { cn } from '@/lib/cn'
 import { ago } from '@/ui/settings/registryUi'
 import { NAV_KEYS, moveActive, scrollTopFor, selectableRows, type NavKey } from './pickerNav'
 
-export type PickerTab = 'configured' | 'favorites' | 'ready' | 'custom' | 'local' | 'all'
+export type PickerTab = 'smart' | 'configured' | 'favorites' | 'ready' | 'custom' | 'local' | 'all'
 const TABS: { id: PickerTab; label: string }[] = [
-  { id: 'configured', label: 'Configured' }, { id: 'favorites', label: 'Favorites ⭐' }, { id: 'ready', label: 'Browser-Ready' },
+  { id: 'smart', label: 'Recommended' }, { id: 'configured', label: 'Configured' }, { id: 'favorites', label: 'Favorites ⭐' }, { id: 'ready', label: 'Browser-Ready' },
   { id: 'custom', label: 'Custom' }, { id: 'local', label: 'Local' }, { id: 'all', label: 'All Providers' },
 ]
-const ROW_H = 36
+const ROW_H = 40
 const OVERSCAN = 8
 const MAX_SEARCH = 300
 
@@ -34,7 +34,6 @@ type Row =
   | { t: 'skeleton'; key: string }
   | { t: 'note'; key: string; text: string }
 
-const Chip = ({ children, title }: { children: React.ReactNode; title?: string }) => <span title={title} className="hidden shrink-0 rounded bg-subtle px-1 font-mono text-[10px] leading-4 text-muted sm:inline-block">{children}</span>
 
 /**
  * Model picker body (anchored popover on desktop, bottom sheet on mobile).
@@ -53,7 +52,7 @@ export function ModelPicker({ close }: { close: () => void }) {
   const customCount = useCustomProviders((c) => c.providers)
   const providers = allProviders()
   const configuredList = providers.filter((p) => isProviderEnabled(p) && isConfigured(p))
-  const [tab, setTab] = useState<PickerTab>(configuredList.length ? 'configured' : 'ready')
+  const [tab, setTab] = useState<PickerTab>('smart')
   const [q, setQ] = useState('')
   const dq = useDeferredValue(q)
   const [open, setOpen] = useState<Set<string>>(() => new Set([s.activeProvider]))
@@ -72,6 +71,7 @@ export function ModelPicker({ close }: { close: () => void }) {
       return modelRow(p, m, true)
     }
     const pool = providers.filter((p) => {
+      if (tab === 'smart') return configuredList.length ? (isProviderEnabled(p) && isConfigured(p)) || !!p.custom || p.compat === 'local' : p.compat === 'browser-ready'
       if (tab === 'configured') return isProviderEnabled(p) && isConfigured(p)
       if (tab === 'ready') return p.compat === 'browser-ready'
       if (tab === 'custom') return !!p.custom
@@ -90,6 +90,19 @@ export function ModelPicker({ close }: { close: () => void }) {
         const f = query ? favRows.filter((r) => r.t === 'model' && matchesQuery(r.m, r.p.name, query)) : favRows
         return f.length ? [{ t: 'section', key: 'sec-fav', label: 'Favorites' }, ...f] : [{ t: 'note', key: 'nofav', text: query ? `No favorites match “${query}”.` : 'Star ⭐ any model to pin it here.' }]
       }
+    }
+    if (!query && tab === 'smart') {
+      const entries: { p: ProviderDef; m: EnrichedModel }[] = []
+      for (const p of pool) { if (p.compat === 'requires-proxy') continue; for (const m of modelsForProvider(p)) entries.push({ p, m }) }
+      const recentFirst = [...entries].sort((a, b) => Number(recents.includes(modelKey(b.p.id, b.m.id))) - Number(recents.includes(modelKey(a.p.id, a.m.id))))
+      const g = groupModels(recentFirst, favorites, (e) => modelKey(e.p.id, e.m.id))
+      for (const id of GROUP_ORDER) {
+        if (!g[id].length) continue
+        out.push({ t: 'section', key: `g:${id}`, label: GROUP_LABELS[id] })
+        for (const e of g[id]) out.push(modelRow(e.p, e.m))
+      }
+      if (!out.length) out.push({ t: 'note', key: 'empty-smart', text: 'No models yet — add an API key in Providers Hub, or browse All Providers.' })
+      return out
     }
     if (query) {
       const hits: { p: ProviderDef; m: EnrichedModel; sc: number }[] = []
@@ -167,7 +180,7 @@ export function ModelPicker({ close }: { close: () => void }) {
 
   const renderRow = (r: Row, idx: number) => {
     const style: React.CSSProperties = { position: 'absolute', top: 0, left: 0, right: 0, height: ROW_H, transform: `translateY(${idx * ROW_H}px)` }
-    if (r.t === 'section') return <div key={r.key} style={style} className="flex items-end px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-faint">{r.label}</div>
+    if (r.t === 'section') return <div key={r.key} style={style} data-model-section={r.label} className="flex items-end px-3 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-fg-quaternary">{r.label}</div>
     if (r.t === 'note') return <div key={r.key} style={style} className="flex items-center px-3 text-[11px] leading-snug text-muted"><span className="line-clamp-2">{r.text}</span></div>
     if (r.t === 'skeleton') return <div key={r.key} style={style} className="flex items-center gap-2 px-3" aria-hidden="true"><span className="h-4 w-4 animate-pulse rounded bg-subtle" /><span className="h-3 flex-1 animate-pulse rounded bg-subtle" /><span className="h-3 w-10 animate-pulse rounded bg-subtle" /></div>
     if (r.t === 'head') {
@@ -187,24 +200,16 @@ export function ModelPicker({ close }: { close: () => void }) {
     const { p, m } = r
     const fav = favorites.includes(modelKey(p.id, m.id))
     const active = s.activeProvider === p.id && s.activeModel === m.id
+    const tag = primaryTag(m)
     return (
       <div key={r.key} style={style} role="option" aria-selected={active} tabIndex={0} title={`${p.name} · ${m.id}`} id={`mp-row-${idx}`} data-active={idx === activeIdx || undefined} data-model-row={`${p.id}::${m.id}`}
         onClick={() => pick(p.id, m.id)} onKeyDown={(e) => { if (e.key === 'Enter') pick(p.id, m.id) }}
-        className={cn('group flex cursor-pointer items-center gap-2 rounded-lg px-2.5 text-[13px] transition-colors duration-150 hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none', idx === activeIdx && 'bg-subtle ring-2 ring-accent/60')}>
-        <ModelIcon modelId={m.id} modelName={m.name} providerId={p.id} providerName={p.name} providerLogo={p.logo} brand={p.brand} accent={p.accent} size={16} />
+        className={cn('group press flex cursor-pointer items-center gap-2.5 rounded-xl px-3 text-[13.5px] transition-colors duration-150 hover:bg-fg/5 focus-visible:bg-fg/5 focus-visible:outline-none', active && 'bg-accent/8', idx === activeIdx && 'bg-fg/5 ring-2 ring-accent/60')}>
+        <ModelIcon modelId={m.id} modelName={m.name} providerId={p.id} providerName={p.name} providerLogo={p.logo} brand={p.brand} accent={p.accent} size={18} />
         <span className="min-w-[5rem] flex-1 truncate">{m.name}</span>
-        <span className="hidden shrink-0 items-center gap-1 text-faint md:flex" title={p.name}><ProviderIcon id={p.id} name={p.name} logo={p.logo} brand={p.brand} accent={p.accent} size={11} /></span>
-        {m.context ? <Chip title="Context window">{formatTokens(m.context)}</Chip> : null}
-        {(m.vision || m.reasoning || m.tool_call) && (
-          <span className="flex shrink-0 items-center gap-0.5 text-faint">
-            {m.vision && <span title="Vision" className="rounded bg-subtle p-0.5"><Eye size={11} aria-label="Vision" /></span>}
-            {m.reasoning && <span title="Reasoning" className="rounded bg-subtle p-0.5"><Brain size={11} aria-label="Reasoning" /></span>}
-            {m.tool_call && <span title="Tools" className="rounded bg-subtle p-0.5"><Wrench size={11} aria-label="Tools" /></span>}
-          </span>
-        )}
-        {m.cost?.input != null ? <Chip title="USD per 1M tokens in/out">${m.cost.input}/{m.cost.output ?? '?'}</Chip> : null}
-        {active && <Check size={13} className="shrink-0 text-accent" />}
-        <button aria-label={fav ? `Unstar ${m.name}` : `Star ${m.name}`} aria-pressed={fav} data-star onClick={(e) => { e.stopPropagation(); useModelPrefs.getState().toggleFavorite(p.id, m.id) }} className={cn('shrink-0 rounded p-0.5 transition-opacity duration-150 hover:text-warn', fav ? 'text-warn' : 'text-faint opacity-60 group-hover:opacity-100')}>
+        {tag && !active && <span data-model-tag className="shrink-0 rounded-full bg-fg/5 px-2 py-0.5 text-[10.5px] font-medium text-fg-tertiary">{tag}</span>}
+        {active && <Check size={15} className="shrink-0 text-accent" aria-label="Selected" />}
+        <button aria-label={fav ? `Unstar ${m.name}` : `Star ${m.name}`} aria-pressed={fav} data-star onClick={(e) => { e.stopPropagation(); useModelPrefs.getState().toggleFavorite(p.id, m.id) }} className={cn('shrink-0 rounded p-0.5 transition-opacity duration-150 hover:text-warn', fav ? 'text-warn' : 'hidden text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 md:block')}>
           <Star size={12} fill={fav ? 'currentColor' : 'none'} />
         </button>
       </div>
@@ -213,8 +218,8 @@ export function ModelPicker({ close }: { close: () => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-model-picker>
-      <div className="sticky top-0 z-10 shrink-0 space-y-2 bg-panel p-2 pb-1.5">
-        <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-subtle px-2.5 text-muted focus-within:border-line-strong focus-within:ring-2 focus-within:ring-accent/20">
+      <div className="sticky top-0 z-10 shrink-0 space-y-2 p-2 pb-1.5">
+        <label className="glass-field flex h-10 items-center gap-2 rounded-xl px-3 text-muted focus-within:ring-2 focus-within:ring-accent/20">
           <Search size={14} className="shrink-0" />
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onNavKey} role="combobox" aria-expanded="true" aria-controls="mp-list" aria-autocomplete="list" aria-activedescendant={activeIdx >= 0 ? `mp-row-${activeIdx}` : undefined} placeholder="Search models, providers, vision, reasoning, free…" aria-label="Search models" className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-faint" />
         </label>
@@ -224,7 +229,7 @@ export function ModelPicker({ close }: { close: () => void }) {
           ))}
         </div>
       </div>
-      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-1 pb-1" id="mp-list" data-picker-list role="listbox" aria-label="Models">
+      <div ref={scroller} onScroll={(e) => setTop(e.currentTarget.scrollTop)} className="sheet-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-1 pb-1" id="mp-list" data-picker-list role="listbox" aria-label="Models">
         <div className="relative" style={{ height: rows.length * ROW_H }}>
           {rows.slice(first, last).map((r, i) => renderRow(r, first + i))}
         </div>
