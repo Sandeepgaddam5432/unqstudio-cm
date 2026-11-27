@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { MousePointerClick, Save, Sparkles, X } from 'lucide-react'
-import { Button, Input, Label } from '@/ui/primitives'
+import { Button, ColorField, Input, Label, SelectSheet } from '@/ui/primitives'
 import { usePreview } from '@/store/preview'
 import { useWorkspace } from '@/store/workspace'
 import { useChatBus } from '@/store/chatBus'
@@ -82,12 +82,12 @@ export function InspectorForm() {
       <div className="space-y-2.5">
         {sel.editableText && <div><Label>Text</Label><Input value={text} onChange={(e) => { setText(e.target.value); live('text', {}, { text: e.target.value }) }} className="h-8 text-xs" /></div>}
         <div className="grid grid-cols-2 gap-2">
-          <div><Label>Text color</Label><input type="color" value={color} onChange={(e) => { setColor(e.target.value); live('color', { color: e.target.value }) }} className="h-8 w-full cursor-pointer rounded-lg border border-line bg-subtle p-0.5" aria-label="Text color" /></div>
-          <div><Label>Background</Label><input type="color" value={bg} onChange={(e) => { setBg(e.target.value); live('bg', { backgroundColor: e.target.value }) }} className="h-8 w-full cursor-pointer rounded-lg border border-line bg-subtle p-0.5" aria-label="Background color" /></div>
+          <div><Label>Text color</Label><ColorField label="Text color" value={color} className="w-full" onChange={(hex) => { setColor(hex); live('color', { color: hex }) }} /></div>
+          <div><Label>Background</Label><ColorField label="Background color" value={bg} className="w-full" onChange={(hex) => { setBg(hex); live('bg', { backgroundColor: hex }) }} /></div>
           {num('Padding px', padding, setPadding, 'padding', (n) => ({ padding: `${n}px` }))}
           {num('Radius px', radius, setRadius, 'radius', (n) => ({ borderRadius: `${n}px` }))}
           {num('Font size px', fontSize, setFontSize, 'fontSize', (n) => ({ fontSize: `${n}px` }))}
-          <div><Label>Font weight</Label><select value={fontWeight} onChange={(e) => { const n = Number(e.target.value); setFontWeight(n); live('fontWeight', { fontWeight: String(n) }) }} aria-label="Font weight" className="h-8 w-full rounded-lg border border-line bg-subtle px-2 text-xs">{[300, 400, 500, 600, 700, 800].map((w) => <option key={w} value={w}>{w}</option>)}</select></div>
+          <div><Label>Font weight</Label><SelectSheet aria-label="Font weight" title="Font weight" value={String(fontWeight)} className="h-8 w-full text-xs" onChange={(v) => { const n = Number(v); setFontWeight(n); live('fontWeight', { fontWeight: String(n) }) }} options={[300, 400, 500, 600, 700, 800].map((w) => ({ value: String(w), label: String(w) }))} /></div>
         </div>
       </div>
       <form data-ask-ai className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!ask.trim()) return; useChatBus.getState().enqueue({ text: composeAskPrompt(sel, hint, ask), mode: 'build' }); toast.info('Sent to the AI', 'The element, its classes and source hint were attached.'); useApp.getState().requestTab('chat'); set({ selected: null, inspectMode: false }) }}>

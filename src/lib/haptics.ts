@@ -1,4 +1,4 @@
-/** Tactile feedback (v3.0): safe wrapper around `navigator.vibrate`. No-ops everywhere vibration is unavailable (desktop, iOS Safari, SSR, tests). */
+/** Tactile feedback (v3.0; v3.2: strictly opt-in, OFF by default): safe wrapper around `navigator.vibrate`. No-ops everywhere vibration is unavailable (desktop, iOS Safari, SSR, tests). */
 export type HapticKind = 'tap' | 'select' | 'send' | 'success' | 'warning' | 'error'
 
 export const HAPTIC_PATTERNS: Record<HapticKind, number | number[]> = {
@@ -17,7 +17,7 @@ export function hapticsSupported(): boolean {
 }
 
 export function hapticsEnabled(): boolean {
-  try { return localStorage.getItem(KEY) !== '0' } catch { return true }
+  try { return localStorage.getItem(KEY) === '1' } catch { return false }
 }
 
 export function setHapticsEnabled(on: boolean): void {

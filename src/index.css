@@ -8,20 +8,20 @@
 /* ── UnQStudio v3.1 OKLCH depth ladder (see DOCS/09-UIUX-MASTER-SPEC.md) ───────── */
 :root {
   color-scheme: light;
-  --bg-depth: oklch(95.49% 0 107);
-  --bg-base: oklch(96.99% 0 107);
-  --bg-primary: oklch(98.51% 0 107);
-  --bg-secondary: oklch(99.99% 0 107);
+  --bg-depth: oklch(95.49% 0 275);
+  --bg-base: oklch(96.99% 0 275);
+  --bg-primary: oklch(98.51% 0 275);
+  --bg-secondary: oklch(99.99% 0 275);
   --bg-muted: oklch(56.74% .009 106.68 / .16);
   --bg-translucent: oklch(100% 0 0 / .8);
   --fg-primary: oklch(10% 0 0);
-  --fg-secondary: oklch(30% .001 107);
-  --fg-tertiary: oklch(50% .001 107);
-  --fg-quaternary: oklch(69% .001 107);
-  --border-depth: oklch(82.1% 0 107 / .4);
-  --bg-accent: oklch(52.43% .2396 264.41);
+  --fg-secondary: oklch(30% .001 275);
+  --fg-tertiary: oklch(50% .001 275);
+  --fg-quaternary: oklch(69% .001 275);
+  --border-depth: oklch(82.1% 0 275 / .4);
+  --bg-accent: oklch(52% .19 277);
   --bg-accent-fg: oklch(100% 0 0);
-  --ring-hair: oklch(82.1% 0 107 / .55);
+  --ring-hair: oklch(82.1% 0 275 / .55);
   --shadow-surface-xs: 0 0 0 1px var(--ring-hair), 0 1px 2px oklch(0% 0 0 / .04);
   --shadow-surface-md: 0 0 0 1px var(--ring-hair), 0 1px 2px oklch(0% 0 0 / .06), 0 4px 12px -2px oklch(0% 0 0 / .07);
   --shadow-floating-md: 0 0 0 1px var(--ring-hair), 0 2px 4px oklch(0% 0 0 / .06), 0 12px 28px -6px oklch(0% 0 0 / .16);
@@ -32,11 +32,11 @@
   --c-subtle: var(--bg-depth);
   --c-raised: var(--bg-secondary);
   --c-line: var(--border-depth);
-  --c-line-strong: oklch(70% 0 107 / .5);
+  --c-line-strong: oklch(70% 0 275 / .5);
   --c-fg: var(--fg-primary);
   --c-muted: var(--fg-tertiary);
   --c-faint: var(--fg-quaternary);
-  --c-accent: #e5481b;
+  --c-accent: #5b5bd6;
   --c-accent-fg: #ffffff;
   --c-danger: #dc2626;
   --c-success: #16a34a;
@@ -50,25 +50,27 @@
 }
 .dark {
   color-scheme: dark;
-  --bg-depth: oklch(20.42% .002 107);
-  --bg-base: oklch(23% .002 107);
-  --bg-primary: oklch(24.74% .002 107);
-  --bg-secondary: oklch(27.2% .002 107);
+  --bg-accent: oklch(72% .15 277);
+  --bg-accent-fg: oklch(16% .03 277);
+  --bg-depth: oklch(20.42% .002 275);
+  --bg-base: oklch(23% .002 275);
+  --bg-primary: oklch(24.74% .002 275);
+  --bg-secondary: oklch(27.2% .002 275);
   --bg-muted: oklch(56.74% .009 106.68 / .08);
-  --bg-translucent: oklch(24.74% .002 107 / .8);
+  --bg-translucent: oklch(24.74% .002 275 / .8);
   --fg-primary: oklch(100% 0 0);
-  --fg-secondary: oklch(90.95% .002 107);
-  --fg-tertiary: oklch(72.34% .002 107);
-  --fg-quaternary: oklch(56.74% .002 107);
-  --border-depth: oklch(30.42% .004 107 / .4);
+  --fg-secondary: oklch(90.95% .002 275);
+  --fg-tertiary: oklch(72.34% .002 275);
+  --fg-quaternary: oklch(56.74% .002 275);
+  --border-depth: oklch(30.42% .004 275 / .4);
   --ring-hair: oklch(100% 0 0 / .09);
   --shadow-surface-xs: 0 0 0 1px var(--ring-hair), 0 1px 2px oklch(0% 0 0 / .3);
   --shadow-surface-md: 0 0 0 1px var(--ring-hair), 0 1px 2px oklch(0% 0 0 / .35), 0 6px 16px -2px oklch(0% 0 0 / .35);
   --shadow-floating-md: 0 0 0 1px var(--ring-hair), 0 2px 4px oklch(0% 0 0 / .35), 0 14px 32px -6px oklch(0% 0 0 / .6);
   --shadow-surface-xl: 0 0 0 1px var(--ring-hair), 0 4px 8px oklch(0% 0 0 / .3), 0 28px 64px -12px oklch(0% 0 0 / .7);
-  --c-line-strong: oklch(45% .004 107 / .6);
-  --c-accent: #ff6a3d;
-  --c-accent-fg: #09090b;
+  --c-line-strong: oklch(45% .004 275 / .6);
+  --c-accent: #8f8cff;
+  --c-accent-fg: #0c0c1d;
   --c-danger: #f87171;
   --c-success: #4ade80;
   --c-warn: #fbbf24;
@@ -173,7 +175,7 @@ button, a, [role="button"], input, textarea, select { -webkit-tap-highlight-colo
 .surface-2 { background: var(--c-raised); box-shadow: 0 1px 2px rgba(9,9,11,.05), 0 8px 24px -12px rgba(9,9,11,.14); }
 .dark .surface-1 { box-shadow: 0 1px 0 rgba(255,255,255,.03) inset; }
 .dark .surface-2 { box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 32px -14px rgba(0,0,0,.7); }
-.bg-mesh { background-image: radial-gradient(60% 50% at 18% 0%, color-mix(in srgb, var(--c-accent) 20%, transparent), transparent 70%), radial-gradient(50% 45% at 85% 8%, color-mix(in srgb, #7c5cff 16%, transparent), transparent 70%), radial-gradient(45% 40% at 50% 100%, color-mix(in srgb, #22c3a6 10%, transparent), transparent 70%); }
+.bg-mesh { background-image: radial-gradient(60% 50% at 18% 0%, color-mix(in srgb, var(--c-accent) 20%, transparent), transparent 70%), radial-gradient(50% 45% at 85% 8%, color-mix(in srgb, #38bdf8 14%, transparent), transparent 70%), radial-gradient(45% 40% at 50% 100%, color-mix(in srgb, #a78bfa 12%, transparent), transparent 70%); }
 .composer-float { border-radius: 1.75rem; box-shadow: var(--shadow-floating-md); }
 .press { transition: transform 200ms var(--ease-spring), background-color 200ms ease, color 200ms ease; }
 .press:active { transform: scale(.96); }
@@ -206,3 +208,36 @@ button, a, .press { transition-timing-function: var(--ease-hover); }
 
 html[data-keyboard] [data-mobile-bottom-nav], html[data-keyboard] [data-new-project], html[data-keyboard] [data-new-chat] { display: none; }
 .composer-gradient { border: 1px solid transparent; background: linear-gradient(var(--bg-translucent), var(--bg-translucent)) padding-box, linear-gradient(135deg, var(--border-depth), color-mix(in oklch, var(--c-accent) 35%, var(--border-depth))) border-box; }
+
+/* ── v3.2: luxury glass system (see DOCS/09 §v3.2) ─────────────────────────── */
+:root {
+  --glass-bg: oklch(100% 0 0 / .62);
+  --glass-bg-strong: oklch(99% .004 275 / .84);
+  --glass-border: oklch(35% .03 275 / .18);
+  --glass-hi: oklch(100% 0 0 / .7);
+  --glass-shadow: 0 1px 2px oklch(0% 0 0 / .05), 0 16px 40px -14px oklch(30% .06 275 / .28);
+}
+.dark {
+  --glass-bg: oklch(26% .012 275 / .58);
+  --glass-bg-strong: oklch(22% .012 275 / .84);
+  --glass-border: oklch(100% 0 0 / .16);
+  --glass-hi: oklch(100% 0 0 / .1);
+  --glass-shadow: 0 1px 2px oklch(0% 0 0 / .4), 0 20px 48px -14px oklch(0% 0 0 / .7);
+}
+.glass, .glass-pop, .glass-sheet, .composer-float, .glass-pill {
+  -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow);
+}
+.glass, .composer-float, .glass-pill { background: var(--glass-bg); }
+.glass-pop, .glass-sheet { background: var(--glass-bg-strong); }
+.glass-sheet { border-bottom: 0; }
+.composer-float { border-radius: 1.75rem; }
+.glass-pill { border-radius: 9999px; }
+.glass-field { background: color-mix(in oklch, var(--fg-primary) 4%, transparent); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-hi); transition: background-color .15s ease, border-color .15s ease; }
+.glass-field:hover { background: color-mix(in oklch, var(--fg-primary) 7%, transparent); }
+.glass-field:focus-visible, .glass-field:focus { border-color: color-mix(in oklch, var(--c-accent) 60%, transparent); outline: none; }
+input.color-hue { background: linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); }
+input.color-hue::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 9999px; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.35); }
+input.color-hue::-moz-range-thumb { height: 14px; width: 14px; border-radius: 9999px; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
+.sheet-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }

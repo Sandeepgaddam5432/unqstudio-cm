@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowRight, Search, Trash2, Upload } from 'lucide-react'
-import { Button, Input, Modal, Segmented, Switch, Textarea } from '@/ui/primitives'
+import { Button, Input, Modal, Segmented, SelectSheet, Switch, Textarea } from '@/ui/primitives'
 import { LANGUAGES, PERM_ROWS, usePrefs, type Perm } from '@/store/prefs'
 import { deleteSkill, listSkills, parseSkillFile, saveSkill } from '@/core/skills'
 import { useApp } from '@/store/app'
@@ -57,7 +57,7 @@ export function AccountSettings() {
   const p = usePrefs()
   const [q, setQ] = useState('')
   const items: Item[] = [
-    { id: 'language', group: 'Preferences', label: 'Language', keywords: 'locale translate', render: () => <Line label="Language" desc="Interface language preference."><select aria-label="Language" value={p.language} onChange={(e) => { p.set({ language: e.target.value }) }} className="h-9 rounded-lg border border-line bg-primary px-2 text-[13px]">{LANGUAGES.map((l) => <option key={l}>{l}</option>)}</select></Line> },
+    { id: 'language', group: 'Preferences', label: 'Language', keywords: 'locale translate', render: () => <Line label="Language" desc="Interface language preference."><SelectSheet aria-label="Language" title="Language" value={p.language} onChange={(v) => { p.set({ language: v }) }} className="w-44" options={LANGUAGES.map((l) => ({ value: l, label: l }))} /></Line> },
     { id: 'suggestions', group: 'Preferences', label: 'Chat suggestions', keywords: 'follow up chips', render: () => <Line label="Chat suggestions" desc="Show follow-up chips after a build."><Switch checked={p.suggestions} onChange={(v) => p.set({ suggestions: v })} label="Chat suggestions" /></Line> },
     { id: 'tips', group: 'Preferences', label: 'Tips & tricks', keywords: 'hints help', render: () => <Line label="Tips & tricks" desc="Occasional hints about shortcuts and features."><Switch checked={p.tips} onChange={(v) => p.set({ tips: v })} label="Tips and tricks" /></Line> },
     { id: 'queue', group: 'Preferences', label: 'Message queue', keywords: 'busy agent queue', render: () => <Line label="Message queue" desc="Messages sent while the agent is busy are queued and run next."><Switch checked={p.messageQueue} onChange={(v) => p.set({ messageQueue: v })} label="Message queue" /></Line> },

@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.2.0 (in progress)
+- **V3.2-M1** Glass design system, indigo accent, custom SelectSheet + Color Studio, haptics opt-in.
+
 ## v3.1.0
 - Full release: OKLCH depth system, Aurora backgrounds, native mobile nav, swipe workspace, Timeline | + Changes, Account/Connectors/Workspace settings. 147-check E2E.
 

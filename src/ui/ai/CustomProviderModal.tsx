@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, Plus, RefreshCw, Trash2, X } from 'lucide-react'
-import { Badge, Button, Input, Label, Modal, Spinner } from '@/ui/primitives'
+import { Badge, ColorField, Button, Input, Label, Modal, Spinner } from '@/ui/primitives'
 import { BrandGlyph } from '@/ui/icons/ProviderIcon'
 import type { BrandKey } from '@/ui/icons/brandSvgs'
 import { useCustomProviders } from '@/store/customProviders'
@@ -94,7 +94,7 @@ function Form({ editing, onClose }: { editing: ReturnType<typeof useCustomProvid
             </div>
             <div className="mt-1.5 flex items-center gap-1">
               {ACCENT_PRESETS.map((c) => <button key={c} aria-label={`Accent ${c}`} onClick={() => setAccent(c)} className={cn('h-4 w-4 rounded-full border', accent === c ? 'ring-2 ring-fg/40 ring-offset-1 ring-offset-panel' : 'border-line')} style={{ background: c }} />)}
-              <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} aria-label="Custom accent colour" className="ml-1 h-5 w-6 cursor-pointer rounded border border-line bg-transparent p-0" />
+              <ColorField label="Custom accent colour" value={accent} onChange={setAccent} showValue={false} />
             </div>
           </div>
         </div>

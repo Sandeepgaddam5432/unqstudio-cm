@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Palette, RotateCcw, Search } from 'lucide-react'
-import { Button, Dropdown, Input, Label, Segmented } from '@/ui/primitives'
+import { Button, ColorField, Dropdown, Input, Label, Segmented } from '@/ui/primitives'
 import { useVfsVersion, useWorkspace } from '@/store/workspace'
 import { useSettings } from '@/store/settings'
 import { DEFAULT_THEME, themeBlock, type ThemeTokens } from '@/core/vfs/scaffold'
@@ -77,7 +77,7 @@ export function ThemeStudio() {
         <div className="space-y-1.5">
           {COLORS.map(([k, label]) => (
             <div key={k} className="flex items-center gap-2">
-              <input type="color" value={val(k)} onChange={(e) => setColor(k, e.target.value)} className="h-7 w-9 shrink-0 cursor-pointer rounded-md border border-line bg-subtle p-0.5" aria-label={label} />
+              <ColorField label={label} value={val(k)} onChange={(hex) => setColor(k, hex)} showValue={false} />
               <span className="flex-1 text-xs text-muted">{label}</span>
               <Input value={val(k)} onChange={(e) => /^#[0-9a-f]{6}$/i.test(e.target.value) && setColor(k, e.target.value)} className="h-7 w-24 px-2 font-mono text-[11px]" aria-label={`${label} hex`} />
             </div>

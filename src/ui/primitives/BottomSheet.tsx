@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { haptic } from '@/lib/haptics'
 import { rubberBand, shouldDismiss, velocityOf, type DragSample } from './sheetPhysics'
 
 export interface BottomSheetProps {
@@ -68,19 +67,19 @@ export function BottomSheet({ open, onClose, title, description, children, foote
     setDragging(false)
     const delta = e.clientY - startY.current
     const h = panel.current?.offsetHeight || 400
-    if (shouldDismiss(delta, velocityOf(samples.current), h)) { haptic('tap'); dismiss() } else setDy(0)
+    if (shouldDismiss(delta, velocityOf(samples.current), h)) dismiss(); else setDy(0)
   }
   const h = panel.current?.offsetHeight || 500
   const fade = closing ? 0 : Math.max(0, 1 - Math.max(0, dy) / h)
 
   return createPortal(
     <div className="fixed inset-0 z-[90] flex flex-col justify-end" role="dialog" aria-modal={!modeless} aria-label={label ?? (typeof title === 'string' ? title : 'Sheet')} data-bottom-sheet style={modeless ? { pointerEvents: 'none' } : undefined}>
-      {!modeless && <div data-sheet-backdrop className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-150" style={{ opacity: fade }} onClick={dismiss} />}
+      {!modeless && <div data-sheet-backdrop className="absolute inset-0 bg-black/35 backdrop-blur-[3px] transition-opacity duration-150" style={{ opacity: fade }} onClick={dismiss} />}
       <div
         ref={panel}
         data-sheet-panel
         style={{ transform: `translateY(${dy}px)`, transition: dragging ? 'none' : 'transform 220ms cubic-bezier(.32,.72,0,1)', pointerEvents: 'auto' }}
-        className={cn('animate-sheet relative flex min-h-0 flex-col overflow-hidden rounded-t-3xl border border-b-0 border-line bg-panel shadow-pop', modeless ? 'max-h-[46dvh]' : tall ? 'h-[92dvh]' : 'max-h-[88dvh]', className)}
+        className={cn('animate-sheet relative flex min-h-0 flex-col overflow-hidden glass-sheet rounded-t-3xl', modeless ? 'max-h-[46dvh]' : tall ? 'h-[92dvh]' : 'max-h-[88dvh]', className)}
       >
         <div onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-sheet-handle style={{ touchAction: 'none' }} className="shrink-0 cursor-grab select-none active:cursor-grabbing">
           <div className="flex h-6 items-center justify-center"><span className="h-1.5 w-10 rounded-full bg-line-strong" /></div>

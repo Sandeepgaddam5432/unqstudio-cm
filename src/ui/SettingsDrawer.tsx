@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { AppearancePanel } from '@/ui/settings/AppearancePanel'
 import { AccountTab } from '@/ui/settings/AccountTab'
-import { Drawer, Logo, Section, Segmented, Switch } from '@/ui/primitives'
+import { Drawer, Logo, Section, Segmented, SelectSheet, Switch } from '@/ui/primitives'
 import { useApp } from '@/store/app'
 import { useSettings } from '@/store/settings'
 import { ProvidersTab } from '@/ui/settings/ProvidersTab'
@@ -79,9 +79,7 @@ export default function SettingsDrawer() {
           ))}
         </nav>
         <div className="shrink-0 border-b border-line p-2 md:hidden">
-          <select value={active.id} onChange={(e) => openSettings(e.target.value)} aria-label="Settings section" className="h-9 w-full rounded-lg border border-line bg-subtle px-2.5 text-[13px] text-fg">
-            {SETTINGS_GROUPS.map((g) => <optgroup key={g.label} label={g.label}>{g.items.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>)}
-          </select>
+          <SelectSheet value={active.id} onChange={(v) => openSettings(v)} aria-label="Settings section" title="Settings" className="w-full" options={SETTINGS_GROUPS.flatMap((g) => g.items.map((t) => ({ value: t.id, label: t.label, group: g.label })))} />
         </div>
         <div className="min-h-0 min-w-0 flex-1 overflow-auto" data-settings-panel>{active.render()}</div>
       </div>

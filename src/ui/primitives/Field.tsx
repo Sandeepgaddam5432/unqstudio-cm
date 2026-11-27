@@ -1,4 +1,5 @@
-import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
+import { Children, type ChangeEvent, forwardRef, isValidElement, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
+import { SelectSheet, type SelectOption } from './SelectSheet'
 import { cn } from '@/lib/cn'
 
 const base =
@@ -12,12 +13,24 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
   return <textarea ref={ref} className={cn(base, 'py-2 leading-relaxed resize-none', className)} {...p} />
 })
 
-export function Select({ className, children, ...p }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select className={cn(base, 'h-9 pr-8 appearance-none bg-no-repeat', className)} {...p}>
-      {children}
-    </select>
-  )
+/**
+ * Custom select (no native OS dropdown). API-compatible with the old `<select>` wrapper: pass `<option>` / `<optgroup>`
+ * children and an `onChange` that reads `e.target.value`.
+ */
+export function Select({ className, children, value, onChange, disabled, 'aria-label': ariaLabel }: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'value'> & { value?: string | number | readonly string[] }) {
+  const options: SelectOption[] = []
+  const walk = (nodes: ReactNode, group?: string) => Children.forEach(nodes, (n) => {
+    if (!isValidElement(n)) return
+    const props = n.props as { value?: string | number; children?: ReactNode; label?: string; disabled?: boolean }
+    if (n.type === 'optgroup') walk(props.children, props.label)
+    else if (n.type === 'option') {
+      const label = typeof props.children === 'string' || typeof props.children === 'number' ? String(props.children) : props.children
+      options.push({ value: String(props.value ?? label), label, group, disabled: props.disabled })
+    }
+  })
+  walk(children)
+  return <SelectSheet className={className} disabled={disabled} aria-label={ariaLabel ?? 'Select'} value={String(value ?? '')} options={options}
+    onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)} />
 }
 
 export function Label({ children, hint, className }: { children: ReactNode; hint?: ReactNode; className?: string }) {

@@ -13,7 +13,7 @@ const TABS: { id: AppView; label: string; icon: typeof HomeIcon }[] = [
 export function MobileBottomNav({ view }: { view: AppView }) {
   return (
     <nav aria-label="Main" data-mobile-bottom-nav className="pointer-events-none fixed inset-x-0 z-40 flex justify-center" style={{ bottom: 'calc(var(--sab, 0px) + 12px)' }}>
-      <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-primary/90 p-1 shadow-floating backdrop-blur-md">
+      <div className="pointer-events-auto flex items-center gap-1 glass-pill p-1">
         {TABS.map(({ id, label, icon: Icon }) => {
           const on = view === id
           return (

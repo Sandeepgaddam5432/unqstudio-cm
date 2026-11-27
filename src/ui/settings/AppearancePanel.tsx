@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { haptic, hapticsEnabled, hapticsSupported, setHapticsEnabled } from '@/lib/haptics'
-import { Section, Segmented, Switch } from '@/ui/primitives'
+import { ColorField, Section, Segmented, Switch } from '@/ui/primitives'
 import { useApp, type AccentPreset, type ThemePref } from '@/store/app'
 import { BG_PRESETS, resolvePreset, useTheme, type BgPresetId } from '@/store/theme'
 import { cn } from '@/lib/cn'
@@ -35,7 +35,7 @@ export function AppearancePanel({ embedded }: { embedded?: boolean }) {
   const [haptics, setHaptics] = useState(hapticsEnabled())
   return (
     <div className={embedded ? '' : 'p-5'} data-appearance-panel>
-      <Section title="Appearance" description="Warm layered OKLCH surfaces. Follow the system or pick a mode.">
+      <Section title="Appearance" description="Refined glass surfaces on a calm OKLCH ladder. Follow the system or pick a mode.">
         <Segmented<ThemePref> value={theme} onChange={setMode} items={[{ id: 'system', label: 'System' }, { id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }]} />
       </Section>
       <Section title="Dashboard background" description="The Aurora scene behind the Home headline. Saved on this device.">
@@ -44,15 +44,15 @@ export function AppearancePanel({ embedded }: { embedded?: boolean }) {
           <Swatch id="custom" label="Custom" />
         </div>
         <div className="mt-3 flex items-center gap-3 text-sm text-fg-secondary" data-custom-bg>
-          <label className="flex items-center gap-2">Colour A<input type="color" aria-label="Custom colour A" value={custom.a} onChange={(e) => setCustom({ a: e.target.value })} className="h-8 w-10 cursor-pointer rounded-md border border-line bg-transparent" /></label>
-          <label className="flex items-center gap-2">Colour B<input type="color" aria-label="Custom colour B" value={custom.b} onChange={(e) => setCustom({ b: e.target.value })} className="h-8 w-10 cursor-pointer rounded-md border border-line bg-transparent" /></label>
+          <div className="flex items-center gap-2">Colour A<ColorField label="Custom colour A" value={custom.a} onChange={(hex) => setCustom({ a: hex })} /></div>
+          <div className="flex items-center gap-2">Colour B<ColorField label="Custom colour B" value={custom.b} onChange={(hex) => setCustom({ b: hex })} /></div>
         </div>
       </Section>
-      <Section title="Accent" description="Signature keeps the ember accent in chat chrome. Lovable Warm is a soft ambient orange.">
+      <Section title="Accent" description="Signature is a refined indigo. Warm is an optional soft amber ambience.">
         <Segmented<AccentPreset> value={accent} onChange={setAccent} items={[{ id: 'signature', label: 'Signature' }, { id: 'warm', label: 'Warm' }]} />
       </Section>
-      <Section title="Haptics" description={hapticsSupported() ? 'Subtle vibration on tab switch, send, restore, build complete and errors.' : 'Vibration is not available on this device or browser.'}>
-        <label className="flex items-center gap-3 text-sm"><Switch checked={haptics} onChange={(v) => { setHaptics(v); setHapticsEnabled(v); if (v) haptic('success') }} />Tactile feedback</label>
+      <Section title="Haptics" description={hapticsSupported() ? 'Off by default. When enabled: subtle vibration on send, restore, build complete and errors.' : 'Vibration is not available on this device or browser.'}>
+        <label className="flex items-center gap-3 text-sm"><Switch checked={haptics} onChange={(v) => { setHaptics(v); setHapticsEnabled(v); if (v) haptic('success') }} />Tactile feedback <span className="t-meta text-fg-tertiary">(opt-in)</span></label>
       </Section>
     </div>
   )

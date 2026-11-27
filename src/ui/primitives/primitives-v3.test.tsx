@@ -63,6 +63,9 @@ describe('haptics', () => {
   it('vibrates with the right pattern, honours the toggle and swallows errors', () => {
     const v = vi.fn(() => true)
     Object.defineProperty(navigator, 'vibrate', { value: v, configurable: true })
+    expect(hapticsEnabled()).toBe(false)
+    expect(haptic('send')).toBe(false)
+    setHapticsEnabled(true)
     expect(haptic('send')).toBe(true)
     expect(v).toHaveBeenCalledWith(HAPTIC_PATTERNS.send)
     setHapticsEnabled(false)

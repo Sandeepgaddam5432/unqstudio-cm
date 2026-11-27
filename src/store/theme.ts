@@ -6,14 +6,14 @@ export type BgPresetId = 'classic' | 'horizon' | 'peach' | 'mono' | 'custom'
 export interface BgPreset { id: BgPresetId; label: string; a: string; b: string; c: string }
 
 export const BG_PRESETS: BgPreset[] = [
-  { id: 'classic', label: 'Classic Aurora', a: '#7c5cff', b: '#ff7a45', c: '#22c3a6' },
-  { id: 'horizon', label: 'Soft Horizon', a: '#7cc4ff', b: '#b9a4ff', c: '#ffc2d9' },
-  { id: 'peach', label: 'Warm Peach', a: '#ffb38a', b: '#ff8f70', c: '#ffd9a8' },
+  { id: 'classic', label: 'Classic Aurora', a: '#6d7bff', b: '#a78bfa', c: '#38bdf8' },
+  { id: 'horizon', label: 'Soft Horizon', a: '#7cc4ff', b: '#b6a8ff', c: '#9ee7d7' },
+  { id: 'peach', label: 'Warm Peach', a: '#ffcfa3', b: '#ffb98f', c: '#ffe6b8' },
   { id: 'mono', label: 'Minimal Monochrome', a: '#a1a1aa', b: '#d4d4d8', c: '#71717a' },
 ]
 
 export interface CustomBg { a: string; b: string }
-export const DEFAULT_CUSTOM: CustomBg = { a: '#3b82f6', b: '#ec4899' }
+export const DEFAULT_CUSTOM: CustomBg = { a: '#4f7cff', b: '#8b5cf6' }
 const K_MODE = 'unq.theme.mode', K_BG = 'unq.theme.bg', K_CUSTOM = 'unq.theme.custom'
 const HEX = /^#[0-9a-f]{6}$/i
 

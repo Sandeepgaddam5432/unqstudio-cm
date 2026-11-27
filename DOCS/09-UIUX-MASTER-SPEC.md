@@ -66,3 +66,12 @@ hover `150ms ease-out` · spatial `200ms cubic-bezier(.2,0,0,1)` · floating `25
 
 ## 10. Invariants carried over from v3.0
 4-source model catalog; zero upstream-directory UI leaks; 3-layer zero-broken-icon system; 4-protocol custom providers; AES-GCM vault; VFS locks/checkpoints; `esbuild-wasm` runtime; multi-step agent loop; OAuth/cloud sync; `VITE_SITE_URL` SEO/AEO. Layout rules from `AGENTS.md` (min-w-0, `h-[100dvh]` grid, Floating UI popovers) still apply.
+
+## 11. v3.2 — Glass, gestures, clean markdown, full-colour icons, real previews, full-stack
+All v3.2 fixes, by milestone (read before touching UI):
+
+### V3.2-M1
+- **Glass tokens** `--glass-bg|--glass-bg-strong|--glass-border|--glass-hi|--glass-shadow` (light + dark). Utilities `.glass` `.glass-pop` `.glass-sheet` `.glass-pill` `.glass-field` `.composer-float`.
+- **Accent** indigo `#5b5bd6` (dark `#8f8cff`); `data-accent=warm` is an opt-in amber ambience only.
+- **No native controls:** `SelectSheet` (popover ≥640px, BottomSheet <640px) and `ColorField`/`ColorStudio` (swatches, SV pad, hue, hex/OKLCH text, contrast chip). `Select` in `Field.tsx` is an `<option>`-compatible shim over SelectSheet.
+- **Haptics** default OFF, toggle in Appearance → Haptics (`unq.haptics`).

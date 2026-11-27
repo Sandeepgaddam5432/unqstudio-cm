@@ -263,4 +263,7 @@ Object.assign(PURPOSES, {
   'src/ui/settings/AccountSettings.tsx': 'Searchable grouped Account settings: Preferences, Personalization (Instructions/Skills/Memory), Permissions.',
   'src/ui/settings/ConnectorsHub.tsx': 'Categorised searchable Connectors hub with Add custom (providers / HTTP MCP).',
   'src/ui/settings/WorkspaceSettings.tsx': 'Searchable collapsible Workspace settings (Customization, Build & deploy, Security).',
+  "src/lib/color.ts": "Pure colour maths (hex/HSV/OKLCH conversion, WCAG contrast) for the Color Studio.",
+  "src/ui/primitives/SelectSheet.tsx": "Custom glassy select: Floating-UI popover (desktop) / bottom sheet (phone). Replaces every native <select>.",
+  "src/ui/primitives/ColorStudio.tsx": "Color Studio (swatches, SV pad, hue slider, hex/OKLCH input, contrast preview) + ColorField trigger. Replaces <input type=color>.",
 })

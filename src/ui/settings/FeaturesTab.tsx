@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plug, Plus, Trash2 } from 'lucide-react'
-import { Badge, Button, Input, Label, Section, Spinner, Switch, Textarea } from '@/ui/primitives'
+import { Badge, Button, ColorField, Input, Label, Section, SelectSheet, Spinner, Switch, Textarea } from '@/ui/primitives'
 import { useSettings, type FeatureFlags } from '@/store/settings'
 import { parseRegistry } from '@/core/plugins'
 import { probeMcp, type McpProbe } from '@/core/ai/mcp'
@@ -54,7 +54,7 @@ export function FeaturesTab() {
         <div className="space-y-2">{reg.themes.map((t) => <div key={t.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2 text-xs"><span className="h-4 w-4 rounded" style={{ background: t.accent }} /><span className="flex-1">{t.name} <span className="text-faint">· {t.font} · r{t.radius}</span></span><Button size="icon-sm" variant="ghost" aria-label="Remove theme" onClick={() => setReg({ themes: reg.themes.filter((x) => x.id !== t.id) })}><Trash2 size={13} /></Button></div>)}</div>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Input placeholder="Name" value={theme.name} onChange={(e) => setTheme({ ...theme, name: e.target.value })} className="col-span-2 h-8 text-xs" />
-          {(['accent', 'bg', 'surface', 'fg'] as const).map((k) => <label key={k} className="flex items-center gap-2 text-[11px] text-muted"><input type="color" value={theme[k]} onChange={(e) => setTheme({ ...theme, [k]: e.target.value })} className="h-7 w-9 rounded border border-line bg-subtle p-0.5" />{k}</label>)}
+          {(['accent', 'bg', 'surface', 'fg'] as const).map((k) => <div key={k} className="flex items-center gap-2 text-[11px] text-muted"><ColorField label={`Theme ${k} colour`} value={theme[k]} onChange={(hex) => setTheme({ ...theme, [k]: hex })} showValue={false} />{k}</div>)}
           <Input placeholder="Font" value={theme.font} onChange={(e) => setTheme({ ...theme, font: e.target.value })} className="h-8 text-xs" />
           <Input type="number" placeholder="Radius" value={theme.radius} onChange={(e) => setTheme({ ...theme, radius: Number(e.target.value) })} className="h-8 text-xs" />
           <Button size="sm" disabled={!theme.name.trim()} onClick={() => { setReg({ themes: [...reg.themes, { id: uid('th_'), ...theme }] }); setTheme({ ...theme, name: '' }) }}><Plus size={13} />Add theme</Button>
@@ -94,7 +94,7 @@ export function FeaturesTab() {
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <Input placeholder="Name" value={mcp.name} onChange={(e) => setMcp({ ...mcp, name: e.target.value })} className="h-8 text-xs" />
           <Input placeholder="https://mcp.example.com/mcp" value={mcp.url} onChange={(e) => setMcp({ ...mcp, url: e.target.value })} className="h-8 text-xs" />
-          <select value={mcp.transport} onChange={(e) => setMcp({ ...mcp, transport: e.target.value as 'http' | 'sse' })} className="h-8 rounded-lg border border-line bg-subtle px-2 text-xs" aria-label="Transport"><option value="http">Streamable HTTP</option><option value="sse">Legacy SSE</option></select>
+          <SelectSheet value={mcp.transport} onChange={(v) => setMcp({ ...mcp, transport: v as 'http' | 'sse' })} aria-label="Transport" className="h-8 w-44" options={[{ value: 'http', label: 'Streamable HTTP' }, { value: 'sse', label: 'Legacy SSE' }]} />
           <Input placeholder='Headers JSON, e.g. {"Authorization":"Bearer …"}' value={mcp.headers} onChange={(e) => setMcp({ ...mcp, headers: e.target.value })} className="h-8 text-xs" />
         </div>
         <Button size="sm" className="mt-2" disabled={!mcp.url} onClick={addMcp}><Plus size={13} />Add connector</Button>

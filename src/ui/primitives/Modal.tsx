@@ -44,7 +44,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         role="dialog"
         aria-modal="true"
         className={cn(
-          'animate-pop relative flex max-h-[92dvh] w-full flex-col rounded-t-2xl border border-line bg-panel shadow-pop sm:rounded-2xl',
+          'animate-pop relative flex max-h-[92dvh] w-full flex-col rounded-t-2xl glass-pop sm:rounded-2xl',
           sizes[size],
         )}
       >
@@ -79,7 +79,7 @@ export function Drawer({ open, onClose, title, children, width = 760 }: { open: 
         role="dialog"
         aria-modal="true"
         style={{ width: `min(${width}px, 100vw)` }}
-        className="animate-slide relative flex h-full flex-col border-l border-line bg-panel shadow-pop"
+        className="animate-slide relative flex h-full flex-col glass-pop rounded-none border-y-0 border-r-0"
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-line px-4">
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>

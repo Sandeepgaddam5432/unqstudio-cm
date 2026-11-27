@@ -206,3 +206,11 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - Fresh `DOCS/screenshots/v31-*.png` inspected; visual fixes: preview-bar pills no longer wrap, launchpad regained the template chip row.
 - Baseline repair: upstream commit `fdcf855` had overwritten `src/lib/qrcode.ts` with its test file; the implementation was restored and the jsqr-free test moved to `qrcode.test.ts`.
 - Release 3.1.0.
+
+### V3.2-M1 — Glass theme, custom Select + Color Studio, haptics opt-in
+- New glass design system in `src/index.css` (`.glass`, `.glass-pop`, `.glass-sheet`, `.glass-pill`, `.glass-field`: `blur(18px) saturate(160%)`, hairline luminous `oklch` border, inner top highlight) applied to composers, bottom-nav pill, modals/drawers, bottom sheets and popovers in Light + Dark.
+- Accent moved from ember-orange to refined indigo (`#5b5bd6` / dark `#8f8cff`); neutral ramp tinted to hue 275; Aurora presets re-tuned (no pink/orange clashes); default custom gradient is blue→violet.
+- `SelectSheet` replaces native `<select>` (Settings category switcher, Language, MCP transport, Inspector weight, Git tab via API-compatible `Select`).
+- `ColorStudio`/`ColorField` replace every `<input type=color>` (Appearance, Theme Studio, Custom Provider, Inspector, Features).
+- Haptics are strictly opt-in and OFF by default (`unq.haptics === '1'`); sheet drag no longer vibrates.
+- ADR-020: native form controls are banned in UI code; use SelectSheet / ColorField.
