@@ -187,3 +187,8 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - Mobile top bar: 44px Close (X), centred project pill, 44px `›/‹` arrow. `MobilePreviewBar`: `‹ Chat`, `Click to add`, `…` overflow (Refresh, Change page, History, Share, Social & search, Preview in new tab), blue Publish.
 - Desktop: `SplitPane` gains `minPx/maxPx/inset` (chat rail 30%, 320–768px, 8px hit seam); preview lives in an 8px `--bg-depth` gutter with 16px radius, hairline border and xl shadow; top bar segmented Preview | Code and 32px blue Publish.
 - Chat: user bubble `24px/4px` radius on `bg-secondary`; AI prose `16/22 max-w-788`; follow-up chips are a 32px horizontal scroller above the composer.
+
+### V3.1-M4 — Agent transparency (Timeline | + Changes)
+- `core/ai/activity.ts` (pure, tested): Timeline (Thought for Xs, Read, Created/Edited/Deleted, Typecheck / Build, Questions answered), Changes (applied ops with before/after) and the `Worked for Xm Xs · N steps · N tokens` summary.
+- `ui/chat/ActivityInspector.tsx` opened via `useApp.openActivity(id, tab)` from the quiet `Used X tools ›` row and the Version card's **Details** button; Changes cards expand into a syntax-coloured, line-numbered green/red diff with View file + copy path.
+- Version card restyled (`bg-primary rounded-xl 1px --border-depth`) with Details · Preview · Restore.

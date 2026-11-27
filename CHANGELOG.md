@@ -1,5 +1,7 @@
 # Changelog
 
+- **M4** Timeline | + Changes inspector, Used X tools row, Details/Preview version cards.
+
 - **M3** Swipe scroll-snap workspace, mobile preview bar, inset desktop canvas, bubble polish.
 
 - **M2** Native mobile nav pill, optical-centre launchpad, Projects & Chats views, skeleton loaders.

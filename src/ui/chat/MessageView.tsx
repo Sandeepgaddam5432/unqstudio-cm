@@ -71,6 +71,15 @@ function OpCard({ op, msgId }: { op: OpRecord; msgId: string }) {
   )
 }
 
+function UsedToolsRow({ m }: { m: ChatMessage }) {
+  const n = (m.ops ?? []).filter((o) => o.status !== 'skipped-locked').length + 1
+  return (
+    <button data-used-tools onClick={() => useApp.getState().openActivity(m.id, 'timeline')} className="press my-1 flex min-h-[32px] items-center gap-1 rounded-full text-[13px] text-fg-tertiary hover:text-fg-primary">
+      Used {n} tool{n === 1 ? '' : 's'}<ChevronRight size={14} />
+    </button>
+  )
+}
+
 export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) {
   const { retry, undoTurn, forkAt, approveOps, rejectOps, send, busy } = useChat()
   const agentSteps = useChat((s) => (s.agent?.originId === m.id ? s.agent.steps : undefined))
@@ -100,6 +109,7 @@ export function MessageView({ m, isLast }: { m: ChatMessage; isLast: boolean }) 
         {m.mode !== 'build' && <Badge tone="accent">{m.mode}</Badge>}
       </div>
       {(m.streaming || ops.length > 0) && <BuildActivityCard m={m} agent={agentSteps} />}
+      {!m.streaming && ops.length > 0 && <UsedToolsRow m={m} />}
       {m.parts?.map((p, i) =>
         p.kind === 'text' ? <Markdown key={i} text={p.text ?? ''} />
         : p.kind === 'think' ? <ThinkBlock key={i} text={p.text ?? ''} done={p.done} />

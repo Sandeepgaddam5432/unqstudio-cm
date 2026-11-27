@@ -9,6 +9,7 @@ import { ProjectSwitcher } from './ProjectSwitcher'
 import { useVisualViewport } from '@/ui/hooks/useVisualViewport'
 import { PublishSheet } from '@/ui/publish/PublishSheet'
 import { ProjectSettings } from '@/ui/project/ProjectSettings'
+import { ActivityInspector } from '@/ui/chat/ActivityInspector'
 import { WorkspaceBody } from './Body'
 import { useChatController } from '@/ui/chat/useChatController'
 
@@ -44,6 +45,7 @@ export default function Workspace({ projectId }: { projectId: string }) {
       <PublishSheet />
       <ProjectSettings />
       <ProjectSwitcher />
+      <ActivityInspector />
     </div>
   )
 }

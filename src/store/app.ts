@@ -6,6 +6,7 @@ export type ThemePref = 'system' | 'dark' | 'light'
 export type WorkspaceMode = 'studio' | 'code'
 export type AccentPreset = 'signature' | 'warm'
 
+export interface ActivityTarget { id: string; tab: 'timeline' | 'changes' }
 export type AppView = 'home' | 'projects' | 'chats'
 export type SheetId = 'workspace' | 'account' | 'accountSettings' | 'connectors' | 'workspaceSettings' | 'appearance'
 
@@ -29,6 +30,9 @@ interface AppState {
   projectSettingsTab: string
   publishTab: string | null
   openPublish: (tab?: string) => void
+  activity: ActivityTarget | null
+  openActivity: (id: string, tab?: 'timeline' | 'changes') => void
+  closeActivity: () => void
   sheet: SheetId | null
   openSheet: (s: SheetId) => void
   closeSheet: () => void
@@ -79,6 +83,9 @@ export const useApp = create<AppState>()(
       projectSettingsOpen: false,
       projectSettingsTab: 'overview',
       publishTab: null,
+      activity: null,
+      openActivity: (id, tab = 'timeline') => set({ activity: { id, tab } }),
+      closeActivity: () => set({ activity: null }),
       sheet: null,
       openSheet: (sheet) => set({ sheet }),
       closeSheet: () => set({ sheet: null }),

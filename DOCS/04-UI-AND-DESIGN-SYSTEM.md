@@ -109,3 +109,6 @@ Routes: `#/` Home, `#/projects`, `#/chats`, `#/p/:id`. Phones get `MobileBottomN
 
 ## v3.1 workspace (M3)
 Mobile: `[data-snap-strip]` (`scroll-snap-type: x mandatory`, panes `chat`/`preview`). Desktop: `SplitPane inset minPx=320 maxPx=768` with `[data-inset-frame]`.
+
+## v3.1 transparency (M4)
+`useApp.activity` = `{id, tab}` drives `ActivityInspector` (`[data-activity-inspector]`, segmented Timeline | + Changes, `[data-diff-line=add|del|ctx]`). Entry points: `[data-used-tools]`, `[data-version-details]`.

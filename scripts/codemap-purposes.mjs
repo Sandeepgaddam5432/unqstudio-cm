@@ -252,4 +252,7 @@ Object.assign(PURPOSES, {
   'src/lib/chatFilters.test.ts': 'Unit tests for chat filters and unread markers.',
   'src/store/app-routes.test.ts': 'Unit tests for hash routing (home / projects / chats / project).',
   'src/ui/workspace/MobilePreviewBar.tsx': 'Mobile Preview floating bottom bar: Chat back pill, Click to add visual-edit toggle, overflow menu, blue Publish.',
+  'src/core/ai/activity.ts': 'Derives the agent Timeline, per-file Changes and summary of one assistant turn from persisted message data, plus a tiny diff syntax tokenizer.',
+  'src/core/ai/activity.test.ts': 'Unit tests for turn activity derivation and the line tokenizer.',
+  'src/ui/chat/ActivityInspector.tsx': 'Full-height Timeline | + Changes inspector (mobile sheet / desktop drawer) with expandable steps and green/red line-numbered diffs.',
 })
