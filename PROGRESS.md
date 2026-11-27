@@ -29,3 +29,7 @@
 | V3.2-M5 Full-colour Connectors Hub, custom connectors, Supabase full-stack engine | ✅ done |
 
 Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks. Unit tests need Node ≥ 22.
+
+## v3.3.0 — True Lovable mobile UX (M1–M6)
+- [x] M1 single-viewport Home + one FAB per tab · [x] M2 SwipePager + springs · [x] M3 model selector overhaul · [x] M4 Home→Chat fix, hammer removed · [x] M5 CORS proxy + URL normalisation · [x] M6 e2e (CDP touch) + docs/screenshots.
+- Gates: verify:docs · tsc · lint · vitest · build green. e2e: 173/175 — the 2 failures (desktop "Project settings" click timeout, OKLCH ladder token #7) fail identically on the pre-3.3 commit in this sandbox.

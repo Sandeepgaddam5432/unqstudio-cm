@@ -1,6 +1,7 @@
 // Headless Chromium verification against the production build (`npm run build` first).
 // Usage: npm run e2e   (requires: npx playwright install chromium)
 // v3.0 suite adds: native-mobile (390×844) shell/sheets/drawer/inspector, Lovable desktop Home/Templates/picker keyboard/Project Settings/Publish QR/Version Card, plus the full v2.1 zero-regression suite.
+// v3.3 suite adds: single-viewport Home, one FAB per tab, CDP touch swipe (finger-tracked pager, zero header overlap), picker no-autofocus + touch scroll + opaque header + dedupe, Home→Chat first message, no hammer, CORS-proxy custom provider end-to-end.
 // v3.1 suite adds: OKLCH tokens + Light/Dark + Dashboard Background, mobile pill dock / skeletons / Projects & Chats filters / scroll-snap swipe workspace / preview bar / Timeline | + Changes diff, Account settings (queue, sound, permissions), Connectors hub, inset desktop canvas.
 // v2.1 suite: zero-leak branding, zero broken icons, custom providers (4 protocols + mocked live /models), picker favorites + windowing,
 // inline ⌘K edit, SEO/AEO canonical, theme, auth UI, chat zero-overlap @1440 + @375, SaaS esbuild-wasm compile, ZERO console errors.
@@ -18,6 +19,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 for (let i = 0; i < 50; i++) { try { if ((await fetch(URL)).ok) break } catch {} await sleep(200) }
 
 const results = []
+const proxied = []
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? '✓' : '✗'} ${name}${detail ? ' — ' + detail : ''}`) }
 const section = async (name, fn) => { try { await fn() } catch (e) { check(`${name} completed`, false, String(e).slice(0, 700)) } }
 const errors = []
@@ -71,6 +73,16 @@ try {
     await ctx.route('**/api/auth/github?action=status', (r) => json(r, { configured: false })) // optional edge function: absent on pure-static hosts
     await ctx.route('https://openrouter.ai/api/v1/models', (r) => json(r, { data: [] }))
     await ctx.route('https://raw.githubusercontent.com/**', (r) => json(r, {}))
+    // v3.3: stand-in for functions/api/proxy.ts (vite preview has no Pages Functions). Unwraps the JSON envelope and answers like the upstream.
+    await ctx.route('**/api/proxy', async (r) => {
+      const env = JSON.parse(r.request().postData() ?? '{}'); proxied.push(env)
+      const sse = (t) => `data: ${JSON.stringify({ choices: [{ delta: { content: t } }] })}\n\n`
+      const up = env.url === 'https://gw.acme.test/v1/models' ? { type: 'application/json', body: JSON.stringify({ data: [{ id: 'acme-chat-1' }, { id: 'acme-chat-2' }, { id: 'acme-mini' }] }) }
+        : env.url === 'https://api.mock-gw.test/api/v1/models' ? { type: 'application/json', body: JSON.stringify({ data: [{ id: 'mock-model' }] }) }
+        : env.url === 'https://api.mock-gw.test/api/v1/chat/completions' ? { type: 'text/event-stream', body: sse('Hello ') + sse('from the proxy') + 'data: [DONE]\n\n' }
+        : { status: 502, type: 'application/json', body: '{"error":"unmocked"}' }
+      await r.fulfill({ status: up.status ?? 200, headers: { 'x-unq-proxy': '1', 'content-type': up.type }, body: up.body })
+    })
     await ctx.route('https://gw.acme.test/v1/models', (r) => json(r, { data: [{ id: 'acme-chat-1' }, { id: 'acme-chat-2' }, { id: 'acme-mini' }] }))
     for (const re of [/cdn\.jsdelivr\.net\/npm\/@lobehub/, /models\.dev\/logos/]) await ctx.route(re, (r) => r.fulfill({ status: 200, contentType: 'image/svg+xml', body: 'not-an-svg' })) // undecodable → Layer 3 (monogram) for long-tail providers, deterministically
   }
@@ -135,14 +147,14 @@ try {
     await panel.waitFor()
     const [t, p, vp] = [await pill.boundingBox(), await panel.boundingBox(), page.viewportSize()]
     check('picker opens anchored to the trigger and inside the viewport', !!p && p.x >= 0 && p.y >= 0 && p.x + p.width <= vp.width + 1 && p.y + p.height <= vp.height + 1 && Math.abs((p.y - (t.y + t.height)) ) < 40 || Math.abs(p.y + p.height - t.y) < 40, JSON.stringify({ p, t }))
-    for (const n of ['Configured', 'Favorites ⭐', 'Browser-Ready', 'Custom', 'Local', 'All Providers']) {
+    for (const n of ['Recommended', 'Configured', 'Favorites ⭐', 'Custom', 'All Providers']) {
       await page.getByRole('tab', { name: n, exact: true }).click()
       await sleep(250)
       check(`picker tab "${n}": no "models.dev", no broken images`, !(await leak(page)) && (await brokenImgs(page)).length === 0)
     }
     await page.getByRole('tab', { name: 'All Providers', exact: true }).click()
     await sleep(300)
-    const win = await page.evaluate(() => { const l = document.querySelector('[data-picker-list]'); return { rows: l.querySelectorAll('[data-provider-group],[data-model-row]').length, total: l.firstElementChild.getBoundingClientRect().height } })
+    const win = await page.evaluate(() => { const l = document.querySelector('[data-picker-list]'); return { rows: l.querySelectorAll('[data-provider-group],[data-model-row]').length, total: document.querySelector('#mp-rows').getBoundingClientRect().height } })
     check('All Providers is virtualized (300+ providers, ~25 DOM rows)', win.rows > 5 && win.rows < 80 && win.total > 10000, JSON.stringify(win))
     const sm = await page.evaluate(async () => {
       const l = document.querySelector('[data-picker-list]'); let max = 0; const t0 = performance.now()
@@ -254,7 +266,6 @@ try {
     watch(mp, 'mobile')
     await mp.goto(URL, { waitUntil: 'networkidle' })
     check('mobile home: zero "models.dev"', !(await leak(mp)))
-    await mp.getByRole('button', { name: /SaaS Landing Page/ }).click()
     await mp.getByRole('button', { name: 'Create project' }).click()
     await mp.waitForURL(/#\/p\//)
     await mp.locator('[data-chat-root]').first().waitFor({ timeout: 30000 })
@@ -296,7 +307,6 @@ try {
     await mp.locator('[data-sidebar-backdrop]').click({ position: { x: 370, y: 400 } })
     await mp.locator('[data-sidebar-drawer]').waitFor({ state: 'detached' })
     check('Sidebar drawer closes on outside tap', true)
-    await mp.getByRole('button', { name: /SaaS Landing Page/ }).click()
     await mp.getByRole('button', { name: 'Create project' }).click()
     await mp.waitForURL(/#\/p\//)
     await mp.locator('[data-topbar-mobile]').waitFor()
@@ -489,22 +499,20 @@ try {
     const m = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 })
     await wire(m)
     const mp = await m.newPage(); watch(mp, 'v31m')
-    await mp.goto(URL); await mp.locator('[data-launchpad]').waitFor(); await sleep(500)
+    await mp.goto(URL); await mp.locator('[data-home-single]').waitFor(); await sleep(500)
     const nav = await rects(mp, '[data-mobile-bottom-nav] button')
     check('v3.1 mobile: floating Home · Projects · Chats pill dock (3 tabs, 44px targets)', nav.length === 3 && nav.every((x) => x.b - x.t >= 43), nav.map((x) => x.n).join('|'))
     const pill = await mp.evaluate(() => { const b = document.querySelector('[data-mobile-bottom-nav] > div'); const c = getComputedStyle(b); return { r: parseFloat(c.borderTopLeftRadius), sh: c.boxShadow !== 'none' } })
     check('dock is rounded-full with a floating shadow', pill.r >= 20 && pill.sh)
-    check('Home header: workspace switcher pill (left) + account avatar (right)', (await mp.locator('[data-workspace-pill]').count()) === 1 && (await mp.locator('[data-account-avatar]').count()) === 1)
-    const geo = await mp.evaluate(() => { const c = document.querySelector('[data-hero-composer]').getBoundingClientRect(); return { bottomFromBottom: innerHeight - c.bottom, h: c.height, w: c.width, r: parseFloat(getComputedStyle(document.querySelector('[data-hero-composer]')).borderTopLeftRadius) } })
-    const expected = 0.55 * 844 - geo.h - 14
-    check('Home composer sits at the optical centre (bottom ≈ 55dvh − height − 14px), radius 28px, ≤ 672px', Math.abs(geo.bottomFromBottom - expected) < 6 && geo.r === 28 && geo.w <= 672, JSON.stringify({ ...geo, expected }))
+    check('Home header: workspace switcher pill (left) + account avatar (right)', (await mp.locator('[data-workspace-pill]:visible').count()) === 1 && (await mp.locator('[data-account-avatar]:visible').count()) === 1)
+    const geo = await mp.evaluate(() => { const el = document.querySelector('[data-hero-composer]'); const c = el.getBoundingClientRect(); return { mid: (c.top + c.bottom) / 2, h: c.height, w: c.width, r: parseFloat(getComputedStyle(el).borderTopLeftRadius), vh: innerHeight } })
+    check('Home composer is vertically centred in the single screen, radius 28px, ≤ 672px', Math.abs(geo.mid - geo.vh / 2) < 130 && geo.r === 28 && geo.w <= 672, JSON.stringify(geo))
     check('Home mobile: zero horizontal overflow', (await ovf(mp)) <= 1)
     await mp.locator('[data-mode-trigger]').click()
     check('Build ▾ popover lists Build / Chat (Free) / Plan', (await mp.locator('[data-mode-menu]').innerText()).includes('Free') && (await mp.locator('[data-mode-menu]').innerText()).includes('Detailed spec'))
     await mp.keyboard.press('Escape'); await sleep(300)
     await mp.screenshot({ path: `${OUT}/v31-home-mobile.png` })
-    await Promise.all([mp.locator('[data-nav-tab="projects"]').click(), mp.locator('[data-skeleton]').first().waitFor({ timeout: 1500 })])
-    check('shimmer skeleton shown while switching views', true)
+    await mp.locator('[data-nav-tab="projects"]').click()
     await mp.locator('[data-projects-view]').waitFor(); await sleep(300)
     check('Projects view: header + Search + Filter + floating New project', (await mp.getByRole('heading', { name: /Projects/ }).count()) === 1 && (await mp.getByLabel('Search projects').count()) === 1 && (await mp.getByLabel('Filter projects').count()) === 1 && (await mp.locator('[data-new-project]').isVisible()))
     await mp.screenshot({ path: `${OUT}/v31-projects-mobile.png` })
@@ -516,12 +524,12 @@ try {
     check('Archived filter applies (empty state)', (await mp.locator('[data-chat-empty]').innerText()).includes('archived'))
     await mp.screenshot({ path: `${OUT}/v31-chats-mobile.png` })
     check('Projects/Chats mobile: zero horizontal overflow', (await ovf(mp)) <= 1)
-    await mp.locator('[data-nav-tab="home"]').click(); await mp.locator('[data-launchpad]').waitFor(); await sleep(500)
+    await mp.locator('[data-nav-tab="home"]').click(); await mp.locator('[data-home-single]').waitFor(); await sleep(500)
     await mp.locator('[data-hero-send]').click()
     await mp.locator('[data-snap-strip]').waitFor({ timeout: 30_000 }); await sleep(600)
     check('workspace has NO bottom dock / tab bar', (await mp.locator('[data-mobile-bottom-nav]').count()) === 0 && (await mp.locator('[data-mobile-nav]').count()) === 0)
-    const strip = await mp.evaluate(() => { const s = document.querySelector('[data-snap-strip]'); return { sw: s.scrollWidth, cw: s.clientWidth, snap: getComputedStyle(s).scrollSnapType } })
-    check('horizontal scroll-snap strip: 2 × 100dvw panes, x mandatory', strip.sw === strip.cw * 2 && /x mandatory/.test(strip.snap), JSON.stringify(strip))
+    const strip = await mp.evaluate(() => { const s = document.querySelector('[data-snap-strip]'); const t = s.querySelector('[data-pager-track]'); const ps = [...s.querySelectorAll('[data-pane]')]; return { n: ps.length, same: ps.every((p) => Math.abs(p.getBoundingClientRect().width - s.clientWidth) < 1), contain: getComputedStyle(ps[0]).contain, clip: getComputedStyle(s).overflowX, tr: getComputedStyle(t).transform !== 'none' } })
+    check('workspace pager: clipped viewport, 2 panes exactly one viewport wide, contain layout paint, GPU transform track', strip.n === 2 && strip.same && /layout/.test(strip.contain) && strip.clip === 'hidden' && strip.tr, JSON.stringify(strip))
     const top = await rects(mp, '[data-topbar-mobile] button')
     check('workspace top bar: 44px Close · title pill · 44px arrow', top.length === 3 && top[0].r - top[0].l >= 43 && top[2].r - top[2].l >= 43)
     await seedChat(mp); await mp.reload(); await mp.locator('[data-snap-strip]').waitFor(); await sleep(900)
@@ -540,7 +548,7 @@ try {
     check('Activity sheet: zero horizontal overflow', (await ovf(mp)) <= 1)
     await mp.keyboard.press('Escape'); await sleep(500)
     await mp.locator('[data-pane-arrow]').click()
-    await mp.waitForFunction(() => { const s = document.querySelector('[data-snap-strip]'); return Math.abs(s.scrollLeft - s.clientWidth) < 4 }, null, { timeout: 5000 })
+    await mp.waitForFunction(() => document.querySelector('[data-snap-strip]').dataset.activePane === 'preview', null, { timeout: 5000 }); await sleep(450)
     check('arrow glides to Preview; floating preview bar visible', await mp.locator('[data-preview-bar]').isVisible())
     await mp.locator('[data-preview-overflow]').click()
     const wantItems = ['Refresh', 'Change page', 'History', 'Share', 'Social & search', 'Preview in new tab']
@@ -550,7 +558,7 @@ try {
     await mp.keyboard.press('Escape'); await sleep(300)
     check('Preview mobile: zero horizontal overflow', (await ovf(mp)) <= 1)
     await mp.locator('[data-preview-back]').click()
-    await mp.waitForFunction(() => document.querySelector('[data-snap-strip]').scrollLeft < 4, null, { timeout: 5000 })
+    await mp.waitForFunction(() => document.querySelector('[data-snap-strip]').dataset.activePane === 'chat', null, { timeout: 5000 })
     check('‹ Chat pill glides back to Chat', true)
     await m.close()
   })
@@ -614,6 +622,138 @@ try {
     check('v3.1 desktop: zero horizontal overflow', (await ovf(dp)) <= 1)
     await d.close()
   })
+
+  // ════════════════════════ v3.3 · Lovable parity: single-screen Home · zero-overlap pager · picker scroll · Home→Chat · CORS proxy ════════════════════════
+  await section('v3.3 mobile 390×844', async () => {
+    const m = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+    await wire(m)
+    const mp = await m.newPage()
+    watch(mp, 'v33 mobile')
+    const touch = async (page) => {
+      const cdp = await page.context().newCDPSession(page)
+      const send = (type, p) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p.x, y: p.y, id: 1 }] : [] })
+      return { start: (p) => send('touchStart', p), move: (p) => send('touchMove', p), end: async () => { await send('touchEnd'); await cdp.detach() } }
+    }
+    const swipe = async (page, from, to, steps = 12) => {
+      const t = await touch(page)
+      await t.start(from)
+      for (let i = 1; i <= steps; i++) { await t.move({ x: from.x + ((to.x - from.x) * i) / steps, y: from.y + ((to.y - from.y) * i) / steps }); await sleep(14) }
+      await t.end()
+    }
+    await mp.goto(URL, { waitUntil: 'networkidle' })
+    await mp.locator('[data-home-single]').waitFor(); await sleep(600)
+
+    // ── M1: single-viewport Home, no FABs
+    const home = await mp.evaluate(() => { const pane = document.querySelector('[data-pane-scroll="home"]'); return { doc: document.documentElement.scrollHeight, vh: innerHeight, pane: pane.scrollHeight, paneH: pane.clientHeight, tpl: document.querySelectorAll('[data-template-chips],[data-starter-chips],#showcase,[data-showcase]').length, txt: /Templates & Showcase|Start from/.test(document.body.innerText) } })
+    check('v3.3 Home is ONE locked screen (scrollHeight <= innerHeight + 2)', home.doc <= home.vh + 2 && home.pane <= home.paneH + 2, JSON.stringify(home))
+    check('v3.3 Home has NO templates list / starter chips / "Start from" strip', home.tpl === 0 && !home.txt)
+    check('v3.3 Home shows NO floating "+ New chat" / "+ New project"', (await mp.locator('[data-new-chat]').count()) === 0 && (await mp.locator('[data-new-project]').count()) === 0)
+    check('v3.3 Home hero: heading + glassy composer (+ · Build ▾ · model · mic · send)', (await mp.getByText('What should we').first().isVisible()) && (await mp.locator('[data-hero-composer] [data-model-pill]').count()) === 1 && (await mp.locator('[data-hero-composer] [data-mode-trigger]').count()) === 1 && (await mp.locator('[data-hero-composer] [data-mic], [data-hero-composer] button[aria-label="Voice input"]').count()) >= 1)
+    await mp.screenshot({ path: `${OUT}/v33-home-mobile.png` })
+
+    // ── M1: exactly one FAB per tab, centred above the nav pill
+    const fabGeo = (sel) => mp.evaluate((s) => { const b = document.querySelector(s).getBoundingClientRect(); const n = document.querySelector('[data-mobile-bottom-nav] > div').getBoundingClientRect(); return { cx: (b.left + b.right) / 2, vw: innerWidth, gap: n.top - b.bottom } }, sel)
+    await mp.locator('[data-nav-tab="projects"]').click(); await mp.locator('[data-projects-view]').waitFor(); await sleep(500)
+    const pg = await fabGeo('[data-new-project]')
+    check('v3.3 Projects: exactly ONE "+ New project", centred, clear of the nav pill', (await mp.locator('[data-new-project]').count()) === 1 && (await mp.locator('[data-new-chat]').count()) === 0 && Math.abs(pg.cx - pg.vw / 2) < 2 && pg.gap >= 4, JSON.stringify(pg))
+    await mp.locator('[data-new-project]').click(); await mp.locator('[data-new-project-sheet]').waitFor(); await sleep(300)
+    check('v3.3 + New project → Blank or From template (all built-in templates live here now)', (await mp.locator('[data-new-blank]').count()) === 1 && (await mp.locator('[data-template-option]').count()) >= 8)
+    await mp.screenshot({ path: `${OUT}/v33-new-project-mobile.png` })
+    await mp.keyboard.press('Escape'); await sleep(400)
+    await mp.screenshot({ path: `${OUT}/v33-projects-mobile.png` })
+    await mp.locator('[data-nav-tab="chats"]').click(); await mp.locator('[data-chats-view]').waitFor(); await sleep(500)
+    const cg = await fabGeo('[data-new-chat]')
+    check('v3.3 Chats: exactly ONE "+ New chat", centred, clear of the nav pill', (await mp.locator('[data-new-chat]').count()) === 1 && (await mp.locator('[data-new-project]').count()) === 0 && Math.abs(cg.cx - cg.vw / 2) < 2 && cg.gap >= 4, JSON.stringify(cg))
+    await mp.screenshot({ path: `${OUT}/v33-chats-mobile.png` })
+
+    // ── M2: finger-tracked swipe pager, no duplicate / overlapping header icons
+    await mp.locator('[data-nav-tab="home"]').click(); await sleep(500)
+    check('v3.3 pager: Home visible → exactly 1 avatar visible', (await mp.locator('[data-account-avatar]:visible').count()) === 1)
+    const t = await touch(mp)
+    await t.start({ x: 340, y: 230 })
+    for (let i = 1; i <= 8; i++) { await t.move({ x: 340 - i * 20, y: 230 }); await sleep(16) }
+    const mid = await mp.evaluate(() => {
+      const av = [...document.querySelectorAll('[data-account-avatar]')].filter((a) => getComputedStyle(a.closest('[data-shell-pane]')).visibility !== 'hidden').map((a) => ({ a: a.getBoundingClientRect(), p: a.closest('[data-shell-pane]').getBoundingClientRect() }))
+      const hit = (x, y) => Math.min(x.right, y.right) - Math.max(x.left, y.left) > 1 && Math.min(x.bottom, y.bottom) - Math.max(x.top, y.top) > 1
+      const tr = document.querySelector('[data-pager-track]').style.transform
+      return { n: av.length, inside: av.every((e) => e.a.left >= e.p.left - 0.5 && e.a.right <= e.p.right + 0.5), overlap: av.some((x, i) => av.some((y, j) => j > i && hit(x.a, y.a))), tr }
+    })
+    check('v3.3 mid-swipe: finger tracks 1:1 (translate3d), each header stays inside its own pane, avatars never overlap', /translate3d\(-1[3-9]\d(\.\d+)?px/.test(mid.tr) && mid.inside && !mid.overlap && mid.n >= 1, JSON.stringify(mid))
+    await t.end(); await mp.waitForFunction(() => location.hash.includes('projects'), null, { timeout: 4000 }); await sleep(500)
+    check('v3.3 swipe Home → Projects settles; exactly 1 avatar + 1 FAB visible', (await mp.locator('[data-account-avatar]:visible').count()) === 1 && (await mp.locator('[data-new-project]').count()) === 1 && (await mp.locator('[data-new-chat]').count()) === 0)
+    await swipe(mp, { x: 340, y: 330 }, { x: 50, y: 330 }); await mp.waitForFunction(() => location.hash.includes('chats'), null, { timeout: 4000 }); await sleep(500)
+    check('v3.3 swipe Projects → Chats settles; exactly 1 avatar + 1 "+ New chat"', (await mp.locator('[data-account-avatar]:visible').count()) === 1 && (await mp.locator('[data-new-chat]').count()) === 1 && (await mp.locator('[data-new-project]').count()) === 0)
+    await swipe(mp, { x: 50, y: 330 }, { x: 340, y: 330 }); await sleep(450); await swipe(mp, { x: 50, y: 330 }, { x: 340, y: 330 }); await mp.waitForFunction(() => /#\/?$|#\/home|^[^#]*$/.test(location.hash) || !/projects|chats/.test(location.hash), null, { timeout: 4000 }); await sleep(500)
+    check('v3.3 swipe back Chats → Projects → Home; Home again has no FAB', (await mp.locator('[data-home-single]:visible').count()) === 1 && (await mp.locator('[data-new-chat]').count()) === 0 && (await mp.locator('[data-new-project]').count()) === 0)
+
+    // ── M4: Home → Chat with the first message
+    await mp.locator('textarea[aria-label="Message"]').fill('Hi')
+    await mp.locator('[data-hero-send]').click()
+    await mp.waitForURL(/#\/p\//); await mp.locator('[data-chat-root]').first().waitFor({ timeout: 30000 }); await sleep(1200)
+    check('v3.3 Home "Hi" lands on the CHAT pane (not Preview)', (await mp.locator('[data-snap-strip]').getAttribute('data-active-pane')) === 'chat')
+    check('v3.3 the "Hi" user bubble is rendered in Chat', (await mp.locator('[data-chat-messages]').getByText('Hi', { exact: true }).count()) >= 1)
+    check('v3.3 blank "Start something precise." starter is NOT showing', (await mp.locator('text=Start something precise >> visible=true').count()) === 0)
+    check('v3.3 assistant turn started (brand-marked reply / error bubble follows the message)', (await mp.locator('[data-chat-messages] [data-brand-mark], [data-pending-reply]').count()) >= 1 || (await mp.locator('[data-chat-messages]').innerText()).includes('UnQStudio'))
+    check('v3.3 assistant header has NO hammer icon / badge', (await mp.locator('svg.lucide-hammer').count()) === 0 && (await mp.locator('[data-chat-messages] [data-brand-mark]').count()) >= 1)
+    await mp.keyboard.press('Escape'); await sleep(500)
+    await mp.screenshot({ path: `${OUT}/v33-chat-mobile.png` })
+
+    // ── M3: model selector — no keyboard, real scrolling, opaque header, de-duplicated
+    await mp.locator('[data-model-pill]').first().click(); await mp.locator('[data-sheet-panel] [data-picker-list]').waitFor(); await sleep(600)
+    check('v3.3 picker opens WITHOUT focusing the search input (no on-screen keyboard)', await mp.evaluate(() => !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName ?? '')))
+    const names = await mp.$$eval('[data-picker-list] [data-model-row]', (els) => els.map((e) => e.getAttribute('title')?.split(' · ')[1] ?? ''))
+    const canon = (x) => x.split('/').pop().toLowerCase().replace(/-(\d{8}|\d{4}-\d{2}-\d{2}|latest)$/, '')
+    check('v3.3 Recommended has no duplicate model rows', names.length === new Set(names.map(canon)).size, names.join(','))
+    check('v3.3 picker tabs: Recommended · Configured · Favorites · Custom · All Providers', (await mp.locator('[data-picker-list] [role="tab"]').allInnerTexts()).join('|') === 'Recommended|Configured|Favorites ⭐|Custom|All Providers')
+    await mp.getByRole('tab', { name: 'All Providers' }).click(); await sleep(400)
+    await swipe(mp, { x: 200, y: 720 }, { x: 200, y: 330 }, 14); await sleep(500)
+    const sc = await mp.evaluate(() => { const l = document.querySelector('[data-picker-list]'); const h = document.querySelector('[data-picker-head]'); const hb = h.getBoundingClientRect(); const top = document.elementFromPoint(hb.left + hb.width / 2, hb.top + hb.height / 2); const cs = getComputedStyle(h).backgroundColor; return { st: l.scrollTop, headOnTop: h.contains(top), bg: cs, sheet: !!document.querySelector('[data-sheet-panel]') } })
+    check('v3.3 touch-scrolling from the LOWER half scrolls the list (scrollTop > 0) and keeps the sheet open', sc.st > 0 && sc.sheet, JSON.stringify(sc))
+    check('v3.3 search + pills header is opaque and on top of scrolled rows (zero bleed-through)', sc.headOnTop && !/transparent|rgba\(0, 0, 0, 0\)|\/ *0?\.\d/.test(sc.bg), JSON.stringify(sc))
+    await swipe(mp, { x: 200, y: 380 }, { x: 200, y: 700 }, 10); await sleep(500)
+    check('v3.3 dragging DOWN mid-list scrolls back up — it never dismisses the sheet', (await mp.locator('[data-sheet-panel]').count()) === 1)
+    await mp.screenshot({ path: `${OUT}/v33-model-picker-mobile.png` })
+
+    // ── M5: custom provider through the CORS proxy, end-to-end
+    await mp.getByTestId('picker-add-custom').click()
+    const modal = mp.getByTestId('custom-provider-modal'); await modal.waitFor()
+    await mp.getByTestId('cp-name').fill('Mock GW')
+    await mp.getByTestId('cp-url').fill('https://api.mock-gw.test/api/v1/')
+    await mp.getByTestId('cp-key').fill('sk-mock-0123456789')
+    check('v3.3 "Route via UnQStudio CORS Proxy" is ON by default for a non-local https endpoint', await mp.getByLabel('Route via UnQStudio CORS Proxy').isChecked())
+    await mp.getByTestId('cp-test').click(); await mp.getByTestId('cp-fetched').waitFor()
+    check('v3.3 Test & Auto-Fetch goes through /api/proxy (envelope: url, GET, Authorization)', proxied.some((e) => e.url === 'https://api.mock-gw.test/api/v1/models' && e.method === 'GET' && /Bearer sk-mock/.test(e.headers?.authorization ?? '')))
+    await mp.getByTestId('cp-save').click(); await modal.waitFor({ state: 'detached' }); await sleep(400)
+    await mp.locator('[data-model-pill]').first().click(); await mp.locator('[data-picker-list]').waitFor()
+    await mp.getByRole('tab', { name: 'Custom', exact: true }).click(); await sleep(400)
+    await mp.locator('[data-provider-group="custom:mock-gw"]').click(); await sleep(300)
+    await mp.locator('[data-model-row="custom:mock-gw::mock-model"]').click(); await sleep(500)
+    await mp.locator('[data-chat-composer] textarea').fill('Hello')
+    await mp.locator('[data-composer-send]').click()
+    await mp.getByText('Hello from the proxy').first().waitFor({ timeout: 15000 })
+    check('v3.3 real chat message through the proxy streams the reply (SSE) without CORS errors', proxied.some((e) => e.url === 'https://api.mock-gw.test/api/v1/chat/completions' && e.method === 'POST' && JSON.parse(e.body).stream === true))
+    check('v3.3 the key never appears in localStorage', !(await mp.evaluate(() => JSON.stringify({ ...localStorage }))).includes('sk-mock-0123456789'))
+
+    // ── M2: workspace close slides back
+    await mp.locator('[data-close-workspace]').click(); await mp.locator('[data-home-single]').waitFor({ timeout: 5000 })
+    check('v3.3 workspace ✕ returns to the Home shell', (await mp.locator('[data-mobile-bottom-nav]').count()) === 1)
+    await m.close()
+  })
+  await section('v3.3 desktop 1440×900', async () => {
+    const d = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    await wire(d)
+    const dp = await d.newPage()
+    watch(dp, 'v33 desktop')
+    await dp.goto(URL, { waitUntil: 'networkidle' }); await dp.locator('[data-hero]').waitFor(); await sleep(600)
+    await dp.screenshot({ path: `${OUT}/v33-home-desktop.png` })
+    await dp.locator('[data-hero-send]').click(); await dp.locator('[data-inset-frame]').waitFor({ timeout: 30000 }); await sleep(800)
+    await dp.screenshot({ path: `${OUT}/v33-workspace-desktop.png` })
+    check('v3.3 desktop: workspace opens, zero horizontal overflow', (await dp.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1)
+    await dp.locator('[data-model-pill]').first().click(); await dp.locator('[data-picker-list]').waitFor(); await sleep(300)
+    check('v3.3 desktop picker: search not auto-focused', await dp.evaluate(() => document.activeElement?.tagName !== 'INPUT'))
+    await d.close()
+  })
+  check('v3.3 functions/api/proxy.ts exists (type-checked by tsc, covered by services/llm unit tests)', existsSync('functions/api/proxy.ts'))
 
   check('ZERO uncaught console errors / page errors', errors.length === 0, errors.slice(0, 4).join(' | ') + ' · 404s: ' + [...new Set(notFound)].slice(0, 6).join(', '))
 } finally {

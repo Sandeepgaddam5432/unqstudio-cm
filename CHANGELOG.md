@@ -60,3 +60,13 @@ First production release.
 - Project Settings hub (Project Knowledge, Version History, Integrations); Publish sheet with SVG QR + SEO editor.
 - Multi-step agent loop (read/search/verify, 1–5 steps) and symbol/dependency graph.
 - E2E: 106 checks incl. mobile 390×844 and desktop 1440×900.
+
+## [3.3.0]
+### Added
+- `functions/api/proxy.ts` streaming CORS proxy (SSRF-guarded) + `src/services/llm` client routing and URL normalisation; "Route via UnQStudio CORS Proxy" toggle for custom providers.
+- `SwipePager` (transform track, spring physics), `NewProjectSheet`, `MobileHome`, `startProjectFromPrompt`.
+### Changed
+- Mobile Home is a single zero-scroll screen; templates live under Projects → New project. One floating CTA per tab. Model selector: no autofocus, one scroller, opaque header, de-duplicated catalog, 5 tabs. Assistant header: hammer badge replaced by a quiet brand dot.
+### Fixed
+- Home "Hi" no longer lands on an empty Preview with the message dropped; send without a key keeps the message and shows an actionable error.
+- Header/FAB overlap while swiping; model picker could not be touch-scrolled; composer model pill overflowing onto Send.

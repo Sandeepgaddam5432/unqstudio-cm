@@ -291,3 +291,20 @@ Object.assign(PURPOSES, {
   "src/templates/fullstack.ts": "Full-stack template: Supabase Auth + CRUD + Realtime notes app with setup screen.",
   "src/ui/publish/SupabaseFullstack.tsx": "Database panel add-on: Scaffold full-stack + SQL migration generator/runner.",
 })
+
+// v3.3
+Object.assign(PURPOSES, {
+  "functions/api/proxy.ts": "Cloudflare Pages Function POST /api/proxy: streaming CORS proxy for custom providers (SSRF guard: public https hosts only, app-origin CORS, SSE pass-through, upstream status/errors forwarded verbatim).",
+  "src/services/llm/urls.ts": "Pure base-URL normalisation (/chat/completions, /models, trailing slashes), /models vs /v1/models probe candidates and proxy-routing defaults (ON for non-local https, OFF for localhost).",
+  "src/services/llm/proxy.ts": "Client side of the CORS proxy: createProxiedFetch wraps requests in a {url,method,headers,body} envelope, streams the response back and falls back to direct fetch when the host has no proxy function.",
+  "src/services/llm/llm.test.ts": "Unit tests: SSRF guard, CORS, header stripping, upstream error pass-through, SSE streaming without buffering, URL normalisation, proxy defaults, live-model probing.",
+  "src/ui/primitives/SwipePager.tsx": "Zero-overlap horizontal pager: clipped viewport + GPU translate3d flex track, panes one viewport wide with contain: layout paint, finger-tracked touch engine with spring settle (cubic-bezier(.22,1,.36,1), 300ms).",
+  "src/ui/primitives/pagerPhysics.ts": "Pure pager physics: axis lock, edge rubber-band and distance/velocity settle rule.",
+  "src/ui/primitives/pager.test.ts": "Unit tests for pager physics and model-catalog de-duplication.",
+  "src/ui/home/startProject.ts": "Home/New-project entry: creates the project, queues the first prompt, pins the workspace to Chat and navigates (the first message is never dropped).",
+  "src/ui/home/ImportModals.tsx": "Import chooser (GitHub | ZIP) and GitHub URL dialog shared by the mobile Home plus-menu and the New-project sheet.",
+  "src/ui/home/NewProjectSheet.tsx": "Projects tab + New project flow: Blank, From template (every built-in/plugin template) or Import.",
+  "src/ui/home/MobileHome.tsx": "Lovable-style single-viewport mobile Home: workspace pill + avatar, hero heading and glassy composer over the aurora; zero scroll, no templates, no FABs.",
+  "src/ui/layout/MobileShell.tsx": "Mobile (<768px) 3-tab shell on SwipePager: Home \u21c4 Projects \u21c4 Chats; PaneActive context gates floating CTAs, publishes --nav-progress for the nav pill and commits the route when the spring settles.",
+  "src/ui/home/Home.tsx": "Home entry: mobile renders MobileHome (single screen); desktop keeps the launchpad with floating composer, starter chips, project grid and Templates & Showcase."
+})

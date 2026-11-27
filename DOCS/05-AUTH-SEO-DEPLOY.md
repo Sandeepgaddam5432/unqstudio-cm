@@ -68,3 +68,12 @@ Session storage: OAuth tokens exist **only** in `sessionStorage` keys `unq.sessi
 - PWA: manifest `id`, `display_override`, shortcuts; `apple-mobile-web-app-*` meta; `viewport-fit=cover`; theme-color synced with the theme (`syncThemeColorMeta`).
 - Publish sheet tabs: Publish (live URL + QR + Netlify/Vercel/Cloudflare, GitHub Pages, ZIP), Share & SEO, Download, Git, Supabase.
 - SEO editor writes title, description, Open Graph/Twitter tags and favicon into the generated project's `/index.html` (not into UnQStudio's own head).
+
+## CORS proxy for custom providers (v3.3) — `functions/api/proxy.ts`
+
+`POST /api/proxy` (Cloudflare Pages Function, Web APIs only). Body: `{ "url": "https://…", "method": "GET"|"POST", "headers": {…}, "body": "<string|json>" }`.
+- **SSRF guard** (`assertPublicHttpsUrl`): `https` only; no credentials in the URL; ports 443/2053/2083/2087/2096/8443; rejects IPv6 literals, loopback, RFC1918, CGNAT, link-local (169.254.169.254), TEST-NETs, multicast/reserved IPv4, single-label and `.local/.internal/.localhost/.svc/…` hosts, and the proxy's own host. Redirects are **not** followed (502 `upstream_redirect`).
+- **CORS**: only the deployment's own origin and `localhost`/`127.0.0.1` dev origins; `Vary: Origin`; exposes `x-unq-proxy`, `x-unq-upstream-status`, `retry-after`.
+- **Headers**: forwards `Authorization`, `x-api-key`, `anthropic-version` and custom headers; strips `Host`, `Cookie`, `Origin`, `Referer`, `cf-*`, `x-forwarded-*`, hop-by-hop headers.
+- **Streaming**: the upstream body is returned as-is (`text/event-stream` is never buffered; `Cache-Control: no-store, no-transform`, `X-Accel-Buffering: no`). Upstream status codes and error bodies pass through verbatim.
+- Keys are only forwarded, never stored or logged. On hosts without the function (static preview, dev server) the client detects the missing `x-unq-proxy` header and falls back to a direct request.
