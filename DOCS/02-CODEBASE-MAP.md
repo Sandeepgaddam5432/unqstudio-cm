@@ -2937,7 +2937,7 @@ Home screen (hero composer, templates, projects, About & FAQ).
 ### `src/ui/home/Home.tsx`
 
 **Purpose:** Lovable-style launchpad: ambient hero with floating composer, starter chips, thumbnail project grid with star/menu actions, and Templates & Showcase with category filter, Preview and Remix.  
-**Size:** 309 lines · React component module
+**Size:** 316 lines · React component module
 
 **Exports:**
 

@@ -115,3 +115,6 @@ Mobile: `[data-snap-strip]` (`scroll-snap-type: x mandatory`, panes `chat`/`prev
 
 ## v3.1 settings (M5)
 Sheets: `account`, `accountSettings`, `connectors`, `workspaceSettings`, `appearance` via `useApp.sheet`. Persisted: `unq.prefs`, `unq.theme.*`, IndexedDB `unq-skills`.
+
+## v3.1 verification
+E2E (`npm run e2e`) captures `DOCS/screenshots/v31-{home-mobile,projects-mobile,chats-mobile,workspace-chat-mobile,timeline-changes,settings-appearance,home-desktop,studio-desktop}.png`.

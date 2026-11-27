@@ -165,6 +165,7 @@ export default function Home() {
           <span className="text-[15px] font-semibold tracking-tight">UnQStudio</span>
           <Badge tone="accent" className="hidden sm:inline-flex">v3.1</Badge>
         </div>
+        <AccountAvatarButton />
       </header>
       )}
 
@@ -180,6 +181,12 @@ export default function Home() {
               <div className="scrollbar-none absolute inset-x-0 flex gap-2 overflow-x-auto px-4" style={{ bottom: 'calc(55dvh - var(--composer-height) - 14px - 52px)' }} data-starter-chips>
                 {STARTERS.map((c) => (
                   <button key={c.label} onClick={() => void start(c.prompt)} title={c.prompt} className="press flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary/90 px-3.5 text-xs font-medium text-fg-secondary shadow-xs-surface backdrop-blur"><Wand2 size={12} className="text-accent" />{c.label}</button>
+                ))}
+              </div>
+              <div className="scrollbar-none absolute inset-x-0 flex items-center gap-2 overflow-x-auto px-4" style={{ bottom: 'calc(55dvh - var(--composer-height) - 14px - 100px)' }} data-template-chips>
+                <span className="shrink-0 text-xs text-fg-quaternary">Start from</span>
+                {templates.map((t) => (
+                  <button key={t.id} onClick={() => setTplId(t.id)} title={t.description} aria-pressed={tplId === t.id} className={cn('press flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium', tplId === t.id ? 'bg-fg-primary text-base' : 'bg-primary/90 text-fg-secondary shadow-xs-surface')}><TemplateIcon name={t.icon} size={13} />{t.name}</button>
                 ))}
               </div>
             </>

@@ -21,5 +21,6 @@
 | V3.1-M3 Swipe workspace, preview bar, inset canvas, chat polish | ✅ done |
 | V3.1-M4 Timeline | + Changes inspector, inline version cards | ✅ done |
 | V3.1-M5 Account menu, preferences, connectors hub, workspace settings | ✅ done |
+| V3.1-M6 Docs, 147-check Chromium E2E, visual QA, release 3.1.0 | ✅ done |
 
 Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks. Unit tests need Node ≥ 22.

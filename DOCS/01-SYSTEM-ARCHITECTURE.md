@@ -98,3 +98,8 @@ Cloudflare Pages: `npm run build` → `dist/`; `functions/` compiled by Pages au
 - **AI**: `chat.send` (stream + apply) ← wrapped by `core/ai/agentLoop.ts` (read/search/verify tools, 1–5 steps) ← driven from `runHeal`. `buildProjectContext` injects Project Knowledge and a symbol map with local import edges.
 - **Preview bridge**: adds `thumb:capture`/`thumb` and `route:*`/`route` messages.
 - Layering unchanged: `ui → store → core`; `lib/qrcode.ts`, `lib/haptics.ts` are framework-free.
+
+## v3.1 additions
+- Routing: `#/` · `#/projects` · `#/chats` · `#/p/:id` (`store/app.ts`). Sheet host state `useApp.sheet`; Activity inspector `useApp.activity`.
+- Personalization: `store/prefs.ts` → `core/ai/userContext.ts` → `core/ai/prompts.ts` (Instructions, Memory, enabled Skills from IndexedDB `unq-skills`). Layering unchanged (core never imports store).
+- Message queue + completion chime live in `ui/chat/ChatPanel.tsx`; permission gate `gate()` guards project edits and publishing.

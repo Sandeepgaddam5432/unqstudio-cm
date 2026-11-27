@@ -200,3 +200,9 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 
 ### ADR-019 Personalization context lives in core/ as a plain module
 `prompts.ts` must not import stores; the prefs store pushes into `core/ai/userContext.ts` on every change (`subscribe`).
+
+### V3.1-M6 — Chromium E2E, visual QA, release 3.1.0
+- `scripts/e2e.mjs`: 147 checks (v2.1/v3.0 suite adapted to the new shell + a v3.1 section: OKLCH tokens resolved by colour (the production CSS minifier serialises `oklch()` as `lab()`, so tokens are compared by resolved pixels, not text), Light/Dark, Dashboard Background, mobile pill dock, skeleton, Projects/Chats filters, scroll-snap swipe, preview bar, Timeline/Changes diff, Account settings, Connectors, inset desktop canvas, hover-only cards, zero overflow, zero console errors).
+- Fresh `DOCS/screenshots/v31-*.png` inspected; visual fixes: preview-bar pills no longer wrap, launchpad regained the template chip row.
+- Baseline repair: upstream commit `fdcf855` had overwritten `src/lib/qrcode.ts` with its test file; the implementation was restored and the jsqr-free test moved to `qrcode.test.ts`.
+- Release 3.1.0.

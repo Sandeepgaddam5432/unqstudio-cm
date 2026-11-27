@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.1.0
+- Full release: OKLCH depth system, Aurora backgrounds, native mobile nav, swipe workspace, Timeline | + Changes, Account/Connectors/Workspace settings. 147-check E2E.
+
 - **M5** Account menu, preferences (queue/sound), personalization, permissions, connectors hub, workspace settings.
 
 - **M4** Timeline | + Changes inspector, Used X tools row, Details/Preview version cards.

@@ -71,3 +71,12 @@ Benchmarked against **Lovable.dev, v0.dev, Cursor and Claude Code**. Metrics wer
 - P0: opt-in CORS relay (`functions/api/proxy.ts`); provider-native tool calling behind the same `AgentDeps`; 10 s post-build runtime-error capture.
 - P1: type-aware symbol graph in a worker; multi-file inline refactor + ghost-text completion; recorded-fixture chat E2E; axe accessibility run in E2E; per-provider catalog shards.
 - P2: WebContainer-class runtime option; project share links (static viewer + read-only fork); Yjs collaboration on checkpoints; template marketplace via signed plugin registry.
+
+## v3.1 honest audit & v3.2 roadmap
+- **Permissions**: `Project edits` and `Publishing` are enforced (`gate()`); `Build / Auto-heal` and `Connectors` are stored and shown but not yet enforced inside the agent loop / connector calls (P1).
+- **Chats → Scheduled** has no scheduler yet (always empty); Unread is derived from last-opened time per project.
+- **Timeline Read steps** come from the transient agent-loop steps; they are not persisted across reloads (P1: persist agent steps on the message).
+- **Tips & tricks / Language** are stored preferences; no localized strings or tip surface ship yet.
+- **OKLCH**: the production CSS minifier rewrites `oklch()` to `lab()` (visually identical); tests compare resolved colours.
+- **Account switching** is local-profile only; real multi-account sessions need the optional OAuth providers.
+- Test environment needs Node ≥ 22 and (for E2E) Chromium system libraries.
