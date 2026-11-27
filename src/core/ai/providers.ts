@@ -35,6 +35,8 @@ export interface ProviderDef {
   doc?: string
   /** v2.1: user-defined provider (CRUD in the Providers Hub). */
   custom?: boolean
+  /** v3.3: route requests through the UnQStudio CORS proxy (`/api/proxy`). */
+  viaProxy?: boolean
   /** v2.1 custom providers: bundled brand glyph preset + accent colour. */
   brand?: string
   accent?: string

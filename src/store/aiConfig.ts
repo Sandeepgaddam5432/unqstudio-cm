@@ -64,7 +64,7 @@ export function modelsForProvider(p: ProviderDef): EnrichedModel[] {
 export function fetchLiveFor(p: ProviderDef, o: { apiKey?: string; baseUrl?: string } = {}): Promise<FetchOutcome> {
   return useModels.getState().fetchLive({
     providerId: p.id,
-    target: { id: p.id, kind: p.kind, baseUrl: p.baseUrl, noKey: p.noKey, headers: p.headers, browserAccess: p.browserAccess },
+    target: { id: p.id, kind: p.kind, baseUrl: p.baseUrl, noKey: p.noKey, headers: p.headers, browserAccess: p.browserAccess, viaProxy: p.viaProxy },
     apiKey: o.apiKey ?? getSecret(providerSecretName(p.id)),
     baseUrl: o.baseUrl ?? (useSettings.getState().baseUrls[p.id] || undefined),
     registryProvider: registryProviderFor(p),

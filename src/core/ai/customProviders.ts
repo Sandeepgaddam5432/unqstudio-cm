@@ -1,4 +1,5 @@
 import type { ProviderDef, ProviderKind } from './providers'
+import { effectiveViaProxy } from '@/services/llm/urls'
 
 /** Persisted (NON-secret) record of a user-defined provider. The API key and header values live in the encrypted Vault. */
 export interface CustomProvider {
@@ -14,6 +15,8 @@ export interface CustomProvider {
   noKey: boolean
   /** Anthropic wire only. */
   browserAccess: boolean
+  /** v3.3: route via the UnQStudio CORS proxy. Undefined ⇒ default (ON for non-local https). */
+  viaProxy?: boolean
   /** Header NAMES only, for display; values are vault secrets. */
   headerNames: string[]
   createdAt: number
@@ -72,6 +75,7 @@ export function toProviderDef(c: CustomProvider, headers: Record<string, string>
     id: c.id, name: c.name, kind: c.kind, baseUrl: c.baseUrl, models: c.models.map((id) => ({ id })), userModels: true, custom: true,
     noKey: c.noKey, local: LOCAL_RE.test(c.baseUrl), compat: LOCAL_RE.test(c.baseUrl) ? 'local' : 'browser-ready', brand: c.brand, accent: c.accent,
     browserAccess: c.kind === 'anthropic' ? c.browserAccess : undefined, headers: Object.keys(headers).length ? headers : undefined,
+    viaProxy: effectiveViaProxy(c),
     blurb: `${protocolInfo(c.kind).label} · custom provider`,
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, Plus, RefreshCw, Trash2, X } from 'lucide-react'
 import { Badge, ColorField, Button, Input, Label, Modal, Spinner } from '@/ui/primitives'
 import { BrandGlyph } from '@/ui/icons/ProviderIcon'
@@ -11,6 +11,7 @@ import { fetchLiveModels, type EnrichedModel } from '@/core/ai/modelFetcher'
 import { ACCENT_PRESETS, BRAND_PRESETS, PROTOCOLS, cleanHeaders, parseHeaders, protocolInfo, secretNames, validateCustomProvider } from '@/core/ai/customProviders'
 import type { ProviderKind } from '@/core/ai/providers'
 import { toast } from '@/store/toast'
+import { normalizeBaseUrl, shouldProxyByDefault } from '@/services/llm/urls'
 import { cn } from '@/lib/cn'
 
 type Row = { k: string; v: string }
@@ -38,18 +39,23 @@ function Form({ editing, onClose }: { editing: ReturnType<typeof useCustomProvid
     const h = editing ? parseHeaders(getSecret(secretNames(editing.id).headers)) : {}
     return Object.entries(h).map(([k, v]) => ({ k, v }))
   })
+  const [viaProxy, setViaProxy] = useState(editing?.viaProxy ?? shouldProxyByDefault(editing?.baseUrl ?? ''))
+  const proxyTouched = useRef(editing?.viaProxy !== undefined)
   const [models, setModels] = useState<string[]>(editing?.models ?? [])
   const [modelInput, setModelInput] = useState('')
   const [fetched, setFetched] = useState<Fetch>({ status: 'idle', models: [] })
   const info = protocolInfo(kind)
 
   useEffect(() => { setFetched({ status: 'idle', models: [] }) }, [kind])
+  // Default: ON for non-local https endpoints, OFF for localhost — until the user flips the switch themselves.
+  useEffect(() => { if (!proxyTouched.current) setViaProxy(shouldProxyByDefault(baseUrl)) }, [baseUrl])
 
   const testFetch = async () => {
     const err = validateCustomProvider({ name: name || 'x', baseUrl, kind })
     if (err) return setFetched({ status: 'error', models: [], message: err })
     setFetched({ status: 'loading', models: [] })
-    const out = await fetchLiveModels({ provider: { id: editing?.id ?? 'custom:test', kind, baseUrl: baseUrl.trim(), headers: cleanHeaders(rows), browserAccess, noKey }, apiKey: apiKey.trim() || savedKey, baseUrl: baseUrl.trim() })
+    const out = await fetchLiveModels({ provider: { id: editing?.id ?? 'custom:test', kind, baseUrl: baseUrl.trim(), headers: cleanHeaders(rows), browserAccess, noKey, viaProxy }, apiKey: apiKey.trim() || savedKey, baseUrl: baseUrl.trim() })
+    if (out.ok && out.resolvedBase && out.resolvedBase !== normalizeBaseUrl(baseUrl)) { setBaseUrl(out.resolvedBase); toast.info('Base URL adjusted', `Models answered at ${out.resolvedBase}/models — saved that as the Base URL.`) }
     setFetched(out.ok ? { status: 'ok', models: out.models, ms: out.ms } : { status: 'error', models: [], message: out.error, ms: out.ms })
   }
 
@@ -61,7 +67,7 @@ function Form({ editing, onClose }: { editing: ReturnType<typeof useCustomProvid
     if (vault.locked) return vault.setUnlockOpen(true)
     const headers = cleanHeaders(rows)
     const store = useCustomProviders.getState()
-    const draft = { name: name.trim(), kind, baseUrl: baseUrl.trim().replace(/\/+$/, ''), brand, accent, models, noKey, browserAccess, headerNames: Object.keys(headers) }
+    const draft = { name: name.trim(), kind, baseUrl: normalizeBaseUrl(baseUrl), brand, accent, models, noKey, browserAccess, viaProxy, headerNames: Object.keys(headers) }
     try {
       const rec = editing ? (store.update(editing.id, draft), { ...editing, ...draft }) : store.add(draft)
       const sn = secretNames(rec.id)
@@ -117,6 +123,7 @@ function Form({ editing, onClose }: { editing: ReturnType<typeof useCustomProvid
             <label className="mt-1 flex items-center gap-1.5 text-[11px] text-muted"><input type="checkbox" checked={noKey} onChange={(e) => setNoKey(e.target.checked)} />No API key needed (local / open proxy)</label>
           </div>
         </div>
+        <label className="flex items-start gap-2 rounded-xl border border-line bg-subtle/40 p-3 text-xs text-muted" data-testid="cp-proxy"><input type="checkbox" className="mt-0.5" checked={viaProxy} onChange={(e) => { proxyTouched.current = true; setViaProxy(e.target.checked) }} aria-label="Route via UnQStudio CORS Proxy" /><span><span className="block font-medium text-fg">Route via UnQStudio CORS Proxy</span>Browsers block many gateways (no CORS headers). The proxy relays requests and streams replies — your key is only forwarded to this provider, never stored. Off for localhost.</span></label>
         {kind === 'anthropic' && <label className="flex items-center gap-2 text-xs text-muted"><input type="checkbox" checked={browserAccess} onChange={(e) => setBrowserAccess(e.target.checked)} />Send <code className="rounded bg-subtle px-1">anthropic-dangerous-direct-browser-access</code> (required to call Anthropic from a browser)</label>}
 
         <div>

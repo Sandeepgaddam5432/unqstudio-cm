@@ -1,4 +1,6 @@
 import type { ProviderDef } from './providers'
+import { pickFetch } from '@/services/llm/proxy'
+import { normalizeBaseUrl } from '@/services/llm/urls'
 import { liveEndpoint } from './modelFetcher'
 import { ProviderError, type ContentPart, type StreamChunk, type StreamRequest } from './types'
 
@@ -50,7 +52,7 @@ function oaContent(c: string | ContentPart[]) {
 }
 
 export function buildOpenAIRequest(req: StreamRequest): { url: string; init: RequestInit } {
-  const base = trimSlash(req.baseUrl || req.provider.baseUrl)
+  const base = normalizeBaseUrl(req.baseUrl || req.provider.baseUrl)
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(req.provider.headers ?? {}) }
   if (req.apiKey) headers.Authorization = `Bearer ${req.apiKey}`
   const body: Record<string, unknown> = {
@@ -271,7 +273,7 @@ export function explainNetworkError(e: unknown, provider: ProviderDef): Provider
 }
 
 export async function* streamChat(req: StreamRequest): AsyncGenerator<StreamChunk> {
-  const f = req.fetchImpl ?? fetch
+  const f = req.fetchImpl ?? pickFetch(req.provider.viaProxy)
   const kind = req.provider.kind
   const { url, init } = kind === 'anthropic' ? buildAnthropicRequest(req) : kind === 'gemini' ? buildGeminiRequest(req) : kind === 'ollama' ? buildOllamaRequest(req) : buildOpenAIRequest(req)
   let res: Response
@@ -316,7 +318,8 @@ export async function completeOnce(req: StreamRequest): Promise<{ text: string; 
   return { text, usage }
 }
 
-export async function listModels(provider: ProviderDef, apiKey: string | undefined, baseUrl?: string, f: typeof fetch = fetch): Promise<string[]> {
+export async function listModels(provider: ProviderDef, apiKey: string | undefined, baseUrl?: string, fetchImpl?: typeof fetch): Promise<string[]> {
+  const f = fetchImpl ?? pickFetch(provider.viaProxy)
   const ep = liveEndpoint({ id: provider.id, kind: provider.kind, baseUrl: provider.baseUrl, headers: provider.headers, browserAccess: provider.browserAccess }, apiKey, baseUrl)
   let res: Response
   try { res = await f(ep.url, { headers: ep.headers }) } catch (e) { throw explainNetworkError(e, provider) }
