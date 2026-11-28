@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.0 — agent tools, real TypeScript checker, preview telemetry 2.0
+- **Tool layer** (`src/core/ai/tools.ts`): 12 typed agent tools; native function-calling serialisation for openai/anthropic/gemini/ollama, native stream accumulation (parallel calls), XML fallback, parallel read-only batching, arg validation. *Not yet on the wire (PARTIAL).*
+- **Real TypeScript checker** (`src/core/runtime/tsCheck.ts`, lazy `typecheckWorker.ts`, `typecheck.ts`): `typescript` is now a runtime dependency used only in the worker chunk. *Not yet called from UI/agent (PARTIAL).*
+- **Preview Telemetry 2.0:** fetch/XHR interception (`network`), DOM & layout audit (`audit:run`/`audit:result`), Network tab in the Console drawer, `observePreview` (≤ 10 s window, instant first-error trigger).
+- **Honest receipts + verify loop** (`src/core/ai/verifyLoop.ts`). *UI badge not wired (MISSING).*
+
 ## v3.4.0 — resilient streaming & resumable writes
 - **Resilient streaming** (`src/core/ai/resilientStream.ts`): 28 s chunk-gap watchdog (separate 120 s first-token budget), automatic mid-file continuation (≤ 2, exponential back-off) with last-25-lines tail context and overlap-deduplicated stitching, tighter retry for files that failed before meaningful output, lock-aware recovery, abort-safe.
 - **Partial salvage:** cut-off files become `interrupted` ops with the partial preserved; completed files are never discarded; `RecoveryCard` offers **Resume** and **Retry failed file only**; live status line (`Writing /src/App.tsx · 148 lines…`, `Stream stalled at line 148 — resuming automatically (1/2)…`).

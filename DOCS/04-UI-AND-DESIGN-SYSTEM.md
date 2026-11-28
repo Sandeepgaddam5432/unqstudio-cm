@@ -118,3 +118,7 @@ Sheets: `account`, `accountSettings`, `connectors`, `workspaceSettings`, `appear
 
 ## v3.1 verification
 E2E (`npm run e2e`) captures `DOCS/screenshots/v31-{home-mobile,projects-mobile,chats-mobile,workspace-chat-mobile,timeline-changes,settings-appearance,home-desktop,studio-desktop}.png`.
+
+## v3.5 Preview Telemetry 2.0 — bridge contract additions
+- iframe → host `network`: `{ method, url, status, ok, durationMs, error? }` for every `fetch` / `XMLHttpRequest` (instrumented in `BRIDGE_SCRIPT`). Stored in `usePreview.network` (last 200); failed requests also log to the console drawer. The Console drawer has a **Network** tab (`data-console-tab="network"`, failed-count badge, `data-net-row`).
+- host → iframe `audit:run` `{ id }` → iframe → host `audit:result` `{ id, report }`: DOM & layout health audit (`blank` #root, horizontal overflow + offender selectors, broken images, missing stylesheet, zero-size/off-screen interactive elements). Host helper `requestAudit()` in `ui/preview/bridge.ts`; findings via `auditFindings()` in `core/runtime/previewAudit.ts`. **PARTIAL:** the audit is not yet auto-triggered after render, there is no UI to run it, and screenshot-to-vision (`inspect_preview` with image) is not wired.

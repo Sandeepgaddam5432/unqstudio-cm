@@ -9,7 +9,8 @@ import { popoutWrapper } from '@/core/runtime/previewHtml'
 import { downloadBlob, slugify } from '@/lib/util'
 import { toast } from '@/store/toast'
 import { cn } from '@/lib/cn'
-import { postToPreview, setPreviewFrame } from './bridge'
+import { postToPreview, resolveAudit, setPreviewFrame } from './bridge'
+import { isFailedRequest, isNetworkMessage, type DomAuditReport } from '@/core/runtime/previewAudit'
 import { getAdapter } from '@/core/vfs/idbAdapter'
 import { useProjects } from '@/store/projects'
 import { persistThumbnail, rasterizeThumbnail, snapshotToThumbnail, type ThumbSnapshot } from '@/core/preview/thumbnail'
@@ -58,8 +59,9 @@ function ErrorBanner() {
 }
 
 function ConsoleDrawer() {
-  const { logs, clearLogs } = usePreview()
-  const [filter, setFilter] = useState<'all' | 'error' | 'warn' | 'log' | 'build'>('all')
+  const { logs, clearLogs, network } = usePreview()
+  const [filter, setFilter] = useState<'all' | 'error' | 'warn' | 'log' | 'build' | 'network'>('all')
+  const failedNet = network.filter(isFailedRequest).length
   const end = useRef<HTMLDivElement>(null)
   const shown = logs.filter((l) => filter === 'all' || (filter === 'log' ? ['log', 'info', 'debug'].includes(l.level) : l.level === filter))
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [shown.length])
@@ -67,15 +69,20 @@ function ConsoleDrawer() {
     <div className="flex h-44 shrink-0 flex-col border-t border-line bg-panel">
       <div className="flex h-8 shrink-0 items-center justify-between border-b border-line px-2">
         <div className="flex gap-1">
-          {(['all', 'error', 'warn', 'log', 'build'] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={cn('rounded px-2 py-0.5 text-[11px] font-medium capitalize', filter === f ? 'bg-subtle text-fg' : 'text-muted hover:text-fg')}>{f}</button>
+          {(['all', 'error', 'warn', 'log', 'build', 'network'] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)} data-console-tab={f} className={cn('rounded px-2 py-0.5 text-[11px] font-medium capitalize', filter === f ? 'bg-subtle text-fg' : 'text-muted hover:text-fg')}>{f}{f === 'network' && network.length > 0 && <span className={cn('ml-1 tabular-nums', failedNet ? 'text-danger' : 'text-faint')}>{failedNet || network.length}</span>}</button>
           ))}
         </div>
         <Button variant="ghost" size="icon-sm" onClick={clearLogs} aria-label="Clear console"><Trash2 size={13} /></Button>
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-2 font-mono text-[11px] leading-relaxed">
-        {shown.length === 0 && <p className="text-faint">No output yet.</p>}
-        {shown.map((l) => (
+        {filter === 'network' && (network.length === 0 ? <p className="text-faint">No network requests yet.</p> : network.map((n, i) => (
+          <div key={i} data-net-row className={cn('flex min-w-0 gap-2 border-b border-line/50 py-0.5 tabular-nums', isFailedRequest(n) ? 'text-danger' : 'text-muted')}>
+            <span className="w-10 shrink-0 font-medium">{n.method}</span><span className="w-8 shrink-0">{n.status || 'ERR'}</span><span className="min-w-0 flex-1 truncate" title={n.url}>{n.url}</span><span className="shrink-0 text-faint">{n.durationMs}ms</span>
+          </div>
+        )))}
+        {filter !== 'network' && shown.length === 0 && <p className="text-faint">No output yet.</p>}
+        {filter !== 'network' && shown.map((l) => (
           <div key={l.id} className={cn('whitespace-pre-wrap break-words border-b border-line/50 py-0.5', levelStyle[l.level])}>
             <span className="mr-2 text-faint">{new Date(l.ts).toLocaleTimeString([], { hour12: false })}</span>
             {l.level === 'build' && <span className="mr-1">⚙</span>}
@@ -127,6 +134,8 @@ export function Preview({ className, toolbarExtra }: { className?: string; toolb
       switch (d.type) {
         case 'console': S.addLog(d.level, (d.args as string[]).join(' '), d.ts); if (d.level === 'error') S.addRuntimeError({ source: 'console', message: (d.args as string[]).join(' ').slice(0, 600) }); break
         case 'error': S.addLog('error', d.message + (d.stack ? '\n' + d.stack : '')); S.addRuntimeError(serializeRuntimeError(d)); break
+        case 'network': if (isNetworkMessage(d)) { S.addNetwork({ method: d.method, url: d.url, status: d.status, ok: d.ok, durationMs: d.durationMs, error: d.error }); if (isFailedRequest(d)) S.addLog('error', `${d.method} ${d.url} → ${d.status || 'failed'}${d.error ? ' ' + d.error : ''}`) } break
+        case 'audit:result': resolveAudit(d.id, d.report as DomAuditReport); break
         case 'resource-error': S.addLog('warn', `Failed to load resource: ${d.url}`); break
         case 'ready': postToPreview(frame.current, { type: 'theme', dark: S.appearance === 'dark' }); if (S.inspectMode) postToPreview(frame.current, { type: 'inspect:enable', on: true }); scheduleThumb(); break
         case 'thumb': void saveThumb(d); break

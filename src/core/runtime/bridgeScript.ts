@@ -1,8 +1,8 @@
 /**
  * Script injected as the very first thing in every preview document. It is a plain string (not a bundled function)
  * so minifiers cannot rewrite it. It implements the iframe side of the postMessage bridge:
- *   iframe → host : console, error, resource-error, ready, inspect:select, screenshot, thumb, route
- *   host → iframe : inspect:enable, inspect:apply, theme, theme-css, screenshot, thumb:capture, route:navigate, route:back, route:forward
+ *   iframe → host : console, error, resource-error, ready, inspect:select, screenshot, thumb, route, network, audit:result
+ *   host → iframe : inspect:enable, inspect:apply, theme, theme-css, screenshot, thumb:capture, route:navigate, route:back, route:forward, audit:run
  * NOTE: keep this free of backticks and dollar-brace sequences.
  */
 export const BRIDGE_SCRIPT = String.raw`(function () {
@@ -192,6 +192,55 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
       send({ type: 'thumb', id: id, snap: { w: W, h: H, bg: bodyBg !== 'rgba(0, 0, 0, 0)' ? bodyBg : rootBg, boxes: out } });
     } catch (err) { send({ type: 'thumb', id: id, error: String(err) }); }
   }
+  // ── v3.5 network telemetry: every fetch / XMLHttpRequest reports { method, url, status, ok, durationMs, error } ──
+  (function () {
+    var of = window.fetch;
+    if (typeof of === 'function') window.fetch = function (input, init) {
+      var t0 = Date.now(), url = '', method = (init && init.method) || 'GET';
+      try { url = typeof input === 'string' ? input : (input && input.url) || String(input); if (!(init && init.method) && input && input.method) method = input.method; } catch (e) {}
+      function rep(status, ok, err) { send({ type: 'network', method: String(method).toUpperCase(), url: String(url).slice(0, 500), status: status, ok: ok, durationMs: Date.now() - t0, error: err }); }
+      return of.apply(this, arguments).then(function (res) { rep(res.status, res.ok); return res; }, function (err) { rep(0, false, String((err && err.message) || err).slice(0, 200)); throw err; });
+    };
+    var XO = window.XMLHttpRequest;
+    if (XO && XO.prototype) {
+      var xopen = XO.prototype.open, xsend = XO.prototype.send;
+      XO.prototype.open = function (m, u) { this.__unqm = m; this.__unqu = u; return xopen.apply(this, arguments); };
+      XO.prototype.send = function () {
+        var x = this, t0 = Date.now();
+        x.addEventListener('loadend', function () { send({ type: 'network', method: String(x.__unqm || 'GET').toUpperCase(), url: String(x.__unqu || '').slice(0, 500), status: x.status || 0, ok: x.status >= 200 && x.status < 400, durationMs: Date.now() - t0, error: x.status === 0 ? 'network error' : undefined }); });
+        return xsend.apply(this, arguments);
+      };
+    }
+  })();
+  // ── v3.5 DOM & layout health audit (audit:run -> audit:result). Zero token cost, works for every model. ──
+  function selOf(el) {
+    if (!el || !el.tagName) return '';
+    var s = el.tagName.toLowerCase();
+    if (el.id) return s + '#' + el.id;
+    var c = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
+    return c ? s + '.' + c : s;
+  }
+  function auditDom() {
+    var root = document.getElementById('root') || document.body;
+    var txt = String((root.innerText !== undefined ? root.innerText : root.textContent) || '').trim();
+    var rb = root.getBoundingClientRect();
+    var media = root.querySelectorAll('img,svg,canvas,video,iframe,input,button,textarea').length;
+    var vw = window.innerWidth, all = document.querySelectorAll('body *'), offenders = [], i, el, r;
+    for (i = 0; i < all.length && i < 2500 && offenders.length < 5; i++) { el = all[i]; r = el.getBoundingClientRect(); if (r.width > 0 && r.right > vw + 2) offenders.push(selOf(el)); }
+    var imgs = document.images, broken = [];
+    for (i = 0; i < imgs.length && broken.length < 8; i++) if (imgs[i].complete && imgs[i].naturalWidth === 0 && imgs[i].getAttribute('src')) broken.push(String(imgs[i].getAttribute('src')).slice(0, 120));
+    var inter = document.querySelectorAll('button,a[href],input,select,textarea,[role=button]'), bad = [];
+    for (i = 0; i < inter.length && bad.length < 8; i++) { el = inter[i]; r = el.getBoundingClientRect(); if (el.offsetParent === null && getComputedStyle(el).position !== 'fixed') continue; if ((r.width === 0 || r.height === 0) && vw > 0) bad.push({ selector: selOf(el), reason: 'zero size' }); else if (r.right < 0 || r.left > vw) bad.push({ selector: selOf(el), reason: 'off-screen' }); }
+    return {
+      blank: (txt.length === 0 && media === 0) || (rb.height === 0 && txt.length === 0),
+      rootTextLength: txt.length, rootHeight: Math.round(rb.height),
+      overflowX: document.documentElement.scrollWidth > vw + 2, scrollWidth: document.documentElement.scrollWidth, innerWidth: vw, overflowOffenders: offenders,
+      brokenImages: broken,
+      noStyles: document.styleSheets.length === 0 && !document.querySelector('style,link[rel=stylesheet]'),
+      badInteractive: bad,
+      title: document.title || ''
+    };
+  }
   window.addEventListener('message', function (e) {
     var m = e.data;
     if (!m || m.__unq !== true) return;
@@ -207,6 +256,7 @@ export const BRIDGE_SCRIPT = String.raw`(function () {
       if (!st) { st = document.createElement('style'); st.id = '__unq_live_theme'; document.head.appendChild(st); }
       st.textContent = m.css || '';
     }
+    else if (m.type === 'audit:run') { var rep; try { rep = auditDom(); } catch (err) { rep = { error: String(err && err.message || err) }; } send({ type: 'audit:result', id: m.id, report: rep }); }
     else if (m.type === 'inspect:apply') {
       var el = m.selector && document.querySelector(m.selector);
       if (!el) return;

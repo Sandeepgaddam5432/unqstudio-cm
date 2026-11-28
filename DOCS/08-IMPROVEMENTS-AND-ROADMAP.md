@@ -98,3 +98,10 @@ Baseline measured in a clean checkout: `verify:docs` ✓ · `tsc` ✓ · `eslint
 | `/api/share`, deploy history/rollback, ERD, npm search UI, a11y panel, insights, leak scanner, `.env` editor | **MISSING** at 3.3.1 (Phases 3–5) |
 | Header versions (README v2.1, PROGRESS v3.2, HANDOFF V3.2-M5) | **FIXED** in 3.3.1 and now enforced by `verify:docs` |
 | Optional `functions/api/{auth,catalog,proxy}` | **VERIFIED** present; degrade gracefully when absent |
+
+| Phase 2 capability (v3.5.0) | Status | Evidence |
+|---|---|---|
+| Native tool schemas / calls for 4 protocols | **PARTIAL** — serialisation+parsing+fallback unit-tested (`tools.test.ts`); not on the wire in `streamChat`/`agentLoop` | `src/core/ai/tools.ts` |
+| Real TypeScript diagnostics | **VERIFIED (core)** real `ts.Program` in tests; **PARTIAL (product)** worker built but not called by UI/agent; no CodeMirror squiggles / "Fix with AI" | `src/core/runtime/tsCheck.ts`, `typecheckWorker.ts` |
+| Network interception + DOM audit in the preview | **VERIFIED (bridge, jsdom tests)**; Network tab shipped; audit not auto-run, no vision screenshot | `bridgeScript.ts`, `previewAudit.ts` |
+| `✓ Verified` receipt + bounded loop | **VERIFIED (logic, unit tests)**; **MISSING (UI badge / store wiring)** | `src/core/ai/verifyLoop.ts` |

@@ -103,3 +103,6 @@ Cloudflare Pages: `npm run build` → `dist/`; `functions/` compiled by Pages au
 - Routing: `#/` · `#/projects` · `#/chats` · `#/p/:id` (`store/app.ts`). Sheet host state `useApp.sheet`; Activity inspector `useApp.activity`.
 - Personalization: `store/prefs.ts` → `core/ai/userContext.ts` → `core/ai/prompts.ts` (Instructions, Memory, enabled Skills from IndexedDB `unq-skills`). Layering unchanged (core never imports store).
 - Message queue + completion chime live in `ui/chat/ChatPanel.tsx`; permission gate `gate()` guards project edits and publishing.
+
+## v3.5 additions
+Core: `ai/tools.ts` (tool schemas + 4-protocol native serialisation), `ai/verifyLoop.ts` (honest receipts, bounded loop), `ai/resilientStream.ts` (3.4), `runtime/tsCheck.ts` + lazy `typecheckWorker.ts`/`typecheck.ts` (real TypeScript diagnostics), `runtime/previewAudit.ts` (network/DOM audit host logic). Layering unchanged: `ui → store → core`; the new core files import nothing from `ui/` or `store/`.

@@ -250,3 +250,9 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - **ADR-3.4-1 — interruption is data, not an exception.** Previously any mid-stream failure threw and the store wrote "nothing was written" over the streaming card. Now `runResilient` converts cut-offs into `InterruptedOp`s and `runTurn` *returns* them (throwing only when nothing was produced) so applied files, checkpoints and partial content survive. Trade-off: callers must read `result.error` / `result.interrupted` (the chat store does).
 - **ADR-3.4-2 — continuation via tail context, not full replay.** Re-sending the whole raw reply would cost O(file) tokens per retry; the last 25 lines plus a strict "next line only" instruction is ~constant cost, and de-duplicated stitching absorbs the model's typical 1–3 line repeat.
 - **ADR-3.4-3 — locks short-circuit recovery.** Resuming a locked file would spend tokens for a write that `applyOp` must refuse anyway.
+
+## 3.5.0 — agent tools, real TypeScript checker, preview telemetry 2.0, honest receipts
+- **ADR-3.5-1 — one tool catalogue, four serialisers.** Tools are data (`TOOL_SPECS`); each wire protocol only differs in envelope. Streaming accumulation is protocol-specific but yields the same `ToolCall`. XML stays as the universal fallback so non-tool models keep working.
+- **ADR-3.5-2 — type-check in a lazy worker, declare bare imports as `any`.** Shipping npm typings would be hundreds of MB; declaring only the *bare specifiers actually imported* keeps relative-import errors real (a blanket `declare module '*'` would have hidden missing local files — caught by the unit test).
+- **ADR-3.5-3 — receipts cannot lie.** A skipped required check yields `unverified`, never `verified`.
+- Bridge: `innerText` falls back to `textContent` (jsdom/odd documents).

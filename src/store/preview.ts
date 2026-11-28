@@ -18,6 +18,8 @@ export const DEVICE_SIZES: Record<Exclude<Device, 'custom'>, { w: number; h: num
   mobile: { w: 390, h: 844, label: 'Mobile' },
 }
 
+import type { NetworkEntry } from '@/core/runtime/previewAudit'
+
 interface PreviewState {
   status: 'idle' | 'initializing' | 'building' | 'ready' | 'error'
   progress: { message: string; pct: number | null } | null
@@ -28,6 +30,9 @@ interface PreviewState {
   warnings: SerializedError[]
   durationMs: number | null
   logs: LogEntry[]
+  /** v3.5: fetch/XHR telemetry reported by the preview bridge (last 200). */
+  network: NetworkEntry[]
+  addNetwork: (n: NetworkEntry) => void
   device: Device
   customW: number
   customH: number
@@ -49,13 +54,14 @@ interface PreviewState {
 }
 
 export const usePreview = create<PreviewState>((set) => ({
-  status: 'idle', progress: null, html: null, lastHash: null, buildErrors: [], runtimeErrors: [], warnings: [], durationMs: null, logs: [],
+  status: 'idle', progress: null, html: null, lastHash: null, buildErrors: [], runtimeErrors: [], warnings: [], durationMs: null, logs: [], network: [],
+  addNetwork: (n) => set((st) => ({ network: [...st.network.slice(-199), { ...n, ts: n.ts ?? Date.now() }] })),
   device: 'desktop', customW: 1024, customH: 768, rotated: false, zoom: 'fit', appearance: 'light', consoleOpen: false,
   inspectMode: false, selected: null, reloadKey: 0, route: '/', errorDismissed: false,
   set: (p) => set(p),
   addLog: (level, text, ts) => set((s) => ({ logs: [...s.logs.slice(-299), { id: uid('l'), level, text, ts: ts ?? Date.now() }] })),
-  clearLogs: () => set({ logs: [], runtimeErrors: [] }),
+  clearLogs: () => set({ logs: [], runtimeErrors: [], network: [] }),
   addRuntimeError: (e) =>
     set((s) => (s.runtimeErrors.some((x) => x.message === e.message) ? s : { runtimeErrors: [...s.runtimeErrors.slice(-9), e], errorDismissed: false })),
-  reload: () => set((s) => ({ reloadKey: s.reloadKey + 1, runtimeErrors: [], errorDismissed: false, selected: null })),
+  reload: () => set((s) => ({ reloadKey: s.reloadKey + 1, runtimeErrors: [], network: [], errorDismissed: false, selected: null })),
 }))

@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v3.4.0
+# PROGRESS — UnQStudio v3.5.0
 
 | Milestone | Status |
 |---|---|
@@ -39,3 +39,6 @@ Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks.
 
 ## v3.4.0 — Phase 1 resilient streaming
 - [x] watchdog + auto-continuation + stitching + salvage + locks + abort (core, **unit-tested**: `resilientStream.test.ts`, 296 AI-engine tests green) · [x] store `recover` + `RecoveryCard` + live status (type-checked, built; **no Chromium e2e for the recovery card yet → PARTIAL**) · [x] patch-first prompt rules.
+
+## v3.5.0 — Phase 2
+- [x] tools.ts (unit-tested) · [x] tsCheck + lazy worker (core unit-tested, NOT wired) · [x] bridge network + audit (jsdom-tested) + Network tab · [x] verifyLoop receipts (unit-tested, NOT wired into UI) · [ ] native tool calls on the wire · [ ] CodeMirror squiggles · [ ] vision screenshot auto-verify.
