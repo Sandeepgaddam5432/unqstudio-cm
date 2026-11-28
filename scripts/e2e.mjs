@@ -21,7 +21,7 @@ for (let i = 0; i < 50; i++) { try { if ((await fetch(URL)).ok) break } catch {}
 const results = []
 const proxied = []
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? '✓' : '✗'} ${name}${detail ? ' — ' + detail : ''}`) }
-const section = async (name, fn) => { try { await fn() } catch (e) { check(`${name} completed`, false, String(e).slice(0, 700)) } }
+const section = async (name, fn) => { if (process.env.E2E_ONLY && !name.includes(process.env.E2E_ONLY)) return; try { await fn() } catch (e) { check(`${name} completed`, false, String(e).slice(0, 2400)) } }
 const errors = []
 const notFound = []
 const watch = (page, tag) => {
@@ -421,6 +421,8 @@ try {
     await sleep(300)
     check('Model Picker: Enter then Escape closes the picker', (await dp.locator('[data-model-picker]').count()) === 0)
     // project settings: knowledge persists across reload
+    // Enter on the picker's first row opens the Settings hub (its scrim would block the toolbar) — dismiss it deterministically.
+    if (await dp.locator('[role=dialog]').count()) { await dp.keyboard.press('Escape'); await dp.locator('[role=dialog]').first().waitFor({ state: 'detached', timeout: 5000 }).catch(() => {}) }
     await dp.getByRole('button', { name: 'Project settings' }).click()
     await dp.getByRole('tab', { name: /Knowledge/ }).click()
     const note = 'E2E brand: use violet #6D5EF5 and a friendly tone.'
@@ -569,7 +571,7 @@ try {
     await dp.goto(URL); await dp.locator('[data-hero]').waitFor(); await sleep(600)
     // The production CSS minifier may serialise oklch() as lab(); compare the *resolved colours* instead of the literal text.
     const same = (pairs) => dp.evaluate((ps) => { const cv = document.createElement('canvas'); cv.width = cv.height = 1; const g = cv.getContext('2d', { willReadFrequently: true }); const probe = document.createElement('div'); document.body.appendChild(probe); const px = (c) => { probe.style.color = ''; probe.style.color = c; c = getComputedStyle(probe).color; g.clearRect(0, 0, 1, 1); g.fillStyle = '#000'; g.fillStyle = c; g.fillRect(0, 0, 1, 1); return [...g.getImageData(0, 0, 1, 1).data] }; return ps.map(([a, b]) => { const x = px(a), y = px(b); return x.every((v, i) => Math.abs(v - y[i]) <= 2) }) }, pairs)
-    const lightOk = await same([['var(--bg-depth)', 'oklch(95.49% 0 107)'], ['var(--bg-base)', 'oklch(96.99% 0 107)'], ['var(--bg-primary)', 'oklch(98.51% 0 107)'], ['var(--bg-secondary)', 'oklch(99.99% 0 107)'], ['var(--fg-primary)', 'oklch(10% 0 0)'], ['var(--fg-tertiary)', 'oklch(50% .001 107)'], ['var(--bg-accent)', 'oklch(52.43% .2396 264.41)']])
+    const lightOk = await same([['var(--bg-depth)', 'oklch(95.49% 0 107)'], ['var(--bg-base)', 'oklch(96.99% 0 107)'], ['var(--bg-primary)', 'oklch(98.51% 0 107)'], ['var(--bg-secondary)', 'oklch(99.99% 0 107)'], ['var(--fg-primary)', 'oklch(10% 0 0)'], ['var(--fg-tertiary)', 'oklch(50% .001 107)'], ['var(--bg-accent)', 'oklch(52% .19 277)']])
     check('OKLCH depth ladder tokens resolve to the specified light values', lightOk.every(Boolean), JSON.stringify(lightOk))
     check('Aurora hero is a crisp SVG (no CSS blur filter)', (await dp.locator('[data-aurora] svg').count()) === 1 && (await dp.evaluate(() => getComputedStyle(document.querySelector('[data-aurora] svg')).filter)) === 'none')
     check('Geist is the UI font', (await dp.evaluate(() => getComputedStyle(document.body).fontFamily)).includes('Geist'))

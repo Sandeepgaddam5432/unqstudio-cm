@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v3.2
+# PROGRESS — UnQStudio v3.3.1
 
 | Milestone | Status |
 |---|---|
@@ -32,4 +32,7 @@ Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks.
 
 ## v3.3.0 — True Lovable mobile UX (M1–M6)
 - [x] M1 single-viewport Home + one FAB per tab · [x] M2 SwipePager + springs · [x] M3 model selector overhaul · [x] M4 Home→Chat fix, hammer removed · [x] M5 CORS proxy + URL normalisation · [x] M6 e2e (CDP touch) + docs/screenshots.
-- Gates: verify:docs · tsc · lint · vitest · build green. e2e: 173/175 — the 2 failures (desktop "Project settings" click timeout, OKLCH ladder token #7) fail identically on the pre-3.3 commit in this sandbox.
+- Gates: verify:docs · tsc · lint · vitest · build green. e2e at 3.3.0 was 173/175 (desktop "Project settings" click, OKLCH ladder #7) — both fixed in 3.3.1.
+
+## v3.3.1 — Phase 0 ground-truth audit
+- [x] Real baseline (verify:docs, tsc, lint, 42 files/573 tests, build, e2e 182/182) · [x] stale headers fixed · [x] verify:docs v2 (version consistency + strict git-diff doc-sync) · [x] AGENTS/CLAUDE micro-change + anti-hallucination law · [x] e2e baseline fixed. See `DOCS/08` audit table.

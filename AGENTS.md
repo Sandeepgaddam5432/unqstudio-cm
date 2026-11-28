@@ -8,13 +8,16 @@ UnQStudio is a **static, browser-native AI coding studio** (React 19 + Vite + Ta
 3. `DOCS/02-CODEBASE-MAP.md` — every file and exported symbol (generated)
 4. Then the topical doc: `03` AI/models, `04` UI/design system, `05` auth/SEO/deploy, `06` ADRs/changelog, `07` VFS/runtime/deploy contracts, `08` honest improvements & roadmap, `09` **UI/UX master spec (v3.1: OKLCH depth, mobile nav, swipe workspace, Timeline/Changes, Settings suite — mandatory before any UI work)**.
 
-## IMMUTABLE DOC-SYNC LAW
-Whenever you **add, rename, delete a file**, or **change its exports, store state, persisted keys or an HTTP API**, you MUST — *before committing*:
-1. Add a purpose line for new files in `scripts/codemap-purposes.mjs`, then run `npm run docs:map` to regenerate `DOCS/02-CODEBASE-MAP.md`.
-2. Update the relevant hand-written doc(s) (`DOCS/01`, `03`, `04`, `05`).
-3. Append an entry to `DOCS/06-CHANGELOG-AND-ADRS.md` (and an ADR if a design decision was made).
-4. Update `PROGRESS.md` and `HANDOFF.md`.
-5. Run `npm run verify:docs` — it must pass. It is a **mandatory pre-commit quality gate** (it fails on undocumented, stale or out-of-date files).
+## IMMUTABLE DOC-SYNC LAW (zero-exception micro-change rule)
+**Even a 1-line or 1-word change** that affects behaviour, UI copy/layout, CSS tokens, prompts, tools, the parser, store state, persistence keys, edge functions, scripts or a bug fix MUST update the matching docs **before committing**:
+1. New/renamed/removed file or changed export/store shape/persisted key/HTTP API → add a purpose in `scripts/codemap-purposes.mjs`, run `npm run docs:map` (regenerates `DOCS/02-CODEBASE-MAP.md`).
+2. The relevant topical doc(s): `DOCS/01`, `03`, `04`, `05`, `07`, `08`, `09`.
+3. `DOCS/06-CHANGELOG-AND-ADRS.md` (+ an ADR for any architectural/UX decision), `CHANGELOG.md`, `PROGRESS.md`, `HANDOFF.md`.
+4. Versions must agree everywhere: `package.json` ⇄ README H1 ⇄ PROGRESS H1 ⇄ HANDOFF `**State:**` ⇄ newest CHANGELOG heading (no stale headers/footers, no "(in progress)").
+5. `npm run verify:docs` must pass. It **fails** on: missing/undocumented/stale files, out-of-date code map, lazy purposes, brand leaks, undocumented bridge events, **version drift**, and **any `src/ functions/ scripts/` change (tests exempt) without DOCS/06 + CHANGELOG + PROGRESS + HANDOFF (+ DOCS/02 for added/removed files)** — the diagnostic lists exactly which files to update. CI runs `node scripts/verify-docs.mjs --strict-diff=<base>`.
+
+## ANTI-HALLUCINATION RULE
+Never write that a feature "works", is "verified" or is "done" unless (a) a passing automated test covers it **and** (b) you observed the runtime behaviour (unit run, e2e, or screenshot). Otherwise tag it `PARTIAL` or `MISSING` (or `ENV-LIMITED` when it needs external credentials/bindings) in `DOCS/08`. Treat every pre-existing `.md` claim as unverified until checked against code. Report real gate numbers, never rounded-up ones.
 
 ## Quality gates (all must pass before every commit)
 `npm run verify:docs` · `npx tsc --noEmit` · `npm run lint` · `npm run test` · `npm run build` (and `npm run e2e` for UI-affecting work). Tests need Node ≥ 22 (jsdom 31).

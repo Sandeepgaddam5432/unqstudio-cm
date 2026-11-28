@@ -1,5 +1,10 @@
 # CLAUDE.md
 
-This project follows the agent constitution in [`AGENTS.md`](./AGENTS.md). Read it first, then `DOCS/01-SYSTEM-ARCHITECTURE.md` and `DOCS/02-CODEBASE-MAP.md` before touching code.
+Read `AGENTS.md` first — it is the single source of truth for every agent (Claude, Codex, Cursor, humans).
 
-**Immutable doc-sync law (summary):** any added/renamed/deleted file or changed exports/state/API ⇒ update `scripts/codemap-purposes.mjs` → `npm run docs:map` → matching `DOCS/*.md` → append `DOCS/06-CHANGELOG-AND-ADRS.md` → `npm run verify:docs` passes → only then commit.
+Non-negotiables repeated here so they are never missed:
+1. **Zero-exception doc-sync:** any behaviour change, even one line, updates DOCS/02 (via `npm run docs:map`), the topical doc, DOCS/06, CHANGELOG, PROGRESS, HANDOFF and keeps the version consistent. `npm run verify:docs` fails otherwise (it inspects `git status` / `--strict-diff`).
+2. **Anti-hallucination:** claim nothing works without a passing test **and** observed runtime behaviour; tag the rest `PARTIAL` / `MISSING` / `ENV-LIMITED`.
+3. **Gates before every commit:** `npm run verify:docs && npx tsc --noEmit && npm run lint && npm run test && npm run build` (+ `npm run e2e` for UI work). Node ≥ 22.
+4. **Never write a token anywhere** (source, docs, `.git/config`, logs). Push with an ephemeral `http.extraheader` only.
+5. Layering `ui → store → core`; no raw `<select>` / `<input type="color">` in `src/ui`; popovers via Floating UI, sheets via `BottomSheet`.

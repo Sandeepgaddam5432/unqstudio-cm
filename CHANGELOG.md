@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.3.1 — ground-truth audit + strict doc-sync law
+- **Audit:** every status doc re-verified against code (see `DOCS/08` "Ground-truth audit v3.3.1"); stale v2.1 / v3.2 / V3.2-M5 headers fixed; overstated claims tagged `PARTIAL`/`MISSING`.
+- **verify:docs v2:** version/header consistency across `package.json`, README, PROGRESS, HANDOFF, CHANGELOG + strict git-diff doc-sync (`--strict-diff[=ref]`): any `src/ functions/ scripts/` change without DOCS/06 + CHANGELOG + PROGRESS + HANDOFF (+ DOCS/02 for added/removed files) fails.
+- **e2e baseline fixed:** desktop "Project settings" click (a Settings dialog opened by Enter on the picker's first row was blocking the toolbar) and the OKLCH ladder check #7 (stale accent expectation → `oklch(52% .19 277)`). `E2E_ONLY=<substring>` runs a single section.
+- **AGENTS.md / CLAUDE.md:** Zero-Exception Micro-Change Rule + Anti-Hallucination Rule.
+
 ## v3.2.0 (in progress)
 - **V3.2-M5** Full-colour Connectors Hub (14 brands), custom connectors, Supabase full-stack engine.
 - **V3.2-M4** Zero tool-call/diff leaks, tool cards, 2-row composer, / skills picker, working mic.

@@ -7,7 +7,7 @@ Benchmarked against **Lovable.dev, v0.dev, Cursor and Claude Code**. Metrics wer
 |---|---|
 | Source files / lines (non-test, `src`+`functions`) | 166 files · 13450 lines (`src` only) |
 | Unit tests | 353 (Vitest, jsdom, fake-indexeddb) |
-| E2E | 68 checks in headless Chromium against the production `dist/` (`scripts/e2e.mjs`) |
+| E2E | 182 checks (was 68 at v2.1; counted at v3.3.1) in headless Chromium against the production `dist/` (`scripts/e2e.mjs`) |
 | Main JS chunk | 411 kB (index-*.js); CodeMirror chunk 573 kB (lazy, Code Mode only) |
 | Bundled catalog snapshot | 2368 kB (`public/catalog-snapshot.json`, 327 providers · ~9.4k models; fetched, **not** in the JS bundle) |
 | Bundled brand glyphs | 41 kB source (`src/ui/icons/brandSvgs.ts`, 35 glyphs, inside the main chunk) |
@@ -80,3 +80,21 @@ Benchmarked against **Lovable.dev, v0.dev, Cursor and Claude Code**. Metrics wer
 - **OKLCH**: the production CSS minifier rewrites `oklch()` to `lab()` (visually identical); tests compare resolved colours.
 - **Account switching** is local-profile only; real multi-account sessions need the optional OAuth providers.
 - Test environment needs Node ≥ 22 and (for E2E) Chromium system libraries.
+
+## Ground-truth audit v3.3.1 (verified against code + a real baseline run, not against older docs)
+Baseline measured in a clean checkout: `verify:docs` ✓ · `tsc` ✓ · `eslint` ✓ · vitest **42 files / 573 tests** ✓ · `vite build` ✓ · Chromium e2e **182/182** after the two baseline fixes (was 173 of 175 reached).
+
+| Claim (older docs) | Status | Evidence |
+|---|---|---|
+| Static Vite SPA, esbuild-wasm runtime, VFS in IndexedDB, checkpoints, locks | **VERIFIED** | `src/core/runtime/*`, `src/core/vfs/*`, runtime/vfs tests, e2e SaaS compile |
+| 4 wire protocols (OpenAI/Anthropic/Gemini/Ollama) **streaming text** | **VERIFIED** | `src/core/ai/stream.ts`, `protocols.test.ts` |
+| Provider-**native tool/function calling** | **MISSING** (Phase 2) | `agentLoop.ts` only parses XML tags (`<read_file/>`…) |
+| In-browser **TypeScript type-check** of user code | **MISSING** (Phase 2) | esbuild strips types only; `typescript` is a devDependency used by tests (`templates.test.ts` tsc --strict), not shipped |
+| Auto-heal loop (build errors + preview errors → AI) | **VERIFIED** (build + console errors) / **PARTIAL** (no network/DOM audit, no verified receipt) | `selfHeal.ts`, `agentLoop.ts` |
+| Permissions: projectEdits, publishing | **VERIFIED** enforced via `gate()` (`ChatPanel.tsx`, `store/app.ts`) — but through toast/`confirm` style, not an inline card |
+| Permissions: build, connectors | **PARTIAL** — stored/shown, not enforced (`store/prefs.ts`) |
+| Symbol map / repo map context | **VERIFIED** (regex-level, not AST/BM25) — `repoMap.ts` |
+| Truncated stream handling | **PARTIAL** pre-3.4: a cut-off file was discarded ("nothing was written"); fixed in Phase 1 |
+| `/api/share`, deploy history/rollback, ERD, npm search UI, a11y panel, insights, leak scanner, `.env` editor | **MISSING** at 3.3.1 (Phases 3–5) |
+| Header versions (README v2.1, PROGRESS v3.2, HANDOFF V3.2-M5) | **FIXED** in 3.3.1 and now enforced by `verify:docs` |
+| Optional `functions/api/{auth,catalog,proxy}` | **VERIFIED** present; degrade gracefully when absent |
