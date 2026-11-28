@@ -261,3 +261,8 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - **ADR-3.6-1 — logic before pixels, honestly labelled.** Leak scanner, hunk diff, BM25/re-export brain, npm search, ERD/seed SQL and WCAG math ship as pure, unit-tested core modules so UI can be layered without rework; every one is tagged PARTIAL in DOCS/08 because no screen consumes it yet.
 - **ADR-3.6-2 — hunks are change groups, not patch offsets.** `applyHunks` rebuilds text from diff parts, so any subset applies exactly with no offset drift.
 - **ADR-3.6-3 — test fixtures for secrets are assembled at runtime** to keep key-shaped literals out of git (GitHub push protection) and out of our own scanner.
+
+## 3.6.1 — 100x master roadmap (docs only)
+- **ADR-3.6.1-1 — one roadmap file with an auditable status per capability.** `DOCS/10-100X-MASTER-ROADMAP.md` is the single plan for the owner's 41 capabilities; each row is mapped to real files and a status from the AGENTS.md vocabulary, and the §6 tally must be regenerated with any status change. Rationale: v3.5/v3.6 shipped modules with no production importers; credit now requires importer + UI + test.
+- **ADR-3.6.1-2 — Track A/B split is a rule, not a hope.** Server-dependent capabilities (#21, #22, #30, #31) are `TRACK-B` and may only land behind `IRuntimeEngine`/`IStorageAdapter`/`IAuthProvider`; a static build with no adapter must stay fully functional.
+- Audit facts recorded: no `typecheckWorker` chunk in `dist/assets`; `isDestructiveSql` absent; main chunk 616.16 kB; vitest 53 files / 655 tests.

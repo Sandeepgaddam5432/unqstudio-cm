@@ -8,3 +8,4 @@ Non-negotiables repeated here so they are never missed:
 3. **Gates before every commit:** `npm run verify:docs && npx tsc --noEmit && npm run lint && npm run test && npm run build` (+ `npm run e2e` for UI work). Node ≥ 22.
 4. **Never write a token anywhere** (source, docs, `.git/config`, logs). Push with an ephemeral `http.extraheader` only.
 5. Layering `ui → store → core`; no raw `<select>` / `<input type="color">` in `src/ui`; popovers via Floating UI, sheets via `BottomSheet`.
+6. **Roadmap truth:** `DOCS/10-100X-MASTER-ROADMAP.md` holds the 41-capability matrix; change a capability's status there (and its §6 tally) in the same commit as the code that changes it.

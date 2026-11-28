@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.1 — 100x master roadmap (documentation only)
+- Added `DOCS/10-100X-MASTER-ROADMAP.md`: dual-track architecture, P0 streaming unblocker, Top-5 order, all 41 capabilities upgraded to frontier specs, agent-needs self-critique, phased order. Statuses audited at `05ea311`: **5 VERIFIED · 22 PARTIAL · 10 MISSING · 4 TRACK-B**.
+- Wired into `AGENTS.md`, `CLAUDE.md`, `README.md`, `DOCS/08` and the `verify:docs` required-file list.
+- Corrected stale lines: README unit-test count (was 353; now dated 53 files / 655 tests), HANDOFF `Next:`, DOCS/08 stale baseline pointer.
+- Audit findings recorded: the production build emits **no** `typecheckWorker` chunk; `isDestructiveSql` is not implemented; v3.5/v3.6 modules (`tools`, `verifyLoop`, `projectBrain`, `leakScanner`, `hunkDiff`, `npmSearch`, `a11yChecks`, `erd`, `typecheck*`) have no production importers.
+
 ## v3.6.0 — trust/safety, brain and full-stack core logic
 - **Core logic (unit-tested, UI not yet wired — PARTIAL):** secret-leak scanner, per-hunk diff, Project Brain BM25 + `export *` resolution + usedBy graph, npm search/installer core, WCAG contrast math, Supabase ERD → SQL/RLS/Realtime/seed generator + destructive-SQL detector.
 

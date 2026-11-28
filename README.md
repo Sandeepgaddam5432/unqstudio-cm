@@ -1,6 +1,6 @@
 <p align="center"><img src="public/logo.svg" width="96" alt="UnQStudio logo"></p>
 
-# UnQStudio · v3.6.0
+# UnQStudio · v3.6.1
 
 **A 100 % static, client-side AI software-engineering studio.** Describe an app, bring your own LLM key, and watch it
 compile with `esbuild-wasm` into a sandboxed live preview — no backend, no WebContainers, nothing leaves your device.
@@ -48,7 +48,7 @@ Deploys as a plain `dist/` folder on Cloudflare Pages.
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm run test         # 353 unit tests (vitest, Node >= 22)
+npm run test         # all unit tests (vitest, Node >= 22) — 53 files / 655 tests at v3.6.1
 npm run verify:docs  # doc-sync guard (also: npm run docs:map to regenerate the code map)
 npm run sync:catalog # refresh public/catalog-snapshot.json: directory + OpenRouter + LiteLLM (alias: sync:models; runs on prebuild)
 npm run gen:seo      # rewrite canonical URLs from VITE_SITE_URL (runs on prebuild)
@@ -77,7 +77,7 @@ On first use press the model pill → **Quick setup**, pick a provider (OpenRout
   functions/api/catalog.ts (+ models-dev alias)  ·  functions/api/auth/*  (GitHub OAuth code exchange)
 ```
 
-Deep docs: [AGENTS.md](./AGENTS.md) · [01 Architecture](./DOCS/01-SYSTEM-ARCHITECTURE.md) · [02 Codebase map](./DOCS/02-CODEBASE-MAP.md) · [03 Models & AI](./DOCS/03-MODELS-AND-AI-ENGINE.md) · [04 UI & design system](./DOCS/04-UI-AND-DESIGN-SYSTEM.md) · [05 Auth/SEO/Deploy](./DOCS/05-AUTH-SEO-DEPLOY.md) · [06 Changelog & ADRs](./DOCS/06-CHANGELOG-AND-ADRS.md) · v1 notes: [ARCHITECTURE.md](./ARCHITECTURE.md) · [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) · [DOCS/FEATURES.md](./DOCS/FEATURES.md) · [DOCS/DEPLOYMENT.md](./DOCS/DEPLOYMENT.md)
+Deep docs: [AGENTS.md](./AGENTS.md) · [01 Architecture](./DOCS/01-SYSTEM-ARCHITECTURE.md) · [02 Codebase map](./DOCS/02-CODEBASE-MAP.md) · [03 Models & AI](./DOCS/03-MODELS-AND-AI-ENGINE.md) · [04 UI & design system](./DOCS/04-UI-AND-DESIGN-SYSTEM.md) · [05 Auth/SEO/Deploy](./DOCS/05-AUTH-SEO-DEPLOY.md) · [06 Changelog & ADRs](./DOCS/06-CHANGELOG-AND-ADRS.md) · [10 100x master roadmap (41 capabilities)](./DOCS/10-100X-MASTER-ROADMAP.md) · v1 notes: [ARCHITECTURE.md](./ARCHITECTURE.md) · [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) · [DOCS/FEATURES.md](./DOCS/FEATURES.md) · [DOCS/DEPLOYMENT.md](./DOCS/DEPLOYMENT.md)
 
 ## Deploy to Cloudflare Pages (static)
 

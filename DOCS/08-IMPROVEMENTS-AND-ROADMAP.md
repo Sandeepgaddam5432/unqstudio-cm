@@ -1,5 +1,7 @@
 # 08 · Improvements & Roadmap — brutally honest audit (v2.1)
 
+> **v3.6.1 pointer:** the forward-looking, per-capability plan (41 capabilities, frontier-grade specs, honest status tally) lives in [`DOCS/10-100X-MASTER-ROADMAP.md`](./10-100X-MASTER-ROADMAP.md). The measured-baseline table below is the v2.1 snapshot; at v3.6.1 the same gates measure **53 test files / 655 tests** and a **616.16 kB** main chunk (`index-*.js`), with **no** `typecheckWorker` chunk emitted yet.
+
 Benchmarked against **Lovable.dev, v0.dev, Cursor and Claude Code**. Metrics were measured on this repository at the v2.1 release commit (`npm run build`, `npm run test`, `npm run e2e`).
 
 ## Measured baseline

@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v3.6.0
+# PROGRESS — UnQStudio v3.6.1
 
 | Milestone | Status |
 |---|---|
@@ -45,3 +45,4 @@ Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks.
 
 ## v3.6.0 — Phase 3/5 core logic
 - [x] leakScanner · hunkDiff · projectBrain · npmSearch · a11yChecks · erd (all unit-tested) · [ ] every UI surface for them (MISSING) · [ ] share function / deploy history / insights (MISSING) · [ ] Phase 4 redesign (MISSING).
+| v3.6.1 100x master roadmap (`DOCS/10`) + doc cleanup | ✅ done (docs only; no capability status changed) |

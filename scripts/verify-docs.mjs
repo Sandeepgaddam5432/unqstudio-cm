@@ -3,7 +3,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { ROOTS, walk, generate } from './gen-codemap.mjs'
 
-const REQUIRED = ['AGENTS.md', 'CLAUDE.md', 'DOCS/01-SYSTEM-ARCHITECTURE.md', 'DOCS/02-CODEBASE-MAP.md', 'DOCS/03-MODELS-AND-AI-ENGINE.md', 'DOCS/04-UI-AND-DESIGN-SYSTEM.md', 'DOCS/05-AUTH-SEO-DEPLOY.md', 'DOCS/06-CHANGELOG-AND-ADRS.md', 'DOCS/07-VFS-RUNTIME-DEPLOY.md', 'DOCS/08-IMPROVEMENTS-AND-ROADMAP.md', 'DOCS/09-UIUX-MASTER-SPEC.md']
+const REQUIRED = ['AGENTS.md', 'CLAUDE.md', 'DOCS/01-SYSTEM-ARCHITECTURE.md', 'DOCS/02-CODEBASE-MAP.md', 'DOCS/03-MODELS-AND-AI-ENGINE.md', 'DOCS/04-UI-AND-DESIGN-SYSTEM.md', 'DOCS/05-AUTH-SEO-DEPLOY.md', 'DOCS/06-CHANGELOG-AND-ADRS.md', 'DOCS/07-VFS-RUNTIME-DEPLOY.md', 'DOCS/08-IMPROVEMENTS-AND-ROADMAP.md', 'DOCS/09-UIUX-MASTER-SPEC.md', 'DOCS/10-100X-MASTER-ROADMAP.md']
 const problems = []
 for (const f of REQUIRED) {
   if (!existsSync(f)) problems.push(`MISSING required doc: ${f}`)
