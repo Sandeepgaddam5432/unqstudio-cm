@@ -256,3 +256,8 @@ Rewriting 150+ components to new class names would risk regressions; aliasing `-
 - **ADR-3.5-2 — type-check in a lazy worker, declare bare imports as `any`.** Shipping npm typings would be hundreds of MB; declaring only the *bare specifiers actually imported* keeps relative-import errors real (a blanket `declare module '*'` would have hidden missing local files — caught by the unit test).
 - **ADR-3.5-3 — receipts cannot lie.** A skipped required check yields `unverified`, never `verified`.
 - Bridge: `innerText` falls back to `textContent` (jsdom/odd documents).
+
+## 3.6.0 — trust/safety + full-stack + brain core logic (no UI yet)
+- **ADR-3.6-1 — logic before pixels, honestly labelled.** Leak scanner, hunk diff, BM25/re-export brain, npm search, ERD/seed SQL and WCAG math ship as pure, unit-tested core modules so UI can be layered without rework; every one is tagged PARTIAL in DOCS/08 because no screen consumes it yet.
+- **ADR-3.6-2 — hunks are change groups, not patch offsets.** `applyHunks` rebuilds text from diff parts, so any subset applies exactly with no offset drift.
+- **ADR-3.6-3 — test fixtures for secrets are assembled at runtime** to keep key-shaped literals out of git (GitHub push protection) and out of our own scanner.

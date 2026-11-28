@@ -77,3 +77,11 @@ Session storage: OAuth tokens exist **only** in `sessionStorage` keys `unq.sessi
 - **Headers**: forwards `Authorization`, `x-api-key`, `anthropic-version` and custom headers; strips `Host`, `Cookie`, `Origin`, `Referer`, `cf-*`, `x-forwarded-*`, hop-by-hop headers.
 - **Streaming**: the upstream body is returned as-is (`text/event-stream` is never buffered; `Cache-Control: no-store, no-transform`, `X-Accel-Buffering: no`). Upstream status codes and error bodies pass through verbatim.
 - Keys are only forwarded, never stored or logged. On hosts without the function (static preview, dev server) the client detects the missing `x-unq-proxy` header and falls back to a direct request.
+
+## v3.6 Trust & safety / full-stack core (logic only — PARTIAL, UI MISSING)
+- `src/core/security/leakScanner.ts` — `scanFiles(files)` → `{file,line,kind,severity,preview,remediation}`; `publishBlockers()` selects findings that must stop publish/push/deploy. **Not yet called** from Publish/Git/Deploy flows, the preview console or the `.env` editor (MISSING UI `EnvEditor`, inline Permission Cards; `build`/`connectors` permissions still unenforced).
+- `src/core/vfs/hunkDiff.ts` — per-hunk accept/reject core (`computeHunks`, `applyHunks`). `DiffViewer` UI not yet using it.
+- `src/services/supabase/erd.ts` — schema model → SQL (+RLS owner policies, Realtime), seed SQL, `migrationPath`, `isDestructiveSql`. No ERD UI (`SchemaDesigner.tsx`), no Management-API run button, no typed-hooks/auth/storage scaffolding generators (MISSING).
+- `src/core/runtime/npmSearch.ts` — registry search parser + `package.json` add/remove (no `PackageManager.tsx` UI).
+- `src/core/runtime/a11yChecks.ts` — WCAG contrast/touch-target math (no in-iframe collector, no `A11yAudit.tsx` panel).
+- NOT STARTED: `functions/api/share.ts` + share links (needs Cloudflare KV/R2 binding → ENV-LIMITED), deployment history/rollback store, Insights tab.

@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.6.0 — trust/safety, brain and full-stack core logic
+- **Core logic (unit-tested, UI not yet wired — PARTIAL):** secret-leak scanner, per-hunk diff, Project Brain BM25 + `export *` resolution + usedBy graph, npm search/installer core, WCAG contrast math, Supabase ERD → SQL/RLS/Realtime/seed generator + destructive-SQL detector.
+
 ## v3.5.0 — agent tools, real TypeScript checker, preview telemetry 2.0
 - **Tool layer** (`src/core/ai/tools.ts`): 12 typed agent tools; native function-calling serialisation for openai/anthropic/gemini/ollama, native stream accumulation (parallel calls), XML fallback, parallel read-only batching, arg validation. *Not yet on the wire (PARTIAL).*
 - **Real TypeScript checker** (`src/core/runtime/tsCheck.ts`, lazy `typecheckWorker.ts`, `typecheck.ts`): `typescript` is now a runtime dependency used only in the worker chunk. *Not yet called from UI/agent (PARTIAL).*

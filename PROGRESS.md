@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v3.5.0
+# PROGRESS — UnQStudio v3.6.0
 
 | Milestone | Status |
 |---|---|
@@ -42,3 +42,6 @@ Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks.
 
 ## v3.5.0 — Phase 2
 - [x] tools.ts (unit-tested) · [x] tsCheck + lazy worker (core unit-tested, NOT wired) · [x] bridge network + audit (jsdom-tested) + Network tab · [x] verifyLoop receipts (unit-tested, NOT wired into UI) · [ ] native tool calls on the wire · [ ] CodeMirror squiggles · [ ] vision screenshot auto-verify.
+
+## v3.6.0 — Phase 3/5 core logic
+- [x] leakScanner · hunkDiff · projectBrain · npmSearch · a11yChecks · erd (all unit-tested) · [ ] every UI surface for them (MISSING) · [ ] share function / deploy history / insights (MISSING) · [ ] Phase 4 redesign (MISSING).

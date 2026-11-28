@@ -105,3 +105,17 @@ Baseline measured in a clean checkout: `verify:docs` ✓ · `tsc` ✓ · `eslint
 | Real TypeScript diagnostics | **VERIFIED (core)** real `ts.Program` in tests; **PARTIAL (product)** worker built but not called by UI/agent; no CodeMirror squiggles / "Fix with AI" | `src/core/runtime/tsCheck.ts`, `typecheckWorker.ts` |
 | Network interception + DOM audit in the preview | **VERIFIED (bridge, jsdom tests)**; Network tab shipped; audit not auto-run, no vision screenshot | `bridgeScript.ts`, `previewAudit.ts` |
 | `✓ Verified` receipt + bounded loop | **VERIFIED (logic, unit tests)**; **MISSING (UI badge / store wiring)** | `src/core/ai/verifyLoop.ts` |
+
+| Phase 3/5 capability (v3.6.0) | Status | Evidence |
+|---|---|---|
+| BM25 ranker, `export *` resolution, usedBy | **VERIFIED (core)** / **PARTIAL (not injected into context, no worker)** | `projectBrain.ts`, `projectBrain.test.ts` |
+| `/.unq/rules.md`, `update_rules`, `ask_user` card | **MISSING** | — |
+| Per-hunk diff | **VERIFIED (core)** / **MISSING (DiffViewer/ActivityInspector UI)** | `hunkDiff.ts` |
+| Leak scanner | **VERIFIED (core)** / **MISSING (publish/git/deploy blocking, preview-bundle scan)** | `leakScanner.ts` |
+| Permission cards for all 4 gates + destructive actions; `EnvEditor` | **MISSING** (only `projectEdits` + `publishing` gated, via toast) | `store/prefs.ts` |
+| Share link (`functions/api/share.ts`), deployment history/rollback | **MISSING** (share is ENV-LIMITED: needs KV/R2) | — |
+| ERD SQL/seed generator | **VERIFIED (core)** / **MISSING (designer UI, Management API run, typed hooks, auth/storage scaffolds)** | `services/supabase/erd.ts` |
+| npm search/installer | **VERIFIED (core)** / **MISSING (PackageManager UI)** | `npmSearch.ts` |
+| a11y audit | **VERIFIED (WCAG math)** / **MISSING (in-iframe collector + panel + fix-with-AI)** | `a11yChecks.ts` |
+| Insights dashboard | **MISSING** | — |
+| Phase 4 flagship UI/UX redesign + v40 screenshots | **MISSING** (only the Network tab was added) | — |
