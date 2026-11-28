@@ -4,6 +4,7 @@ import { getAdapter } from '@/core/vfs/idbAdapter'
 import { forkFromCheckpoint } from '@/core/vfs/projects'
 import { applyPendingOps, runTurn, summarizeOps, type HistoryItem, type TurnEvent } from '@/core/ai/orchestrator'
 import { estimateCost } from '@/core/ai/tokens'
+import { statusText } from '@/core/ai/resilientStream'
 import { AGENT_TOOLS_PROMPT, agentStepsToBuild, clampAgentSteps, formatErrors, runAgentLoop } from '@/core/ai/agentLoop'
 import type { BuildStep } from '@/core/ai/buildSteps'
 import { buildHealPrompt } from '@/core/ai/selfHeal'
@@ -46,6 +47,8 @@ export interface ChatMessage {
   streaming?: boolean
   durationMs?: number
   error?: { message: string; hint?: string }
+  /** v3.4 live stream status line, e.g. "Writing /src/App.tsx · 148 lines…" / "Stream stalled at line 148 — resuming automatically (1/2)…". */
+  liveStatus?: string
 }
 
 interface ChatState {
@@ -66,6 +69,8 @@ interface ChatState {
   clear: () => Promise<void>
   deleteMessage: (id: string) => Promise<void>
   retry: (assistantId: string) => Promise<void>
+  /** v3.4: finish (`resume`, continues from the saved partial) or redo (`retry`, from scratch) ONE interrupted/failed file in place. */
+  recover: (assistantId: string, opId: string, kind: 'resume' | 'retry') => Promise<void>
   undoTurn: (assistantId: string) => Promise<void>
   forkAt: (assistantId: string) => Promise<void>
   approveOps: (assistantId: string, opIds?: string[]) => Promise<void>
@@ -225,6 +230,7 @@ export const useChat = create<ChatState>((set, get) => {
           case 'op-progress': { const o = draft.ops!.find((x) => x.id === e.id); if (o) o.lines = e.lines; break }
           case 'usage': draft.usage = e.usage; break
           case 'checkpoint-before': draft.checkpointBefore = e.id; break
+          case 'status': draft.liveStatus = statusText(e.status) || undefined; break
         }
         schedule()
       }
@@ -244,15 +250,17 @@ export const useChat = create<ChatState>((set, get) => {
           ...draft, streaming: false, ops: res.ops.map((o) => ({ ...o })), usage: res.usage, cost: estimateCost(res.usage, model),
           checkpointBefore: res.checkpointBefore, checkpointAfter: res.checkpointAfter, durationMs: Math.round(performance.now() - t0),
           parts: draft.parts!.map((p) => (p.kind === 'think' ? { ...p, done: true } : p)),
+          liveStatus: undefined,
+          error: res.aborted ? { message: 'Stopped by you.', hint: res.interrupted.length ? 'The file you stopped on was kept — use Resume to finish it.' : undefined } : res.error ? { message: res.error.message || 'The response was interrupted.', hint: res.interrupted.length || res.appliedCount ? 'Completed files were saved. Nothing was lost.' : (res.error as Error & { hint?: string }).hint } : undefined,
         })
-        logEvent('ai', `${cfg.provider.id}/${cfg.model} · ${res.usage.inputTokens}→${res.usage.outputTokens} tokens · ${res.ops.length} file ops`, { durationMs: Math.round(performance.now() - t0) })
+        logEvent('ai', `${cfg.provider.id}/${cfg.model} · ${res.usage.inputTokens}→${res.usage.outputTokens} tokens · ${res.ops.length} file ops${res.recoveries ? ` · ${res.recoveries} auto-recover` : ''}${res.interrupted.length ? ` · ${res.interrupted.length} interrupted` : ''}`, { durationMs: Math.round(performance.now() - t0) })
       } catch (e) {
         clearTimeout(raf)
         const err = e as Error & { hint?: string }
         const aborted = err.name === 'AbortError'
         update(asst.id, {
-          ...draft, streaming: false, durationMs: Math.round(performance.now() - t0),
-          ops: draft.ops!.map((o) => (o.status === 'streaming' ? { ...o, status: 'failed' as const, detail: 'Stopped before the file was finished – nothing was written.' } : { ...o })),
+          ...draft, streaming: false, liveStatus: undefined, durationMs: Math.round(performance.now() - t0),
+          ops: draft.ops!.map((o) => (o.status === 'streaming' ? { ...o, status: 'interrupted' as const, partial: undefined, detail: `Interrupted at line ${o.lines ?? 0} — completed files were saved.` } : { ...o })),
           parts: draft.parts!.map((p) => (p.kind === 'think' ? { ...p, done: true } : p)),
           error: aborted ? { message: 'Stopped by you.' } : { message: err.message || String(e), hint: err.hint },
         })
@@ -303,6 +311,50 @@ export const useChat = create<ChatState>((set, get) => {
       if (i < 1 || !user || user.role !== 'user') return
       set((s) => { const messages = s.messages.filter((m) => m.id !== assistantId && m.id !== user.id); persist(s.projectId, messages); return { messages } })
       await get().send({ text: user.text, images: user.images, mode: user.mode })
+    },
+
+    recover: async (assistantId, opId, kind) => {
+      if (get().busy) return
+      const vfs = useWorkspace.getState().vfs
+      const cfg = activeConfig()
+      const msgs = get().messages
+      const i = msgs.findIndex((m) => m.id === assistantId)
+      const m = msgs[i]
+      const user = msgs[i - 1]
+      const op = m?.ops?.find((o) => o.id === opId)
+      if (!vfs || !m || !op || i < 1 || user?.role !== 'user' || (op.status !== 'interrupted' && op.status !== 'failed') || op.op === 'delete') return
+      if (cfg.error || !cfg.provider) { if (cfg.error === 'locked') useVault.getState().setUnlockOpen(true); else useApp.getState().setOnboardingOpen(true); return }
+      const st = useSettings.getState()
+      const controller = new AbortController()
+      let live = (m.ops ?? []).map((o) => (o.id === opId ? { ...o, status: 'streaming' as const, detail: undefined } : { ...o }))
+      let status: string | undefined = kind === 'resume' ? `Resuming ${op.path}…` : `Retrying ${op.path}…`
+      update(assistantId, { streaming: true, error: undefined, ops: live, liveStatus: status })
+      set({ busy: true, controller })
+      try {
+        const res = await runTurn({
+          vfs, provider: cfg.provider, model: cfg.model, apiKey: cfg.apiKey, baseUrl: cfg.baseUrl, mode: 'build', history: buildHistory(msgs.slice(0, i - 1)), userText: user.text,
+          pinned: useWorkspace.getState().pinned, customPrompts: st.customPrompts.filter((p) => p.enabled).map((p) => p.content), requireApproval: st.flags.approvalTray, includeAllFiles: st.flags.includeAllFiles,
+          autoCheckpoint: false, signal: controller.signal,
+          resume: { opId, path: op.path, op: op.op as 'create' | 'update' | 'patch', partial: kind === 'resume' ? op.partial ?? '' : '' },
+          onEvent: (e) => {
+            if (e.type === 'op') live = live.map((o) => (o.id === e.op.id ? { ...o, ...e.op } : o))
+            else if (e.type === 'op-progress') live = live.map((o) => (o.id === e.id ? { ...o, lines: e.lines } : o))
+            else if (e.type === 'status') status = statusText(e.status) || undefined
+            update(assistantId, { ops: live, liveStatus: status })
+          },
+        })
+        const byId = new Map(res.ops.map((o) => [o.id, o]))
+        update(assistantId, (cur) => ({
+          streaming: false, liveStatus: undefined, ops: (cur.ops ?? []).map((o) => ({ ...o, ...(byId.get(o.id) ?? {}) })),
+          checkpointAfter: res.checkpointAfter ?? cur.checkpointAfter,
+          error: res.aborted ? { message: 'Stopped by you.' } : res.error ? { message: res.error.message, hint: 'The partial file was kept — you can resume again.' } : undefined,
+        }))
+        if (!res.error && res.ops[0]?.status === 'applied') toast.success(`${op.path} finished`, kind === 'resume' ? 'Resumed from where it stopped.' : 'Rewritten successfully.')
+        logEvent('ai', `${kind} ${op.path} · ${res.ops[0]?.status ?? 'no-op'}`)
+      } catch (e) {
+        const err = e as Error & { hint?: string }
+        update(assistantId, { streaming: false, liveStatus: undefined, ops: live.map((o) => (o.id === opId ? { ...o, status: 'interrupted' as const, partial: op.partial, detail: `Interrupted at line ${op.lines ?? 0}.` } : o)), error: err.name === 'AbortError' ? { message: 'Stopped by you.' } : { message: err.message || String(e), hint: err.hint } })
+      } finally { set({ busy: false, controller: null }) }
     },
 
     undoTurn: async (assistantId) => {

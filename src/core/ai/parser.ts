@@ -69,6 +69,20 @@ export class ArtifactStreamParser {
     return out
   }
 
+  /**
+   * Flush after a mid-stream interruption (network drop / stall / token limit). Unlike `flush()` a dangling partial tag
+   * (`<create_fi`, `<patch_file path="/sr`) is DROPPED instead of leaking into the chat as text, and reported to the caller.
+   * An open file block is still emitted as `file-end { complete: false }` carrying everything streamed so far.
+   */
+  flushInterrupted(): { events: ParserEvent[]; danglingTag?: string } {
+    let danglingTag: string | undefined
+    if (this.state === 'text' && this.buf.startsWith('<')) {
+      const m = OPEN_FILE.exec(this.buf)
+      if (!m && !DELETE.exec(this.buf) && couldBePrefix(this.buf)) { danglingTag = this.buf; this.buf = '' }
+    }
+    return { events: this.flush(), danglingTag }
+  }
+
   private drain(final: boolean): ParserEvent[] {
     const out: ParserEvent[] = []
     for (;;) {

@@ -1,4 +1,4 @@
-# PROGRESS — UnQStudio v3.3.1
+# PROGRESS — UnQStudio v3.4.0
 
 | Milestone | Status |
 |---|---|
@@ -36,3 +36,6 @@ Gates: verify:docs · tsc · lint · 440+ unit tests · build · 106 E2E checks.
 
 ## v3.3.1 — Phase 0 ground-truth audit
 - [x] Real baseline (verify:docs, tsc, lint, 42 files/573 tests, build, e2e 182/182) · [x] stale headers fixed · [x] verify:docs v2 (version consistency + strict git-diff doc-sync) · [x] AGENTS/CLAUDE micro-change + anti-hallucination law · [x] e2e baseline fixed. See `DOCS/08` audit table.
+
+## v3.4.0 — Phase 1 resilient streaming
+- [x] watchdog + auto-continuation + stitching + salvage + locks + abort (core, **unit-tested**: `resilientStream.test.ts`, 296 AI-engine tests green) · [x] store `recover` + `RecoveryCard` + live status (type-checked, built; **no Chromium e2e for the recovery card yet → PARTIAL**) · [x] patch-first prompt rules.

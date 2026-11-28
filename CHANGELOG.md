@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.4.0 — resilient streaming & resumable writes
+- **Resilient streaming** (`src/core/ai/resilientStream.ts`): 28 s chunk-gap watchdog (separate 120 s first-token budget), automatic mid-file continuation (≤ 2, exponential back-off) with last-25-lines tail context and overlap-deduplicated stitching, tighter retry for files that failed before meaningful output, lock-aware recovery, abort-safe.
+- **Partial salvage:** cut-off files become `interrupted` ops with the partial preserved; completed files are never discarded; `RecoveryCard` offers **Resume** and **Retry failed file only**; live status line (`Writing /src/App.tsx · 148 lines…`, `Stream stalled at line 148 — resuming automatically (1/2)…`).
+- **Prompts:** strict patch-first for files > 40 lines + chunk-budget discipline.
+- `ArtifactStreamParser.flushInterrupted()` — a dangling `<create_fi` fragment is never leaked into chat text.
+
 ## v3.3.1 — ground-truth audit + strict doc-sync law
 - **Audit:** every status doc re-verified against code (see `DOCS/08` "Ground-truth audit v3.3.1"); stale v2.1 / v3.2 / V3.2-M5 headers fixed; overstated claims tagged `PARTIAL`/`MISSING`.
 - **verify:docs v2:** version/header consistency across `package.json`, README, PROGRESS, HANDOFF, CHANGELOG + strict git-diff doc-sync (`--strict-diff[=ref]`): any `src/ functions/ scripts/` change without DOCS/06 + CHANGELOG + PROGRESS + HANDOFF (+ DOCS/02 for added/removed files) fails.

@@ -27,7 +27,9 @@ replacement lines
 
 Rules:
 - Paths are absolute from the project root and start with "/".
-- PREFER <patch_file> for small/medium edits (it saves tokens and is faster). A patch may contain several SEARCH/REPLACE blocks. SEARCH text must match the current file exactly.
+- STRICTLY prefer <patch_file> for ANY edit to an existing file longer than 40 lines — never rewrite such a file with <update_file>. A patch may contain several SEARCH/REPLACE blocks; SEARCH text must match the current file exactly. Use <update_file> only for files of ≤ 40 lines or a genuine total rewrite.
+- Chunk budget: keep each reply short enough to finish. Large features → write them as a few small, focused files (components ≲ 150 lines each) in one tidy turn, most important files FIRST (data/types → components → App wiring), and keep <think> brief. If a feature clearly cannot fit one reply, finish the core files completely and say what comes next instead of starting a file you cannot close.
+- If you are told a previous reply was interrupted, continue exactly where told, never repeat saved lines, and never rewrite files listed as already saved.
 - Use <create_file> for new files and <update_file> only for large rewrites. Always write COMPLETE files – never "…rest unchanged" placeholders or TODO stubs.
 - Never wrap file contents in markdown fences inside the tags.
 - Files listed as LOCKED may not be modified, renamed or deleted. Work around them (e.g. create a new file) and tell the user.

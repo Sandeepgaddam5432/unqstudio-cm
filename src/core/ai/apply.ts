@@ -3,7 +3,7 @@ import { FileLockedError, normalizePath, type VirtualFileSystem } from '@/core/v
 import { applyPatch, parsePatchBlocks } from './patch'
 import type { FileOpKind } from './parser'
 
-export type OpStatus = 'streaming' | 'pending' | 'applied' | 'skipped-locked' | 'failed' | 'rejected'
+export type OpStatus = 'streaming' | 'pending' | 'applied' | 'skipped-locked' | 'failed' | 'rejected' | 'interrupted'
 export interface OpRecord {
   id: string
   op: FileOpKind | 'delete'
@@ -17,6 +17,9 @@ export interface OpRecord {
   before?: string
   after?: string
   lines?: number
+  /** v3.4: everything streamed before the file was cut off (status 'interrupted'). Never discarded; powers Resume. */
+  partial?: string
+  interruptedReason?: string
 }
 
 export interface OpResult { status: OpStatus; detail?: string; added: number; removed: number; before?: string; after?: string }

@@ -264,8 +264,9 @@ describe('orchestrator end-to-end (mocked provider)', () => {
   })
   it('flags truncated streams and estimates usage when the provider omits it', async () => {
     const vfs = await projectVfs()
-    const res = await runTurn({ vfs, provider: getProvider('openai')!, model: 'gpt', mode: 'build', history: [], userText: 'x', fetchImpl: fakeFetch(sse([{ choices: [{ delta: { content: '<create_file path="/src/Cut.tsx">\nhalf' } }] }, '[DONE]'])) })
-    expect(res.ops[0]).toMatchObject({ status: 'failed' })
+    const res = await runTurn({ vfs, provider: getProvider('openai')!, model: 'gpt', mode: 'build', history: [], userText: 'x', resilience: { backoffMs: 0 }, fetchImpl: fakeFetch(sse([{ choices: [{ delta: { content: '<create_file path="/src/Cut.tsx">\nhalf' } }] }, '[DONE]'])) })
+    expect(res.ops[0]).toMatchObject({ status: 'interrupted', partial: 'half' }) // v3.4: kept, resumable — never discarded
+    expect(res.interrupted).toHaveLength(1)
     expect(vfs.has('/src/Cut.tsx')).toBe(false)
     expect(res.usage.estimated).toBe(true)
     expect(buildMessages({ vfs, mode: 'build', history: [{ role: 'user', text: 'a' }, { role: 'assistant', text: 'b', summary: '[S]' }], userText: 'c' }).messages.map((m) => m.role)).toEqual(['system', 'user', 'assistant', 'user'])

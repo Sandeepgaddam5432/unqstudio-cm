@@ -18,7 +18,7 @@ export function deriveSteps(i: StepInput): BuildStep[] {
   for (const o of i.ops) {
     const diff = o.status === 'applied' && o.op !== 'delete' ? ` +${o.added ?? 0}/-${o.removed ?? 0}` : ''
     const state: StepState = o.status === 'streaming' ? 'active' : o.status === 'applied' ? 'done' : o.status === 'pending' ? 'pending' : 'error'
-    const label = o.status === 'skipped-locked' ? `Skipped locked ${o.path}` : o.status === 'failed' ? `Failed ${o.path}` : `${VERB[o.op]} ${o.path}${diff}`
+    const label = o.status === 'skipped-locked' ? `Skipped locked ${o.path}` : o.status === 'interrupted' ? `Interrupted ${o.path}` : o.status === 'failed' ? `Failed ${o.path}` : `${VERB[o.op]} ${o.path}${diff}`
     steps.push({ id: o.id, label, state, path: o.path })
   }
   if (i.agent) steps.push(...i.agent)

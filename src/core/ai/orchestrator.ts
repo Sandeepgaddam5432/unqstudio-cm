@@ -2,9 +2,11 @@ import { uid } from '@/lib/util'
 import type { VirtualFileSystem } from '@/core/vfs/vfs'
 import type { AIMode } from '@/store/settings'
 import { applyOp, type OpRecord } from './apply'
-import { ArtifactStreamParser, type ParserEvent } from './parser'
+import { type ParserEvent } from './parser'
 import type { ProviderDef } from './providers'
 import { completeOnce, listModels, streamChat } from './stream'
+import { runResilient, type InterruptedOp, type StreamStatus } from './resilientStream'
+import { normalizePath } from '@/core/vfs/vfs'
 import { estimateMessagesTokens, estimateTokens } from './tokens'
 import { buildProjectContext, extractMentions, systemInstructions, ENHANCER_SYSTEM } from './prompts'
 import type { ContentPart, LLMMessage, Usage } from './types'
@@ -20,6 +22,7 @@ export type TurnEvent =
   | { type: 'op-progress'; id: string; lines: number }
   | { type: 'usage'; usage: Usage }
   | { type: 'checkpoint-before'; id: string }
+  | { type: 'status'; status: StreamStatus }
 
 export interface TurnInput {
   vfs: VirtualFileSystem
@@ -39,6 +42,10 @@ export interface TurnInput {
   signal?: AbortSignal
   fetchImpl?: typeof fetch
   onEvent?: (e: TurnEvent) => void
+  /** v3.4: resume/retry ONE interrupted file instead of running a fresh turn (`partial: ''` = retry from scratch). */
+  resume?: { opId: string; path: string; op: 'create' | 'update' | 'patch'; partial: string }
+  /** v3.4 resilience tuning (defaults: 28 s stall, 120 s first-token, 2 continuations, 700 ms back-off). */
+  resilience?: { stallMs?: number; ttftMs?: number; maxContinuations?: number; backoffMs?: number; sleep?: (ms: number, signal?: AbortSignal) => Promise<void> }
 }
 
 export interface TurnResult {
@@ -48,6 +55,13 @@ export interface TurnResult {
   checkpointBefore?: string
   checkpointAfter?: string
   appliedCount: number
+  /** v3.4: files cut off mid-stream that automatic recovery could not finish (partial content preserved on the OpRecord). */
+  interrupted: InterruptedOp[]
+  /** Set when the turn ended early (stall/network/limit/abort) — completed files are still applied and returned in `ops`. */
+  error?: Error
+  aborted?: boolean
+  /** Automatic continuation/retry attempts spent. */
+  recoveries: number
 }
 
 export function buildMessages(input: Pick<TurnInput, 'vfs' | 'mode' | 'history' | 'userText' | 'images' | 'pinned' | 'customPrompts' | 'includeAllFiles'>): { messages: LLMMessage[]; contextTokens: number } {
@@ -72,6 +86,7 @@ export function summarizeOps(ops: OpRecord[]): string {
   if (by('failed').length) lines.push('FAILED: ' + by('failed').map((o) => `${o.op} ${o.path} (${o.detail})`).join('; '))
   if (by('pending').length) lines.push('Awaiting user approval: ' + by('pending').map((o) => o.path).join(', '))
   if (by('rejected').length) lines.push('Rejected by user: ' + by('rejected').map((o) => o.path).join(', '))
+  if (by('interrupted').length) lines.push('INTERRUPTED mid-file (partial content kept, the user can resume): ' + by('interrupted').map((o) => `${o.path} at line ${o.lines ?? 0}`).join(', '))
   return `[System recap of file operations — ${lines.join(' | ')}]`
 }
 
@@ -80,20 +95,25 @@ export async function runTurn(input: TurnInput): Promise<TurnResult> {
   const emit = input.onEvent ?? (() => {})
   const { messages } = buildMessages(input)
   const ops: OpRecord[] = []
-  let raw = ''
-  let usage: Usage | null = null
   let checkpointBefore: string | undefined
 
-  if (mode === 'build' && input.autoCheckpoint !== false) {
+  if (mode === 'build' && input.autoCheckpoint !== false && !input.resume) {
     const cp = await vfs.checkpoint(`Before: ${input.userText.replace(/\s+/g, ' ').slice(0, 48)}`, 'auto')
     checkpointBefore = cp.id
     emit({ type: 'checkpoint-before', id: cp.id })
   }
 
-  const parser = new ArtifactStreamParser()
   const progress = new Map<string, { id: string; lines: number }>()
-  let reasoning = false
   let appliedCount = 0
+
+  // resume / retry of ONE interrupted file: re-open its record so the UI card updates in place
+  if (input.resume) {
+    const r = input.resume
+    const rec: OpRecord = { id: r.opId, op: r.op, path: r.path, status: 'streaming', added: 0, removed: 0, lines: r.partial ? r.partial.split('\n').length : 0 }
+    progress.set(r.path, { id: rec.id, lines: (r.partial.match(/\n/g) ?? []).length })
+    ops.push(rec)
+    emit({ type: 'op', op: { ...rec } })
+  }
 
   const handle = async (ev: ParserEvent) => {
     switch (ev.type) {
@@ -102,6 +122,8 @@ export async function runTurn(input: TurnInput): Promise<TurnResult> {
       case 'think-delta': emit({ type: 'think-delta', text: ev.text }); break
       case 'file-start': {
         if (mode !== 'build') break
+        const existing = progress.get(ev.path)
+        if (existing) { existing.lines = 0; break } // a retry re-opens the same record — never a duplicate card
         const rec: OpRecord = { id: uid('o'), op: ev.op, path: ev.path, status: 'streaming', added: 0, removed: 0 }
         progress.set(ev.path, { id: rec.id, lines: 0 })
         ops.push(rec)
@@ -120,11 +142,12 @@ export async function runTurn(input: TurnInput): Promise<TurnResult> {
         const rec = ops.find((o) => o.id === p?.id)
         if (!rec) break
         progress.delete(ev.path)
-        if (!ev.complete) { rec.status = 'failed'; rec.detail = 'Response was cut off before this file was finished – nothing was written.' }
-        else if (input.requireApproval) { rec.status = 'pending'; rec.content = ev.content; rec.lines = ev.content.split('\n').length }
+        if (!ev.complete) { rec.status = 'failed'; rec.detail = 'Response was cut off before this file was finished.' }
+        else if (input.requireApproval) { rec.op = ev.op; rec.status = 'pending'; rec.content = ev.content; rec.lines = ev.content.split('\n').length; rec.partial = undefined }
         else {
+          rec.op = ev.op
           const r = await applyOp(vfs, rec.op as 'create', rec.path, ev.content)
-          Object.assign(rec, r, { lines: ev.content.split('\n').length })
+          Object.assign(rec, r, { lines: ev.content.split('\n').length, partial: undefined })
           if (r.status === 'applied') appliedCount++
         }
         emit({ type: 'op', op: { ...rec } })
@@ -144,20 +167,41 @@ export async function runTurn(input: TurnInput): Promise<TurnResult> {
     }
   }
 
-  for await (const chunk of streamChat({ provider: input.provider, model: input.model, apiKey: input.apiKey, baseUrl: input.baseUrl, messages, signal: input.signal, fetchImpl: input.fetchImpl })) {
-    if (chunk.type === 'reasoning') {
-      if (!reasoning) { reasoning = true; await handle({ type: 'think-start' }) }
-      await handle({ type: 'think-delta', text: chunk.text })
-    } else if (chunk.type === 'text') {
-      if (reasoning) { reasoning = false; await handle({ type: 'think-end' }) }
-      raw += chunk.text
-      for (const ev of parser.push(chunk.text)) await handle(ev)
-    } else if (chunk.type === 'usage') usage = chunk.usage
-  }
-  if (reasoning) await handle({ type: 'think-end' })
-  for (const ev of parser.flush()) await handle(ev)
+  const r = input.resilience ?? {}
+  const result = await runResilient({
+    messages,
+    open: (msgs, signal) => streamChat({ provider: input.provider, model: input.model, apiKey: input.apiKey, baseUrl: input.baseUrl, messages: msgs, signal, fetchImpl: input.fetchImpl }),
+    handle,
+    signal: input.signal,
+    isLocked: (p) => vfs.isLocked(normalizePath(p)),
+    getSaved: () => ops.filter((o) => o.status === 'applied' || o.status === 'pending').map((o) => o.path),
+    onStatus: (status) => emit({ type: 'status', status }),
+    stallMs: r.stallMs, ttftMs: r.ttftMs, maxContinuations: r.maxContinuations, backoffMs: r.backoffMs, sleep: r.sleep,
+    seed: input.resume ? { path: input.resume.path, op: input.resume.op, partial: input.resume.partial } : undefined,
+  })
 
-  const finalUsage: Usage = usage ?? { inputTokens: estimateMessagesTokens(messages), outputTokens: estimateTokens(raw), estimated: true }
+  // Nothing salvageable and the request itself failed (bad key, HTTP 4xx, offline…) → surface it like before.
+  if (result.error && !ops.length && !result.raw.trim()) throw result.error
+
+  // Partial salvage: every cut-off file keeps what was streamed. Completed files of this turn are already persisted above.
+  const total = ops.filter((o) => o.op !== 'delete').length
+  for (const it of result.interrupted) {
+    const rec = [...ops].reverse().find((o) => o.path === it.path && o.status === 'streaming')
+    if (!rec) continue
+    const saved = ops.filter((o) => o.status === 'applied' || o.status === 'pending').length
+    rec.status = 'interrupted'
+    rec.partial = it.partialContent
+    rec.lines = it.linesStreamed
+    rec.interruptedReason = it.reason
+    rec.detail = it.reason === 'aborted'
+      ? `Stopped at line ${it.linesStreamed} — ${saved}/${total} files saved.`
+      : `${saved}/${total} files saved · ${it.path} interrupted at line ${it.linesStreamed}${it.attempts ? ` (after ${it.attempts} automatic ${it.attempts === 1 ? 'retry' : 'retries'})` : ''}.`
+    emit({ type: 'op', op: { ...rec } })
+  }
+  for (const rec of ops) if (rec.status === 'streaming') { rec.status = 'failed'; rec.detail = 'Response ended before this file was finished.'; emit({ type: 'op', op: { ...rec } }) }
+  emit({ type: 'status', status: { phase: 'idle' } })
+
+  const finalUsage: Usage = result.usage ?? { inputTokens: estimateMessagesTokens(messages), outputTokens: estimateTokens(result.raw), estimated: true }
   emit({ type: 'usage', usage: finalUsage })
 
   let checkpointAfter: string | undefined
@@ -165,7 +209,7 @@ export async function runTurn(input: TurnInput): Promise<TurnResult> {
     const cp = await vfs.checkpoint(`AI: ${input.userText.replace(/\s+/g, ' ').slice(0, 56)}`, 'ai')
     checkpointAfter = cp.id
   }
-  return { raw, ops, usage: finalUsage, checkpointBefore, checkpointAfter, appliedCount }
+  return { raw: result.raw, ops, usage: finalUsage, checkpointBefore, checkpointAfter, appliedCount, interrupted: result.interrupted, error: result.error, aborted: result.aborted, recoveries: result.recoveries }
 }
 
 /** Apply operations that were held in the approval tray. */

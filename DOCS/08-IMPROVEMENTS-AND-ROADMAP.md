@@ -94,7 +94,7 @@ Baseline measured in a clean checkout: `verify:docs` ✓ · `tsc` ✓ · `eslint
 | Permissions: projectEdits, publishing | **VERIFIED** enforced via `gate()` (`ChatPanel.tsx`, `store/app.ts`) — but through toast/`confirm` style, not an inline card |
 | Permissions: build, connectors | **PARTIAL** — stored/shown, not enforced (`store/prefs.ts`) |
 | Symbol map / repo map context | **VERIFIED** (regex-level, not AST/BM25) — `repoMap.ts` |
-| Truncated stream handling | **PARTIAL** pre-3.4: a cut-off file was discarded ("nothing was written"); fixed in Phase 1 |
+| Truncated stream handling | **VERIFIED (core, unit tests)** since 3.4.0 — watchdog, continuation, stitching, salvage (`resilientStream.ts`). **PARTIAL (UI)**: RecoveryCard/live status are type-checked + built but have no scripted Chromium scenario; no real-LLM test of continuation quality (models may still repeat/deviate; stitching dedupes only exact/prefix overlaps) |
 | `/api/share`, deploy history/rollback, ERD, npm search UI, a11y panel, insights, leak scanner, `.env` editor | **MISSING** at 3.3.1 (Phases 3–5) |
 | Header versions (README v2.1, PROGRESS v3.2, HANDOFF V3.2-M5) | **FIXED** in 3.3.1 and now enforced by `verify:docs` |
 | Optional `functions/api/{auth,catalog,proxy}` | **VERIFIED** present; degrade gracefully when absent |
